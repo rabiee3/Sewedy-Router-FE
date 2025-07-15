@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Help Text in English for ATM OAM F5 Loopback</title>
+    </head>
+    <body>
+        <div class="container_help">
+            <h1>ATM OAM F5 Loopback Diagnostic Test</h1>
+            <div class="row">
+                <p>This page allows you to do ATM OAM F5 Loopback Pings to check the VPI/VCI connections.</p>
+                <p>Click on:-</p><p><button class="btn btn-xs table-btn" ng-click="edit($event,'oamatmviewform')" name="edit" id="Device.ATM.Diagnostics.F5Loopback"><span class="fa fa-edit btn_color_wht"></span></button></p><p>button under Actions and fill relevant fields to carry the test.</p>
+                <p>By default, the page shows previous test results. If the results shows blank or zeros, then no tests where conducted earlier.</p>
+                <table class="table">
+                <tr><th colspan="2"><h4>Fields to fill in for the test</h4></th></tr>
+                <tr><td>ATM PVC</td><td>Select ATM VPI/VCI from the drop down list. You can add new ATM PVC's from Internet Connections page.</td></tr>
+                <tr><td>Number of ATM OAM Cells to send</td><td>Specify total number of ATM OAM Cells to send for test.</td></tr>
+                <tr><td>Timeout</td><td>Total timeout (in ms) to complete the test. Optimal cases, use 300ms or more.</td></tr>
+                </table>
+                <table class="table">
+                <tr><th colspan="2"><h4>Results</h4></th></tr>
+                <tr><td>Diagnostic State</td><td>Shows "Complete" if the test completed successfully and "Error" if there is a failure.</td></tr>
+                <tr><td>Number of ATM OAM Cells Received</td><td>Shows total number of ATM OAM Cells received.</td></tr>
+                <tr><td>Number of ATM OAM Cells Failed</td><td>Shows total number of ATM OAM Cells failed.</td></tr>
+                <tr><td>Average Response Time</td><td>Average response time of the server sending back the OAM Cells (in ms).</td></tr>
+                <tr><td>Minimum Response Time</td><td>Minimum response time of the server sending back the OAM Cells (in ms).</td></tr>
+                <tr><td>Maximum Response Time</td><td>Maximum response time of the server sending back the OAM Cells (in ms).</td></tr>
+                </table>
+                <p></p>
+           </div>
+        </div>
+    </body>
+</html>

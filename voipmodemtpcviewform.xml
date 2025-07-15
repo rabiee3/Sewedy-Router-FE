@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Dect TPC</name>
+        <description>This page allows to configure Dect TPC params.</description>
+    </header>
+    <object title="TPC" name="Device.Services.VoiceService.1.X_VENDOR_COM_TransmitPowerParam"  viewtype="form" Type="string">
+	<row><col><parameter name="X_VENDOR_COM_TuneDigitalRef"  required="false" type="string" writable="true" webname="Tune Digital Ref" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_PABiasRef" required="false" type="string" writable="true" webname="PA Bias Ref" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_PowerOffset0" required="false" type="string" writable="true" webname="Reduced Power Setting 0" maxlen="10"></parameter></col></row>
+	<row><col><parameter name="X_VENDOR_COM_PowerOffset1" required="false" type="string" writable="true" webname="Reduced Power Setting 1" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_PowerOffset2" required="false" type="string" writable="true" webname="Reduced Power Setting 2" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_PowerOffset3" required="false" type="string" writable="true" webname="Reduced Power Setting 3" maxlen="64"></parameter></col></row>
+	<row><col><parameter name="X_VENDOR_COM_PowerOffset4" required="false" type="string" writable="true" webname="Reduced Power Setting 4" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_TD1" required="false" type="string" writable="true" webname="TD 1" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_TD2" required="false" type="string" writable="true" webname="TD 2" maxlen="64"></parameter></col></row>
+	<row><col><parameter name="X_VENDOR_COM_TD3" required="false" type="string" writable="true" webname="TD 3" maxlen="64"></parameter></col>
+    <col><parameter name="X_VENDOR_COM_PA1" required="false" type="string" writable="true" webname="PA 1" maxlen="64"></parameter></col>
+    <col><parameter name="X_VENDOR_COM_PA2" required="false" type="string" writable="true" webname="PA 2" maxlen="64"></parameter></col></row>
+       <row><col> <parameter name="X_VENDOR_COM_PA3" required="false" type="string" writable="true" webname="PA 3" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_SWPowerMode" required="false" type="dropdown" validvalues="IFX_VMAPI_SW_POWERMODE_CONTANT,IFX_VMAPI_SW_POWERMODE_ADAPTIVE,IFX_VMAPI_SW_POWERMODE_USER" writable="true" webname="SW Power Mode (Tx Power Mode in BMC)" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_DBPOW" required="false" type="dropdown" validvalues="IFX_VMAPI_MCEI_FULLPOWERMODE,IFX_VMAPI_MCEI_FIVEDB,IFX_VMAPI_MCEI_TENDB,IFX_VMAPI_MCEI_FIFTEENDB,IFX_VMAPI_MCEI_TWENTYDB,IFX_VMAPI_MCEI_TWENTYFIVEDB,IFX_VMAPI_MCEI_THIRTYDB,IFX_VMAPI_MCEI_MIN_POWERMODE,IFX_VMAPI_MCEI_USERMODE" writable="true" webname="DBPOW" maxlen="64"></parameter></col></row>
+
+        <row><col><parameter name="X_VENDOR_COM_TXPOW_0" required="false" type="dropdown" validvalues="IFX_VMAPI_MCEI_FULLPOWERMODE,IFX_VMAPI_MCEI_FIVEDB,IFX_VMAPI_MCEI_TENDB,IFX_VMAPI_MCEI_FIFTEENDB,IFX_VMAPI_MCEI_TWENTYDB,IFX_VMAPI_MCEI_TWENTYFIVEDB,IFX_VMAPI_MCEI_THIRTYDB,IFX_VMAPI_MCEI_MIN_POWERMODE,IFX_VMAPI_MCEI_USERMODE" access="readonly" webname="TXPOW 0" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_TXPOW_1" required="false" type="dropdown" validvalues="IFX_VMAPI_MCEI_FULLPOWERMODE,IFX_VMAPI_MCEI_FIVEDB,IFX_VMAPI_MCEI_TENDB,IFX_VMAPI_MCEI_FIFTEENDB,IFX_VMAPI_MCEI_TWENTYDB,IFX_VMAPI_MCEI_TWENTYFIVEDB,IFX_VMAPI_MCEI_THIRTYDB,IFX_VMAPI_MCEI_MIN_POWERMODE,IFX_VMAPI_MCEI_USERMODE" access="readonly" webname="TXPOW 1" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_TXPOW_2" required="false" type="dropdown" validvalues="IFX_VMAPI_MCEI_FULLPOWERMODE,IFX_VMAPI_MCEI_FIVEDB,IFX_VMAPI_MCEI_TENDB,IFX_VMAPI_MCEI_FIFTEENDB,IFX_VMAPI_MCEI_TWENTYDB,IFX_VMAPI_MCEI_TWENTYFIVEDB,IFX_VMAPI_MCEI_THIRTYDB,IFX_VMAPI_MCEI_MIN_POWERMODE,IFX_VMAPI_MCEI_USERMODE" access="readonly" webname="TXPOW 2" maxlen="64"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_TXPOW_3" required="false" type="dropdown" validvalues="IFX_VMAPI_MCEI_FULLPOWERMODE,IFX_VMAPI_MCEI_FIVEDB,IFX_VMAPI_MCEI_TENDB,IFX_VMAPI_MCEI_FIFTEENDB,IFX_VMAPI_MCEI_TWENTYDB,IFX_VMAPI_MCEI_TWENTYFIVEDB,IFX_VMAPI_MCEI_THIRTYDB,IFX_VMAPI_MCEI_MIN_POWERMODE,IFX_VMAPI_MCEI_USERMODE" access="readonly" webname="TXPOW 3" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_TXPOW_4" required="false" type="dropdown" validvalues="IFX_VMAPI_MCEI_FULLPOWERMODE,IFX_VMAPI_MCEI_FIVEDB,IFX_VMAPI_MCEI_TENDB,IFX_VMAPI_MCEI_FIFTEENDB,IFX_VMAPI_MCEI_TWENTYDB,IFX_VMAPI_MCEI_TWENTYFIVEDB,IFX_VMAPI_MCEI_THIRTYDB,IFX_VMAPI_MCEI_MIN_POWERMODE,IFX_VMAPI_MCEI_USERMODE" access="readonly" webname="TXPOW 4" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_TXPOW_5" required="false" type="dropdown" validvalues="IFX_VMAPI_MCEI_FULLPOWERMODE,IFX_VMAPI_MCEI_FIVEDB,IFX_VMAPI_MCEI_TENDB,IFX_VMAPI_MCEI_FIFTEENDB,IFX_VMAPI_MCEI_TWENTYDB,IFX_VMAPI_MCEI_TWENTYFIVEDB,IFX_VMAPI_MCEI_THIRTYDB,IFX_VMAPI_MCEI_MIN_POWERMODE,IFX_VMAPI_MCEI_USERMODE" access="readonly" webname="TXPOW 5" maxlen="64"></parameter></col></row>
+
+    </object>
+</view>
+

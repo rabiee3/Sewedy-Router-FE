@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Fax Over IP</name>
+        <description>This page allows to configure FAX.</description>
+    </header>
+    <object title="Fax over IP" name="Device.Services.VoiceService.1.X_VENDOR_COM_T38configuration"  viewtype="form" Type="string">
+	<row><col><parameter name="X_VENDOR_COM_OldAsn1"  required="false" type="checkbox" writable="true" webname="Old ASN 1" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_NsxSize"  required="false" type="string" writable="false" webname="NSX(Non Standard Functions) Size" maxlen="64"></parameter></col></row>
+	<row><col><parameter name="X_VENDOR_COM_NsxInfoField"  required="false" type="string" writable="false" webname="NSX(Non Standard Functions) Info" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_DataWaitTime"  required="false" type="string" writable="false" webname="Data Wait Time" maxlen="64"></parameter></col></row>
+	<row><col><parameter name="X_VENDOR_COM_UdpHighRateErrRecPkts"  required="false" type="string" writable="true" webname="UDP High Rate Error Recovery Packets" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_UdpLowRateErrRecPkts"  required="false" type="string" writable="true" webname="UDP Low Rate Error Recovery Packets" maxlen="64"></parameter></col></row>
+	 <row><col><parameter name="X_VENDOR_COM_UdpPriorFecPkts"  required="false" type="string" writable="false" webname="UDP Prior Packets for FEC" maxlen="64"></parameter></col>
+	  <col><parameter name="X_VENDOR_COM_T38Connection"  required="false" type="dropdown" url="t38connectiontype" writable="false" webname="T38 Connection" maxlen="64"></parameter></col></row>
+<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply" action="post"/>
+    </object>
+</view>
+

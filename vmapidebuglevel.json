@@ -1,0 +1,28 @@
+{
+  "X_VENDOR_COM_CMDebugLevel":
+[
+    {
+        "id": "0",
+        "name": "NONE"
+    },
+    {
+        "id": "1",
+        "name": "ERROR"
+    },
+    {
+        "id": "2",
+        "name": "LOW"
+    },
+    {
+        "id": "3",
+        "name": "NORMAL"
+    },
+    {
+        "id": "4",
+        "name": "HIGH"
+    }
+
+
+]
+}
+

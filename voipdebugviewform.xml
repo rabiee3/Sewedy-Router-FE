@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Debug</name>
+        <description>This page allows to configure debug setting for VoIP submodules.</description>
+    </header>
+    <object viewtype="form" title="Debug Settings">
+    <object name="Device.Services.VoiceService.1.X_VENDOR_COM_SystemDebugSettings"  viewtype="form" Type="string">
+	<row><col><parameter name="X_VENDOR_COM_CallManagerDebugType" required="false" type="dropdown" url="cmdebugtype" writable="true" webname="Call Manager Debug Type" maxlen="10"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_CallManagerDebugLevel" required="false" type="dropdown" url="cmdebuglevel" writable="true" webname="Call Manager DEbug Level" maxlen="64"></parameter></col></row>
+	<row><col><parameter name="X_VENDOR_COM_MediaManagerDebugType" required="false" type="dropdown" url="mmdebugtype" writable="true" webname="Media Manager Debug Type" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_MediaManagerDebugLevel" required="false" type="dropdown" url="mmdebuglevel" writable="true" webname="Media Manager Debug Level" maxlen="64"></parameter></col></row>
+	<row><col><parameter name="X_VENDOR_COM_AgentsDebugType" required="false" type="dropdown" url="agentdebugtype" writable="true" webname="Agents Debug Type" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_AgentsDebugLevel"  required="false" type="dropdown" url="agentsdebuglevel" writable="true" webname="Agents Debug Level" maxlen="64"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_RtpDebugType" required="false" type="dropdown" url="rtpdebugtype" writable="true" webname="RTP Debug Type" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_RtpDebugLevel" required="false" type="dropdown" url="rtpdebuglevel" writable="true" webname="RTP Debug Level" maxlen="64"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_CMDebugType" required="false" type="dropdown" url="vmapidebugtype" writable="true" webname="VMAPI Debug Type" maxlen="64"></parameter></col>
+       <col> <parameter name="X_VENDOR_COM_CMDebugLevel" required="false" type="dropdown" url="vmapidebuglevel" writable="true" webname="VMAPI Debug Level" maxlen="64"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_SIPDebugType" required="false" type="dropdown" url="sipdebugtype" writable="true" webname="SIP Debug Type" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_SIPDebugLevel" required="false" type="dropdown" url="sipdebuglevel" writable="true" webname="SIP Debug Level" maxlen="64"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_FaxDebugType"  required="false" type="dropdown" url="faxdebugtype" writable="true" webname="FAX Debug Type" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_FaxDebugLevel" required="false" type="dropdown" url="faxdebuglevel" writable="true" webname="Fax Debug Level" maxlen="64"></parameter></col></row>
+    </object>
+<parameter name="Modify" action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" maxlen="64"/>
+</object>
+</view>
+

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="logd">
+<helptext></helptext>
+	<header>
+		<image>images/icons/system.png</image>
+		<name>System Log Configurations</name>
+		<description>The CPE device provides customized logging the messages to File, Remote.</description>
+	</header>
+	<object title="logd Rules" name="Device.DeviceInfo.VendorLogFile.*"  form="logdviewform" viewtype="table" Type="string" icon="system">
+		<parameter name="Name"  type="string" writable="true" webname="File Name" maxlen="64"></parameter>
+		<parameter name="MaximumSize"  type="string" writable="true" webname="File Size(in KiB)" maxlen="128"></parameter>
+		<parameter name="X_INTEL_COM_FilterString"  type="string" writable="true" webname="Filter String" maxlen="64"></parameter>
+		<parameter name="X_INTEL_COM_IPAddress"  type="string" writable="true" webname="Remote IP" maxlen="64"></parameter>
+		<parameter name="X_INTEL_COM_Port"  type="string" writable="true" webname="Port No" maxlen="64"></parameter>
+		<parameter name="edit"  action="post" routeurl="edit($event,'logdviewform')" type="button" webname="Edit" maxlen="64"></parameter>
+		<parameter name="delete"  action="post"   type="button" webname="delete" maxlen="64"></parameter>
+	</object>
+</view>

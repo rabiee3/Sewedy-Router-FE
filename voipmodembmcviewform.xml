@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Dect BMC</name>
+        <description>This page allows to configure Dect BMC params.</description>
+    </header>
+    <object title="BMC" name="Device.Services.VoiceService.1.X_VENDOR_COM_DectBMCParams"  viewtype="form" Type="string">
+        <row><col><parameter name="X_VENDOR_COM_DectRSSIFreeLevel"  required="false" type="string" access="readonly" webname="RSSI Free Level" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_DectRSSIBusyLevel"  required="false" type="string" access="readonly" webname="RSSI Busy Level" maxlen="64"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_DectBearerChgLim"  required="false" type="string" access="readonly" webname="RSSI DB Change Limit" maxlen="10"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_DectDefaultAntenna"  required="false" type="string" access="readonly" webname="Default Antenna" maxlen="64"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_DectWOPNSF"  required="false" type="string" access="readonly" webname="Window Open Sync Free Mode" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_DectWWSF"  required="false" type="string" access="readonly" webname="Window Width Sync Free Mode" maxlen="64"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_DectCNTUPCtrlReg" required="false" type="string" access="readonly" webname="DRON Ctrl Register" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_DectDelayReg" required="false" type="string" access="readonly" webname="Delay Compensation" maxlen="64"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_DectHandOverEvalper" required="false" type="string" access="readonly" webname="Handover Eval Period" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_DectSYNCMCtrlReg" required="false" type="string" access="readonly" webname="General Sync Mode" maxlen="64"></parameter></col></row>
+    </object>
+</view>
+

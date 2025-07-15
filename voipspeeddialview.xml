@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Speed Dial</name>
+        <description>This page allows to add/delete the contacs for speed dial.</description>
+    </header>
+    <object title="Speed Dial" name="Device.Services.VoiceService.1.X_VENDOR_COM_AddressBook.X_VENDOR_COM_AddressBookEntry.*" viewtype="table">
+
+        <parameter name="X_VENDOR_COM_DialCode"  type="string" writable="true" webname="Dial Code" maxlen="42"></parameter>
+        <parameter name="X_VENDOR_COM_UserName"  type="string" writable="true" webname="User Name/Number" maxlen="31"></parameter>
+        <parameter name="X_VENDOR_COM_DisplayName"  type="string" writable="true" webname="Display Name" maxlen="31"></parameter>
+
+	 <parameter name="X_VENDOR_COM_CallType"  type="dropdown1" url="calltype" writable="true" webname="Call type" maxlen="64"></parameter>
+
+        <parameter name="X_VENDOR_COM_AddrType"  type="dropdown1" url="addresstype" writable="true" webname="Address Type" maxlen="64"></parameter>
+        
+        <parameter name="X_VENDOR_COM_DestAddr"  type="string" writable="true" webname="Caller Address" maxlen="128"></parameter>
+<parameter name="X_VENDOR_COM_Port"  type="string" writable="true" webname="Caller Port" maxlen="128"></parameter>
+        <parameter name="edit" maxlen="64" webname="Edit" type="button" routeurl="edit($event,'voipspeeddialviewform')" action="post"/>
+	<parameter name="delete" maxlen="64" webname="delete" type="button" action="post"/>
+
+	<parameter name="Add" maxlen="64" webname="Add" type="button" routeurl="formToOpen('voipspeeddialviewform')" action="post"/>
+    </object>
+</view>

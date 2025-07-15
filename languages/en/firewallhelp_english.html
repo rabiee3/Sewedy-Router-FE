@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div class="container_help">
+            <h1>Firewall</h1>
+            <div class="row">
+                <p>The CPE device provides extensive firewall protection against a wide array of common hacker attacks. This is done by restricting connection parameters to limit the risk of intrusion. Application layer protocol services can be enabled/disabled from this page.</p>
+    </div>
+        
+	<p><b>Traffic In : </b>Common services offered by CPE for traffic originating from LAN hosts terminating to CPE(i.e LAN Hosts->CPE)</p>
+        <h2>Precedence Order</h2>
+            </div>
+                <div class="row">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <td>Precedence Order</td>
+                                <td>Feature/Chain</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Guest SSID Isolation/ Device Isolation</td>
+                            </tr>
+                            <tr>
+                                <td>Packet Filter</td>
+                            </tr>
+                            <tr>
+                                <td>Parental Control</td>
+                            </tr>
+                            <tr>
+                                <td>ALGS</td>
+                            </tr>
+                            <tr>
+                                <td>DMZ</td>
+                            </tr>
+                            <tr>
+                                <td>Port Mapping</td>
+                            </tr>
+                            <tr>
+                                <td>Port Triggering</td>
+                            </tr>
+                            <tr>
+                                <td>Firewal Config</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>
+		        <b> Note:</b>
+                
+                <p>1.   If New Services Need to be added , We should add from packet filter as Adding services/port Not allowed.</p> 
+            </div>
+
+
+            <div>
+		<p><b>Example:</b></p>
+            </div>            
+            <div class="row">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <td>Service Description</td>
+                                <td>Service Port</td>
+                                <td>Traffic In</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Telnet</td>
+                                <td>23</td>
+                                <td>Drop</td>
+                            </tr>
+                            <tr>
+                                <td>FTP</td>
+                                <td>21</td>
+                                <td>Drop</td>
+                            </tr>
+                            <tr>
+                                <td>HTTP</td>
+                                <td>80</td>
+                                <td>Accept</td>
+                            </tr>
+                            <tr>
+                                <td>HTTPS</td>
+                                <td>443</td>
+                                <td>Accept</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

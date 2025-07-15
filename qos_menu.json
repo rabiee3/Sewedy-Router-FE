@@ -1,0 +1,24 @@
+{
+		"menu": [
+		{
+				"name": "Advanced",
+				"id": "profile",
+				"childrens": [
+				{
+						"name": "QoS",
+						"icon": "qos",
+						"order": "6",
+						"childrens": [
+						{
+								"name": "QoS",
+								"order": "1",
+								"viewtype": "custom",
+								"view": "qospage",
+								"childrens": []
+						}
+						]
+				}
+				]
+		}
+		]
+}

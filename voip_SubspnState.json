@@ -1,0 +1,37 @@
+{
+  "X_VENDOR_COM_SubspnState":
+[
+    {
+        "id": "1",
+        "name": "IDLE"
+    },
+    {
+        "id": "2",
+        "name": "SUBSCRIBING"
+    },
+    {
+        "id": "3",
+        "name": "SUBSCRIBED"
+    },
+    {
+        "id": "4",
+        "name": "PENDING"
+    },
+    {
+        "id": "5",
+        "name": "ACTIVE"
+    },
+    {
+        "id": "6",
+        "name": "TIMEOUT"
+    },
+    {
+        "id": "7",
+        "name": "TERMINATED"
+    },
+    {
+        "id": "8",
+        "name": "UNAUTHORIZED"
+    }
+]
+}

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Speed Dial</name>
+        <description>This page allows to configure the contact details for speed dial.</description>
+    </header>
+    <object title="Speed Dial" name="Device.Services.VoiceService.1.X_VENDOR_COM_AddressBook.X_VENDOR_COM_AddressBookEntry.*"  viewtype="form" Type="string">
+
+        <parameter name="X_VENDOR_COM_DialCode"  required="false" type="string" writable="true" webname="Dial Code" maxlen="42"></parameter>
+        <parameter name="X_VENDOR_COM_UserName"  required="false" type="string" writable="true" webname="User Name/Number" maxlen="31"></parameter>
+        <parameter name="X_VENDOR_COM_DisplayName"  required="false" type="string" writable="true" webname="Display Name" maxlen="31"></parameter>
+            <parameter name="X_VENDOR_COM_CallType"  required="false" type="dropdown" url="calltype" writable="true" webname="Call type" maxlen="64"></parameter>
+
+	<parameter name="X_VENDOR_COM_AddrType"  required="false" type="dropdown" url="addresstype" writable="true" webname="Address Type" maxlen="64"></parameter>
+
+        <parameter name="X_VENDOR_COM_DestAddr"  required="false" type="string" writable="true" webname="Caller Address" maxlen="128"></parameter>
+<parameter name="X_VENDOR_COM_Port"  type="string" required="false" writable="true" webname="Caller Port" maxlen="128"></parameter>
+
+	<parameter name="Add" action="post" routeurl="Apply($event,'voipspeeddialview')" type="submitbutton" webname="Apply" maxlen="64"/>
+<parameter name="Close" type="submitbutton" routeurl="Add('voipspeeddialview')" webname="Close" maxlen="64"/>
+    </object>
+</view>
+

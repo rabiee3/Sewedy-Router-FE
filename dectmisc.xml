@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+	<header>
+	<image>images/icons/voip.png</image>
+    <name>Dect Miscellaneous</name>
+	<description>This page allows to configure Dect Miscellaneous parameter</description>
+	</header>
+	<object viewtype="form" title="Dect Miscellaneous">
+    <object name="Device.Services.VoiceService.1.X_VENDOR_COM_Miscellaneous"  form="dectmisc">
+	<row><col><parameter name="X_VENDOR_COM_AcceptUnSolNotify" required="false" type="checkbox" webname="Unsolicited Notify" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_SilenceSupp" required="false" type="checkbox" webname="Silence Supression" maxlen="64"></parameter></col></row>
+	<row><col><parameter name="X_VENDOR_COM_DialToneDuration" required="false" type="string" webname="Dial Tone Duration(in Secs)" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_SessExpires" required="false" type="string" webname="Session Expire Duration(in Secs)" maxlen="64"></parameter></col></row>
+	</object>
+	<object name="Device.Services.VoiceService.1.VoiceProfile.1.RTP" form="dectmisc">
+	<row><col><parameter name="X_VENDOR_COM_JitterBufferType" required="false" type="dropdown" url="jitterbuffertype" webname="Jitter Buffer Type" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_ScalingFactor" required="false" type="string" webname="Scalling Factor" maxlen="64"></parameter></col></row>
+	<row><col><parameter name="X_VENDOR_COM_InitialSize" required="false" type="string" webname="Initial Size" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_MaxSize" required="false" type="string" webname="Maximum Size" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_MinSize" required="false" type="string" webname="Minimum Size" maxlen="64"></parameter></col></row>
+    </object>
+    <object name="Device.Services.VoiceService.1.VoiceProfile.1.NumberingPlan" form="dectmisc">
+    <row><col><parameter name="MaximumNumberOfDigits" required="false" type="string" webname="Dial Digit Length" maxlen="64"></parameter></col>
+	<col></col></row>
+    </object>
+    <object name="Device.Services.VoiceService.1.X_VENDOR_COM_DectSystem" form="dectmisc">
+    <row><col><parameter name="X_VENDOR_COM_DnaEnable" required="false" type="checkbox" webname="DNA Test Enable" maxlen="64"></parameter></col>
+    <col><parameter name="X_VENDOR_COM_ClkMaster" required="false" type="checkbox" webname="Clock Master" maxlen="64"></parameter></col></row>
+    </object>
+	<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply" action="post" maxlen="64"/>
+	</object>
+</view>

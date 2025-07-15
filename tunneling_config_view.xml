@@ -1,0 +1,382 @@
+<view layout="2column" viewid="tunneling" translation="tunneling">
+<helptext/>
+ <header>
+    <image>images/icons/tunneling.png</image>
+    <name>IPv6 6rd - DSLite Configuration</name>
+        <description> 6rd is a mechanism to facilitate IPv6 rapid deployment across IPv4 infrastructures of Internet service providers (ISPs).</description>
+    </header>
+    <row>
+    <col>
+      <object viewtype="form" title="6rdconfiguration" icon="6rdconfig-panel-icon" name="Device.IPv6rd.InterfaceSetting.1">
+      		<parameter name="Enable" type="toggle" webname="Enable 6rd tunnel" maxlen="64"/>
+      		<row>
+      		<col>
+      		</col>
+      		</row>
+      		<row>
+      		<col>
+                <parameter name="TunnelInterface" type="dropdown" parent="1" parentname="Device.IPv6rd.InterfaceSetting.1" depends="Enable" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=" webname="WAN Interface" maxlen="64"/>
+      		</col>
+      		<col>
+                <parameter name="X_LANTIQ_COM_Mode" type="dropdown" validvalues="Static,Dynamic" webname="Configuration Modes" maxlen="64" parent="1" parentname="Device.IPv6rd.InterfaceSetting.1" depends="Enable"/>
+      		</col>
+      		</row>
+      		<row>
+      		<col>
+                <parameter name="X_LANTIQ_COM_MTU" type="number" minval="1280" exceptionvalue="0" required="false" webname="MTU(min 1280)" customdependson="DeviceIPv6rdInterfaceSetting1.X_LANTIQ_COM_Mode == 'Static' and DeviceIPv6rdInterfaceSetting1.Enable == true"/>
+      		</col>
+      		<col>
+                <parameter name="BorderRelayIPv4Addresses" customdependson="DeviceIPv6rdInterfaceSetting1.X_LANTIQ_COM_Mode == 'Static' and DeviceIPv6rdInterfaceSetting1.Enable == true" type="ipv4" webname="6RD BR IP"/>
+      		</col>
+      		<col>
+      		</col>
+      		</row>
+      		<row>
+      		<col>
+                <parameter name="IPv4MaskLength" customdependson="DeviceIPv6rdInterfaceSetting1.X_LANTIQ_COM_Mode == 'Static' and DeviceIPv6rdInterfaceSetting1.Enable == true" type="number" webname="IPv4 Mask Length" maxval="64"/>
+      		</col>
+      		<col>
+                <parameter name="SPIPv6Prefix" customdependson="DeviceIPv6rdInterfaceSetting1.X_LANTIQ_COM_Mode == 'Static' and DeviceIPv6rdInterfaceSetting1.Enable == true" type="ipv6" webname="6RD Prefix" maxlen="64"/>
+      		</col>
+      		<col>
+		<parameter name="X_LANTIQ_COM_6RD_PREFIX_LEN" customdependson="DeviceIPv6rdInterfaceSetting1.X_LANTIQ_COM_Mode == 'Static' and DeviceIPv6rdInterfaceSetting1.Enable == true" type="number" webname="6RD Prefix Length" maxlen="64"/>
+      		</col>
+      		</row>
+		<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+        </object>
+       </col>
+       <col>
+    <object viewtype="form" name="Device.DSLite.InterfaceSetting.1" title="dsliteconfiguration" icon="dslite-panel-icon">
+		<parameter name="Enable" type="toggle" webname="Enable DS-Lite tunnel" maxlen="64"/>
+	<row>
+	<col>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="TunnelInterface" type="dropdown" dependsonparamvalue="1" dependsonobject="Device.DSLite.InterfaceSetting.1" dependsonparam="Enable" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=" webname="WAN Interface" maxlen="64"/>
+	</col>
+	<col>
+    		<parameter name="EndpointAssignmentPrecedence" type="dropdown" validvalues="Static,Dynamic,Stateless DSLite" webname="Configuration Modes" maxlen="64" parent="1" parentname="Device.DSLite.InterfaceSetting.1" depends="Enable"/>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="EndpointAddress" customdependson="DeviceDSLiteInterfaceSetting1.EndpointAssignmentPrecedence == 'Static' and DeviceDSLiteInterfaceSetting1.Enable == true"  type="ipv6" webname="DS-Lite Remote IPv6 address" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="X_LANTIQ_COM_MTU" customdependson="(DeviceDSLiteInterfaceSetting1.EndpointAssignmentPrecedence == 'Static' or DeviceDSLiteInterfaceSetting1.EndpointAssignmentPrecedence == 'Stateless DSLite') and DeviceDSLiteInterfaceSetting1.Enable == true"  type="number" required="false" webname="MTU(min 1280)" minval="1280" exceptionvalue="0"/>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="X_LANTIQ_COM_TunnelIP"  required="false" customdependson="DeviceDSLiteInterfaceSetting1.EndpointAssignmentPrecedence == 'Static' and DeviceDSLiteInterfaceSetting1.Enable == true" type="ipv4" webname="DS-Lite tunnel IP address(IPv4)" maxlen="64"/>
+	</col>
+	<col>
+    		<parameter name="X_LANTIQ_COM_Mask" customdependson="DeviceDSLiteInterfaceSetting1.EndpointAssignmentPrecedence == 'Static' and DeviceDSLiteInterfaceSetting1.Enable == true" required="false" type="ipv4" webname="Subnet Mask" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+		<parameter name="EndpointAddress" customdependson="DeviceDSLiteInterfaceSetting1.EndpointAssignmentPrecedence == 'Stateless DSLite' and DeviceDSLiteInterfaceSetting1.Enable == true" type="ipv6" webname="DS-Lite Remote IPv6 address" maxlen="64"/>
+	</col>
+	<col>
+        	<parameter name="X_LANTIQ_COM_TunnelIP" customdependson="DeviceDSLiteInterfaceSetting1.EndpointAssignmentPrecedence == 'Stateless DSLite' and DeviceDSLiteInterfaceSetting1.Enable == true" type="ipv4" webname="DS-Lite tunnel IP address(IPv4)" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+        	<parameter name="X_LANTIQ_COM_Mask" customdependson="DeviceDSLiteInterfaceSetting1.EndpointAssignmentPrecedence == 'Stateless DSLite' and DeviceDSLiteInterfaceSetting1.Enable == true" type="ipv4" webname="Subnet Mask" maxlen="64"/>
+	</col>
+	<col>
+    		<parameter name="X_LANTIQ_COM_PortRange" customdependson="DeviceDSLiteInterfaceSetting1.EndpointAssignmentPrecedence == 'Stateless DSLite' and DeviceDSLiteInterfaceSetting1.Enable == true"  type="wholenumber" webname="Lw4o6 Port Range(Valid 0 to 65535)" placeholder="Ex:40000-41000" minval="0" maxval="65535" maxlen="64"/>
+	</col>
+	</row>
+    	<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+    </object>
+    </col>
+    </row>
+    <row>
+    <col>
+      <object viewtype="form" title="6in4configuration" icon="6rdconfig-panel-icon" name="Device.X_INTEL_COM_6in4">
+      		<parameter name="Enabled" type="toggle" webname="Enable 6in4 tunnel"/>
+      		<row>
+      		<col>
+      		</col>
+      		</row>
+      		<row>
+      		<col>
+                <parameter name="IPAddress" type="ipv4" required="false" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="IPv4 Address" maxlen="64"/>
+      		</col>
+      		<col>
+                <parameter name="PeerAddress" type="ipv4" webname="IPv4 PeerAddress" maxlen="64" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled"/>
+      		</col>
+      		</row>
+      		<row>
+      		<col>
+                <parameter name="IP6Address" type="string" webname="IP6Address" maxlen="64" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled"/>
+      		</col>
+      		<col>
+                <parameter name="IP6Prefix" type="string" required="false" webname="IP6Prefix" maxlen="64" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled"/>
+      		</col>
+      		</row>
+      		<row>
+      		<col>
+		<parameter name="TunLink" type="dropdown" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=" webname="WAN Interface" maxlen="64"/>
+      		</col>
+      		<col>
+                <parameter name="SourceRouting" type="checkbox" required="false" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="SourceRouting"/>
+      		</col>
+      		</row>
+      		<row>
+      		<col>
+		<parameter name="DefaultRoute" type="checkbox" required="false" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="DefaultRoute"/>
+      		</col>
+      		<col>
+		<parameter name="TTL" type="number" required="false" minval="0" maxval="255" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="TTL"/>
+      		</col>
+            </row>
+            <row>
+      		<col>
+                <parameter name="ToS" type="string" required="false" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="ToS"/>
+      		</col>
+      		<col>
+		<parameter name="MTU" type="number" required="false" minval="1280" exceptionvalue="0" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="MTU"/>
+      		</col>
+      		</row>
+      		<row>
+      		<col>
+		<parameter name="TunnelID" type="number" required="false" minval="0" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="TunnelID"/>
+      		</col>
+      		<col>
+                <parameter name="UserName" type="string" required="false" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="UserName"/>
+      		</col>
+      		</row>
+      		<row>
+      		<col>
+		<parameter name="Password" type="password" required="false" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="Password"/>
+      		</col>
+      		<col>
+		<parameter name="UpdateKey" type="string" required="false" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="UpdateKey"/>
+      		</col>
+            </row>
+            <row>
+      		<col>
+                <parameter name="Metric" type="number" required="false" minval="0" parent="1" parentname="Device.X_INTEL_COM_6in4" depends="Enabled" webname="Metric"/>
+      		</col>
+      		<col>
+      		</col>
+      		</row>
+		<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+        </object>
+       </col>
+       <col>
+    <object viewtype="form" name="Device.X_INTEL_COM_6to4" title="6to4configuration" icon="6rdconfig-panel-icon">
+		<parameter name="Enabled" type="toggle" webname="Enable 6to4 tunnel"/>
+	<row>
+	<col>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="IPAddr" type="ipv4" required="false" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_6to4" dependsonparam="Enabled" webname="IPAddr" maxlen="64"/>
+	</col>
+	<col>
+    		<parameter name="DefaultRoute" type="toggle" required="false" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_6to4" dependsonparam="Enabled" webname="DefaultRoute" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="TTL" type="number" required="false" minval="0" maxval="255" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_6to4" dependsonparam="Enabled" webname="TTL" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="TOS" type="string" required="false" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_6to4" dependsonparam="Enabled" webname="TOS"/>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="MTU" type="number" required="false" minval="1280" exceptionvalue="0" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_6to4" dependsonparam="Enabled" webname="MTU" maxlen="64"/>
+	</col>
+	<col>
+    		<parameter name="Metric" type="number" required="false" minval="0" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_6to4" dependsonparam="Enabled" webname="Metric" maxlen="64"/>
+	</col>
+	</row>
+    	<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+    </object>
+    </col>
+    </row>
+    <row>
+    <col>
+    <object viewtype="form" name="Device.X_INTEL_COM_MAP" title="Mapconfiguration" icon="6rdconfig-panel-icon">
+		<parameter name="Enabled" type="toggle" webname="Enable Map tunnel"/>
+	<row>
+	<col>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="Type" type="dropdown" validvalues="lw4o6,map-e,map-t" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_MAP" dependsonparam="Enabled" webname="Type" maxlen="64"/>
+	</col>
+	<col>
+    		<parameter name="IPAddr" type="ipv4" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_MAP" dependsonparam="Enabled" webname="IPv4 IPAddr" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="PeerAddr" type="ipv6" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_MAP" dependsonparam="Enabled" webname="IPv6 PeerAddr" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="IP4PrefixLen" type="number" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_MAP" dependsonparam="Enabled" webname="IP4PrefixLen"/>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="IP6Prefix" type="ipv6" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_MAP" dependsonparam="Enabled" webname="IP6Prefix" maxlen="64"/>
+	</col>
+	<col>
+    		<parameter name="IP6PrefixLen" type="number" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_MAP" dependsonparam="Enabled" webname="IP6PrefixLen" maxlen="64"/>
+	</col>
+	</row>
+    <row>
+    <col>
+            <parameter name="TunLink" type="dropdown" parent="1" parentname="Device.X_INTEL_COM_MAP" depends="Enabled" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=" webname="WAN Interface" maxlen="64"/>
+    </col>
+	<col>
+    		<parameter name="MTU" type="number" required="false" minval="1280" exceptionvalue="0" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_MAP" dependsonparam="Enabled" webname="MTU" maxlen="64"/>
+	</col>
+    </row>
+    <row>
+	<col>
+    		<parameter name="Offset" type="number" required="false" minval="0" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_MAP" dependsonparam="Enabled" webname="Offset" maxlen="64"/>
+	</col>
+    <col>
+    </col>
+    </row>
+    	<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+    </object>
+    </col>
+	<col>
+    <object viewtype="form" name="Device.X_INTEL_COM_L2TP" title="L2TP tunnel configuration" icon="6rdconfig-panel-icon">
+		<parameter name="Enabled" type="toggle" webname="Enable L2TP tunnel"/>
+	<row>
+	<col>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="ServerIPAddr" type="ipv4" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_L2TP" dependsonparam="Enabled" webname="IPv4 Server IPAddr" maxlen="64"/>
+	</col>
+	<col>
+    		<parameter name="PPPDOptions" type="string" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_L2TP" dependsonparam="Enabled" webname="PPPD Options" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+		<parameter name="LCPEchoInterval" type="number" required="false" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_L2TP" dependsonparam="Enabled" webname="LCP Echo Interval"/>
+	</col>
+	<col>
+		<parameter name="LCPEchoFailure" type="number" required="false" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_L2TP" dependsonparam="Enabled" webname="LCP Echo Failure"/>
+	</col>
+	</row>
+	<row>
+	<col>
+		<parameter name="ConnectDelay" type="number" required="false" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_L2TP" dependsonparam="Enabled" webname="Connect Delay"/>
+	</col>
+	<col>
+    		<parameter name="MRU" type="number" required="false" minval="1280" exceptionvalue="0" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_L2TP" dependsonparam="Enabled" webname="MRU" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="MTU" type="number" required="false" minval="1280" exceptionvalue="0" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_L2TP" dependsonparam="Enabled" webname="MTU" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="IP6Enabled" type="toggle" required="false" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_L2TP" dependsonparam="Enabled" webname="IPv6 Enabled"/>
+	</col>
+	</row>
+    	<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+    </object>
+    </col>
+    </row>
+	<row>
+	<col>
+    <object viewtype="form" name="Device.X_INTEL_COM_GRE" title="GRE tunnel configuration" icon="6rdconfig-panel-icon">
+		<parameter name="Enabled" type="toggle" webname="Enable GRE tunnel"/>
+	<row>
+	<col>
+	</col>
+	</row>
+	<row>
+	<col>
+		<parameter name="Proto" type="dropdown" validvalues="gre,gretap,grev6,grev6tap" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_GRE" dependsonparam="Enabled" webname="Proto" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="TunLink" type="dropdown" parent="1" parentname="Device.X_INTEL_COM_GRE" depends="Enabled" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=" webname="WAN Interface" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+		<parameter name="ServerIPAddr" type="ipv4" customdependson="(DeviceX_INTEL_COM_GRE.Proto == 'gre' or DeviceX_INTEL_COM_GRE.Proto == 'gretap') and DeviceX_INTEL_COM_GRE.Enabled == true" webname="IPv4 Server Addr" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="LocalIPAddr" type="ipv4" required="false" customdependson="(DeviceX_INTEL_COM_GRE.Proto == 'gre' or DeviceX_INTEL_COM_GRE.Proto == 'gretap') and DeviceX_INTEL_COM_GRE.Enabled == true" webname="IPv4 Local Addr" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+		<parameter name="ServerIPAddr" type="ipv6" customdependson="(DeviceX_INTEL_COM_GRE.Proto == 'grev6' or DeviceX_INTEL_COM_GRE.Proto == 'grev6tap') and DeviceX_INTEL_COM_GRE.Enabled == true" webname="IPv6 Server Addr" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="LocalIPAddr" type="ipv6" required="false" customdependson="(DeviceX_INTEL_COM_GRE.Proto == 'grev6' or DeviceX_INTEL_COM_GRE.Proto == 'grev6tap') and DeviceX_INTEL_COM_GRE.Enabled == true" webname="IPv6 Local Addr" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+		<parameter name="TunIPAddr" type="ipv4" customdependson="DeviceX_INTEL_COM_GRE.Proto == 'gre' and DeviceX_INTEL_COM_GRE.Enabled == true" webname="IPv4 tunnel Addr for IPoGRE" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="TunNetMask" type="ipv4" customdependson="DeviceX_INTEL_COM_GRE.Proto == 'gre' and DeviceX_INTEL_COM_GRE.Enabled == true" webname="IPv4 Tunnel net mask" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+		<parameter name="TunIPAddr" type="ipv6" customdependson="DeviceX_INTEL_COM_GRE.Proto == 'grev6' and DeviceX_INTEL_COM_GRE.Enabled == true" webname="IPv6 tunnel Addr for IPoGRE" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="TunNetMask" type="string" customdependson="DeviceX_INTEL_COM_GRE.Proto == 'grev6' and DeviceX_INTEL_COM_GRE.Enabled == true" webname="IPv6 Tunnel prefix" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="MTU" type="number" required="false" minval="1280" exceptionvalue="0" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_GRE" dependsonparam="Enabled" webname="MTU" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="IP6Enabled" type="toggle" required="false" customdependson="DeviceX_INTEL_COM_GRE.Enabled == true" webname="IPv6 Enabled"/>
+	</col>
+	</row>
+    	<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+    </object>
+    </col>
+	<col>
+    <object viewtype="form" name="Device.X_INTEL_COM_PPTP" title="PPTP tunnel configuration" icon="6rdconfig-panel-icon">
+		<parameter name="Enabled" type="toggle" webname="Enable PPTP tunnel"/>
+	<row>
+	<col>
+    		<parameter name="ServerIPAddr" type="ipv4" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_PPTP" dependsonparam="Enabled" webname="IPv4 Server Addr" maxlen="64"/>
+	</col>
+	</row>
+	<row>
+	<col>
+    		<parameter name="UserName" type="string" required="false" minval="1280" exceptionvalue="0" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_PPTP" dependsonparam="Enabled" webname="User name" maxlen="64"/>
+	</col>
+	<col>
+		<parameter name="Password" type="string" required="false" dependsonparamvalue="1" dependsonobject="Device.X_INTEL_COM_PPTP" dependsonparam="Enabled" webname="password"/>
+	</col>
+	</row>
+    	<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+    </object>
+    </col>
+
+	</row>
+</view>
+

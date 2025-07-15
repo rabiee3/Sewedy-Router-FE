@@ -1,0 +1,153 @@
+{
+	"FacilityAction":
+[
+    {
+        "id": "0",
+        "name": "Activate Anonymus CallBlock"
+    },
+    {
+        "id": "1",
+        "name": "Deactivate Anonymus CallBlock"
+    },    
+	{
+        "id": "2",
+        "name": "Auto-Redial Active"
+    },
+    {
+        "id": "3",
+        "name": "Auto-Redial DeActive"
+    },
+    {
+        "id": "4",
+        "name": "DND Activate"
+    },
+    {
+        "id": "5",
+        "name": "DND DeActivate"
+    },    
+	{
+        "id": "6",
+        "name": "Callwaiting Activate"
+    },
+    {
+        "id": "7",
+        "name": "Callwaiting DeActivate"
+    },
+    {
+        "id": "8",
+        "name": "Callwaiting Activate Per Call"
+    },
+    {
+        "id": "9",
+        "name": "Callwaiting DeActivate Per Call"
+    },    
+	{
+        "id": "10",
+        "name": "Activate Unconditional Call Forward"
+    },
+    {
+        "id": "11",
+        "name": "DeActivate Unconditional Call Forward"
+    },
+    {
+        "id": "12",
+        "name": "Activate Call Forward On Busy"
+    },
+    {
+        "id": "13",
+        "name": "DeActivate Call Forward On Busy"
+    },    
+	{
+        "id": "14",
+        "name": "Activate Call Forward On NoAnswer"
+    },
+    {
+        "id": "15",
+        "name": "DeActivate Call Forward On NoAnswer"
+    },
+    {
+        "id": "16",
+        "name": "Activate Caller ID Block"
+    },
+    {
+        "id": "17",
+        "name": "DeActivate Caller ID Block"
+    },    
+	{
+        "id": "18",
+        "name": "Activate Caller ID Block Per Call"
+    },
+    {
+        "id": "19",
+        "name": "DeActivate Caller ID Block Per Call"
+    },
+    {
+        "id": "20",
+        "name": "Blind Transfer"
+    },
+    {
+        "id": "21",
+        "name": "Call Return"
+    },
+    {
+        "id": "22",
+        "name": "CallWaiting Reject"
+    },
+    {
+        "id": "23",
+        "name": "VoiceMail Retrieval"
+    },
+    {
+        "id": "24",
+        "name": "Internal General Call"
+    },
+    {
+        "id": "25",
+        "name": "Disconnect Last Active Call"
+    },
+    {
+        "id": "26",
+        "name": "Resume Last Active Call"
+    },
+    {
+        "id": "27",
+        "name": "Resume NonLast Active Call"
+    },
+    {
+        "id": "28",
+        "name": "Conference"
+    },
+    {
+        "id": "29",
+        "name": "Speed Dial"
+    },
+    {
+        "id": "30",
+        "name": "EXTN Dial"
+    },
+    {
+        "id": "31",
+        "name": "Two Stage PSTN"
+    },
+    {
+        "id": "32",
+        "name": "Local PSTN"
+    },
+    {
+        "id": "33",
+        "name": "Emergency"
+    },
+    {
+        "id": "34",
+        "name": "DialOut Defult"
+    },
+    {
+        "id": "35",
+        "name": "FXS Delayed Hotline Activate"
+    },
+    {
+        "id": "36",
+        "name": "FXS Delayed Hotline DeActivate"
+    }
+]
+}

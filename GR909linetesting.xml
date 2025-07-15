@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view layout="2column">
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>GR-909 Line Testing</name>
+        <description>GR-909 linetesting allows the user to perform tests on the analog line. These tests are done when no call session is processed on this specific analog line.</description>
+    </header>
+    <object name="Device.Services.VoiceService.1.X_VENDOR_COM_VoiceServPhyIfTest"  viewtype="form" polling="true" interval="10000">
+	<parameter name="X_VENDOR_COM_InterfaceId"  required="false" type="dropdown" url="linenumberfortest" writable="true" webname="FXS line for Line Testing" maxlen="64"></parameter>
+	<parameter name="X_VENDOR_COM_TestState" required="false" type="dropdown" url="gr909teststate" access="readonly" webname="Test Status" maxlen="64"></parameter>      
+    <parameter  name="ExecuteTest"  action="post" routeurl="pushbtnclick('cgi_action','Object=Device.Services.VoiceService.1.X_VENDOR_COM_VoiceServPhyIfTest&amp;NOTIFICATION=NOTIFY_GR909_EXE_TEST&amp;Action=TEST&amp;X_VENDOR_COM_InterfaceId=&amp;X_VENDOR_COM_TestState=',$event)" type="button" webname="Execute the Test" ></parameter>
+	</object>
+	<row>
+	<col>
+    <object title="Hazardous Potential Test" name="Device.Services.VoiceService.1.X_VENDOR_COM_VoiceServTestResult.X_VENDOR_COM_Gr909HPTVoltResult" viewtype="form" polling="true" interval="10000">
+	<parameter name="X_VENDOR_COM_HPTACringwiretoground"  required="false" type="string" access="readonly" webname="HPT AC Ring Wire to GND Value [Vrms]" maxlen="64"></parameter>
+	<parameter name="X_VENDOR_COM_HPTACtipwiretoground"  required="false" type="string" access="readonly" webname="HPT AC Tip Wire to GND Value [Vrms]" maxlen="64"></parameter>
+	<parameter name="X_VENDOR_COM_HPTACtipwiretoringwire"  required="false" type="string" access="readonly" webname="HPT AC Tip Wire to Ring Value [Vrms]" maxlen="64"></parameter>
+	<parameter name="X_VENDOR_COM_HPTDCringwiretoground"  required="false" type="string" access="readonly" webname="HPT DC Ring Wire to GND Value [V]" maxlen="64"></parameter>
+	<parameter name="X_VENDOR_COM_HPTDCtipwiretoground"  required="false" type="string" access="readonly" webname="HPT DC Tip Wire to GND Value [V]" maxlen="64"></parameter>
+	</object>
+	</col>
+	<col>
+    <object title="Foreign Electromotive Forces Test" name="Device.Services.VoiceService.1.X_VENDOR_COM_VoiceServTestResult.X_VENDOR_COM_Gr909FEMFVoltResult" viewtype="form" polling="true" interval="10000">
+    <parameter name="X_VENDOR_COM_FEMFACringwiretoground"  required="false" type="string" access="readonly" webname="FEMF AC Ring Wire to GND Value [Vrms]" maxlen="64"></parameter>
+    <parameter name="X_VENDOR_COM_FEMFACtipwiretoground"  required="false" type="string" access="readonly" webname="FEMF AC Tip Wire to GND Value [Vrms]" maxlen="64"></parameter>
+    <parameter name="X_VENDOR_COM_FEMFACtipwiretoringwire"  required="false" type="string" access="readonly" webname="FEMF AC Tip Wire to Ring Value [Vrms]" maxlen="64"></parameter>
+    <parameter name="X_VENDOR_COM_FEMFDCringwiretoground"  required="false" type="string" access="readonly" webname="FEMF DC Ring Wire to GND Value [Ohm]" maxlen="64"></parameter>
+    <parameter name="X_VENDOR_COM_FEMFDCtipwiretoground"  required="false" type="string" access="readonly" webname="FEMF DC Tip Wire to GND Value [Ohm]" maxlen="64"></parameter>
+	</object>
+	</col>
+	</row>
+
+    <row>
+    <col>
+    <object title="Resistive Faults Test" name="Device.Services.VoiceService.1.X_VENDOR_COM_VoiceServTestResult.X_VENDOR_COM_Gr909RFTResult" viewtype="form" polling="true" interval="10000">
+    <parameter name="X_VENDOR_COM_RFTRingwiretoground"  required="false" type="string" access="readonly" webname="RFT Ring Wire to GND Value [Ohm]" maxlen="64"></parameter>
+    <parameter name="X_VENDOR_COM_RFTTipwiretoground"  required="false" type="string" access="readonly" webname="RFT Tip Wire to GND Value [Ohm]" maxlen="64"></parameter>
+    <parameter name="X_VENDOR_COM_RFTTipwiretoringwire"  required="false" type="string" access="readonly" webname="RFT Tip Wire to Ring Value [Vrms]" maxlen="64"></parameter>
+    </object>
+    </col>
+    <col>
+    <object title="Receiver Off-Hook Test" name="Device.Services.VoiceService.1.X_VENDOR_COM_VoiceServTestResult.X_VENDOR_COM_Gr909ROHResult" viewtype="form" polling="true" interval="10000">
+    <parameter name="X_VENDOR_COM_ROHTipwiretoringwireresistance"  required="false" type="string" access="readonly" webname="Roh Tip Wire to Ring Wire Value for low Voltage [Ohm]" maxlen="64"></parameter>
+	</object>
+    <object title="Ringer Impedance Test" name="Device.Services.VoiceService.1.X_VENDOR_COM_VoiceServTestResult.X_VENDOR_COM_Gr909RIResult" viewtype="form" polling="true" interval="10000">
+    <parameter name="X_VENDOR_COM_RITvalue"  required="false" type="string" access="readonly" webname="Rit value [Ohm]" maxlen="64"></parameter>
+    </object>
+    </col>
+
+    </row>
+
+</view>
+

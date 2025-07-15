@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view layout="2column">
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Dect Base Configuration</name>
+        <description>This page contains Dect related configuration.</description>
+    </header>
+    <object title="Dect Base Config" name="Device.Services.VoiceService.1.X_VENDOR_COM_DectSystem" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.X_VENDOR_COM_DectSystem" viewtype="form" Type="string">
+
+        <row><col><parameter name="X_VENDOR_COM_AuthCode"  required="false" type="string" writable="true" webname="PIN" maxlen="9"></parameter></col>
+       <col> <parameter name="X_VENDOR_COM_BaseName"  required="false" type="string" writable="true" webname="NAME" maxlen="18"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_EncrytionEnable"  required="false" type="checkbox" writable="true" webname="Encryption Enable" maxInclusive="1"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_NoEmo"  required="false" type="checkbox" writable="true" webname="NEMO Support" maxlen="64"></parameter></col>
+       <col> <parameter name="X_VENDOR_COM_RfEnable"  required="false" type="checkbox" writable="true" webname="DECT RF Enable" maxInclusive="1"></parameter></col></row>
+        <row><col><parameter name="X_VENDOR_COM_EARLY_ENCRYPTION" required="false" type="checkbox" writable="true" webname="Early encryption support" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_CYCLIC_REKEYING" required="false" type="checkbox" writable="true" webname="Re-keying support" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_ULE" required="false" type="checkbox" writable="true" webname="ULE support" maxlen="64"></parameter></col></row>
+       <row> <col><parameter name="X_VENDOR_COM_REPEATER" required="false" type="checkbox" writable="true" webname="Repeater support" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_JDECT" required="false" type="checkbox" writable="true" webname="JDECT support" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_REAL_CARRIER_NUMBER" required="false" type="checkbox" writable="true" webname="Use the real carrier number(CN) in ETSI channel table definition" maxlen="64"></parameter></col></row>
+        <parameter  name="Modify"  type="submitbutton"  routeurl="Apply($event)" action="post" webname="Apply" maxlen="64"></parameter>
+    </object>
+    <row><col><object title="RFPI Params" name="Device.Services.VoiceService.1.X_VENDOR_COM_DectRfpi" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.X_VENDOR_COM_DectRfpi" viewtype="form" Type="string">
+
+        <parameter name="X_VENDOR_COM_Byte1"  required="false" type="string" writable="true" webname="0x" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_Byte2"  required="false" type="string" writable="true" webname=":0x" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_Byte3"  required="false" type="string" writable="true" webname=":0x" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_Byte4"  required="false" type="string" writable="true" webname=":0x" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_Byte5"  required="false" type="string" writable="true" webname=":0x" maxlen="64"></parameter>
+        <parameter  name="Modify"  type="submitbutton"  routeurl="Apply($event)" action="post" webname="Apply" maxlen="64"></parameter>
+    </object></col>
+    <col>
+    <object title="Country Params" name="Device.Services.VoiceService.1.X_VENDOR_COM_DectCountrySettings" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.X_VENDOR_COM_DectCountrySettings" viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_FrequencyTxoffset"  required="false" type="string" writable="true" webname="Frequency TX Offset" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_FrequencyRxoffset"  required="false" type="string"  writable="true" webname="Frequency RX Offset" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_FrequencyRange"  required="false" type="string"  writable="true" webname="Frequency Range" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_configuration_channel_Mask"  required="false" type="string"  writable="true" webname="configuration channel Mask" maxlen="1024"></parameter>
+		
+		<parameter type="description" content="Freq Tx Offset,Rx Offset [ EU-0x00 , LATIN-0x12 , US-0x12 ]"></parameter>
+		<parameter type="description" content="Freq Range [ EU-0x09 , LATIN-0x09 , US-0x04 ]"></parameter>
+        <parameter  name="Modify"  type="submitbutton"  required="false" routeurl="Apply($event)" webname="Apply" action="post" maxlen="64"></parameter>
+    </object></col></row>
+</view>

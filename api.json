@@ -1,0 +1,556 @@
+{
+  "api": [
+    {
+      "desc": "https://192.168.1.1/cgi/cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true",
+      "Objects": [
+        {
+          "ObjName": "Device.IP.Interface.8",
+          "Param": [
+            {
+              "ParamName": "Enable",
+              "ParamId": "12",
+              "ParamValue": "true",
+              "ParamFlag": "0x400410"
+            },
+            {
+              "ParamName": "IPv4Enable",
+              "ParamId": "13",
+              "ParamValue": "true",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "IPv6Enable",
+              "ParamId": "14",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "ULAEnable",
+              "ParamId": "15",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "Status",
+              "ParamId": "16",
+              "ParamValue": "Down",
+              "ParamFlag": "0x200404"
+            },
+            {
+              "ParamName": "Alias",
+              "ParamId": "17",
+              "ParamValue": "cpe-SL-IPInterface-850",
+              "ParamFlag": "0x400000"
+            },
+            {
+              "ParamName": "Name",
+              "ParamId": "18",
+              "ParamValue": "eth1_wan4",
+              "ParamFlag": "0x200004"
+            },
+            {
+              "ParamName": "LastChange",
+              "ParamId": "19",
+              "ParamValue": "0",
+              "ParamFlag": "0x200002"
+            },
+            {
+              "ParamName": "LowerLayers",
+              "ParamId": "20",
+              "ParamValue": "Device.Ethernet.Link.8.",
+              "ParamFlag": "0x400004"
+            },
+            {
+              "ParamName": "Router",
+              "ParamId": "21",
+              "ParamValue": "",
+              "ParamFlag": "0x400004"
+            },
+            {
+              "ParamName": "Reset",
+              "ParamId": "22",
+              "ParamValue": "",
+              "ParamFlag": "0x40400010"
+            },
+            {
+              "ParamName": "MaxMTUSize",
+              "ParamId": "23",
+              "ParamValue": "1500",
+              "ParamFlag": "0x400002"
+            },
+            {
+              "ParamName": "Type",
+              "ParamId": "24",
+              "ParamValue": "Normal",
+              "ParamFlag": "0x200004"
+            },
+            {
+              "ParamName": "Loopback",
+              "ParamId": "25",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "X_LANTIQ_COM_UpStream",
+              "ParamId": "26",
+              "ParamValue": "true",
+              "ParamFlag": "0x400004"
+            },
+            {
+              "ParamName": "X_LANTIQ_COM_DefaultGateway",
+              "ParamId": "27",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "IPv4AddressNumberOfEntries",
+              "ParamId": "28",
+              "ParamValue": "1",
+              "ParamFlag": "0x200002"
+            },
+            {
+              "ParamName": "IPv6AddressNumberOfEntries",
+              "ParamId": "29",
+              "ParamValue": "0",
+              "ParamFlag": "0x200002"
+            },
+            {
+              "ParamName": "IPv6PrefixNumberOfEntries",
+              "ParamId": "30",
+              "ParamValue": "0",
+              "ParamFlag": "0x200002"
+            },
+            {
+              "ParamName": "AutoIPEnable",
+              "ParamId": "31",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "X_INTEL_COM_RepeaterMode",
+              "ParamId": "32",
+              "ParamValue": "false",
+              "ParamFlag": "0x10"
+            }
+          ]
+        },
+        {
+          "ObjName": "Device.IP.Interface.8.IPv4Address.1",
+          "Param": [
+            {
+              "ParamName": "Enable",
+              "ParamId": "34",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "Status",
+              "ParamId": "35",
+              "ParamValue": "Disabled",
+              "ParamFlag": "0x200004"
+            },
+            {
+              "ParamName": "Alias",
+              "ParamId": "36",
+              "ParamValue": "CPE-1025-CSD",
+              "ParamFlag": "0x400000"
+            },
+            {
+              "ParamName": "IPAddress",
+              "ParamId": "37",
+              "ParamValue": "",
+              "ParamFlag": "0x400400"
+            },
+            {
+              "ParamName": "SubnetMask",
+              "ParamId": "38",
+              "ParamValue": "",
+              "ParamFlag": "0x400400"
+            },
+            {
+              "ParamName": "AddressingType",
+              "ParamId": "39",
+              "ParamValue": "DHCP",
+              "ParamFlag": "0x200004"
+            },
+            {
+              "ParamName": "X_LANTIQ_COM_Description",
+              "ParamId": "40",
+              "ParamValue": "ETH WAN, Proto: DHCP",
+              "ParamFlag": "0x200004"
+            }
+          ]
+        },
+        {
+          "ObjName": "Device.IP.Interface.9",
+          "Param": [
+            {
+              "ParamName": "Enable",
+              "ParamId": "12",
+              "ParamValue": "true",
+              "ParamFlag": "0x400410"
+            },
+            {
+              "ParamName": "IPv4Enable",
+              "ParamId": "13",
+              "ParamValue": "true",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "IPv6Enable",
+              "ParamId": "14",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "ULAEnable",
+              "ParamId": "15",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "Status",
+              "ParamId": "16",
+              "ParamValue": "Down",
+              "ParamFlag": "0x200404"
+            },
+            {
+              "ParamName": "Alias",
+              "ParamId": "17",
+              "ParamValue": "cpe-WEB-IPInterface-23",
+              "ParamFlag": "0x400000"
+            },
+            {
+              "ParamName": "Name",
+              "ParamId": "18",
+              "ParamValue": "pppoe-wan9",
+              "ParamFlag": "0x200004"
+            },
+            {
+              "ParamName": "LastChange",
+              "ParamId": "19",
+              "ParamValue": "0",
+              "ParamFlag": "0x200002"
+            },
+            {
+              "ParamName": "LowerLayers",
+              "ParamId": "20",
+              "ParamValue": "Device.PPP.Interface.1.",
+              "ParamFlag": "0x400004"
+            },
+            {
+              "ParamName": "Router",
+              "ParamId": "21",
+              "ParamValue": "",
+              "ParamFlag": "0x400004"
+            },
+            {
+              "ParamName": "Reset",
+              "ParamId": "22",
+              "ParamValue": "",
+              "ParamFlag": "0x40400010"
+            },
+            {
+              "ParamName": "MaxMTUSize",
+              "ParamId": "23",
+              "ParamValue": "1500",
+              "ParamFlag": "0x400002"
+            },
+            {
+              "ParamName": "Type",
+              "ParamId": "24",
+              "ParamValue": "Normal",
+              "ParamFlag": "0x200004"
+            },
+            {
+              "ParamName": "Loopback",
+              "ParamId": "25",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "X_LANTIQ_COM_UpStream",
+              "ParamId": "26",
+              "ParamValue": "true",
+              "ParamFlag": "0x400004"
+            },
+            {
+              "ParamName": "X_LANTIQ_COM_DefaultGateway",
+              "ParamId": "27",
+              "ParamValue": "true",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "IPv4AddressNumberOfEntries",
+              "ParamId": "28",
+              "ParamValue": "1",
+              "ParamFlag": "0x200002"
+            },
+            {
+              "ParamName": "IPv6AddressNumberOfEntries",
+              "ParamId": "29",
+              "ParamValue": "0",
+              "ParamFlag": "0x200002"
+            },
+            {
+              "ParamName": "IPv6PrefixNumberOfEntries",
+              "ParamId": "30",
+              "ParamValue": "0",
+              "ParamFlag": "0x200002"
+            },
+            {
+              "ParamName": "AutoIPEnable",
+              "ParamId": "31",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "X_INTEL_COM_RepeaterMode",
+              "ParamId": "32",
+              "ParamValue": "false",
+              "ParamFlag": "0x10"
+            }
+          ]
+        },
+        {
+          "ObjName": "Device.IP.Interface.9.IPv4Address.1",
+          "Param": [
+            {
+              "ParamName": "Enable",
+              "ParamId": "34",
+              "ParamValue": "false",
+              "ParamFlag": "0x400010"
+            },
+            {
+              "ParamName": "Status",
+              "ParamId": "35",
+              "ParamValue": "Disabled",
+              "ParamFlag": "0x200004"
+            },
+            {
+              "ParamName": "Alias",
+              "ParamId": "36",
+              "ParamValue": "CPE-1035-CSD",
+              "ParamFlag": "0x400000"
+            },
+            {
+              "ParamName": "IPAddress",
+              "ParamId": "37",
+              "ParamValue": "",
+              "ParamFlag": "0x400400"
+            },
+            {
+              "ParamName": "SubnetMask",
+              "ParamId": "38",
+              "ParamValue": "",
+              "ParamFlag": "0x400400"
+            },
+            {
+              "ParamName": "AddressingType",
+              "ParamId": "39",
+              "ParamValue": "X_LANTIQ_COM_PPPoE",
+              "ParamFlag": "0x200004"
+            },
+            {
+              "ParamName": "X_LANTIQ_COM_Description",
+              "ParamId": "40",
+              "ParamValue": "PTM WAN, Proto: PPPoE",
+              "ParamFlag": "0x200004"
+            }
+          ]
+        },
+        {
+          "ObjName": "Device.IP.Interface.8.Stats",
+          "Param": [
+            {
+              "ParamName": "BytesSent",
+              "ParamId": "67",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "BytesReceived",
+              "ParamId": "68",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "PacketsSent",
+              "ParamId": "69",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "PacketsReceived",
+              "ParamId": "70",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "ErrorsSent",
+              "ParamId": "71",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            },
+            {
+              "ParamName": "ErrorsReceived",
+              "ParamId": "72",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            },
+            {
+              "ParamName": "UnicastPacketsSent",
+              "ParamId": "73",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "UnicastPacketsReceived",
+              "ParamId": "74",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "DiscardPacketsSent",
+              "ParamId": "75",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            },
+            {
+              "ParamName": "DiscardPacketsReceived",
+              "ParamId": "76",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            },
+            {
+              "ParamName": "MulticastPacketsSent",
+              "ParamId": "77",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "MulticastPacketsReceived",
+              "ParamId": "78",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "BroadcastPacketsSent",
+              "ParamId": "79",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "BroadcastPacketsReceived",
+              "ParamId": "80",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "UnknownProtoPacketsReceived",
+              "ParamId": "81",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            }
+          ]
+        },
+        {
+          "ObjName": "Device.IP.Interface.9.Stats",
+          "Param": [
+            {
+              "ParamName": "BytesSent",
+              "ParamId": "67",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "BytesReceived",
+              "ParamId": "68",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "PacketsSent",
+              "ParamId": "69",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "PacketsReceived",
+              "ParamId": "70",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "ErrorsSent",
+              "ParamId": "71",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            },
+            {
+              "ParamName": "ErrorsReceived",
+              "ParamId": "72",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            },
+            {
+              "ParamName": "UnicastPacketsSent",
+              "ParamId": "73",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "UnicastPacketsReceived",
+              "ParamId": "74",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "DiscardPacketsSent",
+              "ParamId": "75",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            },
+            {
+              "ParamName": "DiscardPacketsReceived",
+              "ParamId": "76",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            },
+            {
+              "ParamName": "MulticastPacketsSent",
+              "ParamId": "77",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "MulticastPacketsReceived",
+              "ParamId": "78",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "BroadcastPacketsSent",
+              "ParamId": "79",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "BroadcastPacketsReceived",
+              "ParamId": "80",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00080"
+            },
+            {
+              "ParamName": "UnknownProtoPacketsReceived",
+              "ParamId": "81",
+              "ParamValue": "0",
+              "ParamFlag": "0xa00002"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+
+}

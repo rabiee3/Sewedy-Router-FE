@@ -1,0 +1,13 @@
+{
+	"logd.headername": "Konfigurieren Sie Systemprotokollregeln",
+	"logd.headerdescription": "Das CPE-Gerät bietet eine angepasste Protokollierung der Nachrichten an File, Remote",
+	"logd.helpkey":"logdhelp_deutsch.html",
+	"DeviceInfo.VendorLogFile.File Name": "Dateiname", 
+	"Device.DeviceInfo.VendorLogFile.File Size (in Bytes)": "Dateigröße (in Bytes)",
+	"Device.DeviceInfo.VendorLogFile.Remote IP": "Remote-IP",
+	"Device.DeviceInfo.VendorLogFile.Port No" : "Port Nr",
+	"Device.DeviceInfo.VendorLogFile.Filter String": "Zeichenfolge filtern",
+	"Apply": "SICH BEWERBEN",
+	"Cancel": "STORNIEREN"
+}
+

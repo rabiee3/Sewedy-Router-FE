@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<object viewtype="form" title="Debug Settings">
+    <object title="Debug Settings" name="Device.Services.VoiceService.X_VENDOR_COM_SystemDebugSettings.X_VENDOR_COM_CallManagerDebug" viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_CallManagerDebugType" type="dropdown" url="cmdebugtype" writable="true" webname="Call Manager Debug Type" maxlen="10"/>
+        <parameter name="X_VENDOR_COM_CallManagerDebugLevel" type="dropdown" url="cmdebuglevel" writable="true" webname="Call Manager DEbug Level" maxlen="64"/>
+    </object>
+    <object name="Device.Services.VoiceService.X_VENDOR_COM_SystemDebugSettings.X_VENDOR_COM_MediaManagerDebug" viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_MediaManagerDebugType" type="dropdown" url="mmdebugtype" writable="true" webname="Media Manager Debug Type" maxlen="64"/>
+        <parameter name="X_VENDOR_COM_MediaManagerDebugLevel" type="dropdown" url="mmdebuglevel" writable="true" webname="Media Manager Debug Level" maxlen="64"/>
+    </object>
+    <object name="Device.Services.VoiceService.X_VENDOR_COM_SystemDebugSettings.X_VENDOR_COM_AgentsDebug" viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_AgentsDebugType" type="dropdown" url="agentdebugtype" writable="true" webname="Agents Debug Type" maxlen="64"/>
+        <parameter name="X_VENDOR_COM_AgentsDebugLevel" type="dropdown" url="agentsdebuglevel" writable="true" webname="Agents Debug Level" maxlen="64"/>
+    </object>
+    <object name="Device.Services.VoiceService.X_VENDOR_COM_SystemDebugSettings.X_VENDOR_COM_RtpDebug" viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_RtpDebugType" type="dropdown" url="rtpdebugtype" writable="true" webname="RTP Debug Type" maxlen="64"/>
+        <parameter name="X_VENDOR_COM_RtpDebugLevel" type="dropdown" url="rtpdebuglevel" writable="true" webname="RTP Debug Level" maxlen="64"/>
+    </object>
+    <object name="Device.Services.VoiceService.X_VENDOR_COM_SystemDebugSettings.X_VENDOR_COM_CMDebug" viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_CMDebugType" type="dropdown" url="vmapidebugtype" writable="true" webname="VMAPI Debug Type" maxlen="64"/>
+        <parameter name="X_VENDOR_COM_CMDebugLevel" type="dropdown" url="vmapidebuglevel" writable="true" webname="VMAPI Debug Level" maxlen="64"/>
+    </object>
+    <object name="Device.Services.VoiceService.X_VENDOR_COM_SystemDebugSettings.X_VENDOR_COM_SIPDebug" viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_SIPDebugType" type="dropdown" url="sipdebugtype" writable="true" webname="SIP Debug Type" maxlen="64"/>
+        <parameter name="X_VENDOR_COM_SIPDebugLevel" type="dropdown" url="sipdebuglevel" writable="true" webname="SIP Debug Level" maxlen="64"/>
+    </object>
+    <object name="Device.Services.VoiceService.X_VENDOR_COM_SystemDebugSettings.X_VENDOR_COM_FaxDebug" viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_FaxDebugType" type="dropdown" url="faxdebugtype" writable="true" webname="FAX Debug Type" maxlen="64"/>
+        <parameter name="X_VENDOR_COM_FaxDebugLevel" type="dropdown" url="faxdebuglevel" writable="true" webname="Fax Debug Level" maxlen="64"/>
+    </object>
+    <parameter name="Modify" action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" maxlen="64"/>
+</object>

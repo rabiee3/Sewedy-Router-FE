@@ -1,0 +1,49 @@
+{
+    "menu": [
+    {
+            "name": "Advanced",
+            "id": "profile",
+            "childrens": [
+            {
+                    "name": "Multicast",
+                    "order": "2",
+                    "icon": "multicast",
+                    "viewtype": "tableform",
+                    "view": "multicast_mcconfiguration",
+                    "childrens": [{
+                            "childrens": [],
+                            "name": "Basic Settings",
+                            "order": "1",
+                            "icon": "multicast",
+                            "viewtype": "tableform",
+                            "view": "multicast_mcconfiguration"
+                    },{
+                            "childrens": [],
+                            "name": "Advanced",
+                            "order": "2",
+                            "icon": "multicast",
+                            "viewtype": "tableform",
+                            "view": "multicast_mcsettings"
+                    }
+                    ]
+            },
+            {
+                    "name": "Guest Access",
+                    "icon": "parentcontrol",
+                    "order": "5.2",
+                    "viewtype": "tableform",
+                    "view": "guestaccessview",
+                    "childrens": []
+            },
+            {
+                    "name": "Client Mode",
+                    "icon": "wireless",
+                    "order": "5.3",
+                    "viewtype": "tableform",
+                    "view": "client_mode",
+                    "childrens": []
+            }
+            ]
+    }
+    ]
+}

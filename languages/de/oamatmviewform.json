@@ -1,0 +1,12 @@
+{
+    "oamatmviewform.headername": "ATM OAM F5 Loopback dieDiagnoseprüfung"
+    "oamatmviewform.headerdescription": "This page allows user to Test ATM OAM F5 Loopback",
+    "oamatmviewform.helpkey": "oamatm_help_german.html",
+    "ATM OAM F5 Loopback Diagnostics Test": "ATM OAM F5 Loopback dieDiagnoseprüfung"
+    "Device.ATM.Diagnostics.F5Loopback.ATM Interface": "ATM Schnittstelle",
+    "Device.ATM.Diagnostics.F5Loopback.ATM PVC": "ATM PVC",
+    "Device.ATM.Diagnostics.F5Loopback.Number of ATM OAM Cells to send": "Anzahl der ATM OAM Zellen zu senden",
+    "Device.ATM.Diagnostics.F5Loopback.Timeout": "Auszeit",
+    "Add" : "Test",
+    "Cancel" : "Stornieren"
+}

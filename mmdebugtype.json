@@ -1,0 +1,17 @@
+{
+  "X_VENDOR_COM_MediaManagerDebugType":
+[
+    {
+        "id": "0",
+        "name": "NONE"
+    },
+    {
+        "id": "1",
+        "name": "CONSOLE"
+    },
+    {
+        "id": "2",
+        "name": "FILE"
+    }
+]
+}

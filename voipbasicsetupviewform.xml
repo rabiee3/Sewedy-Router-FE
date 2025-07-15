@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="voipbasic">
+	<helptext></helptext>
+    <header>
+     <image>images/icons/voip.png</image>
+    <name>VoIP</name>
+        <description>This page allows to configure Profile and Line for basic voip setup.</description>
+    </header>
+    <object  viewtype="form" title= "Settings" icon="settings-1" polling="true" interval="20000">
+    <object name="Device.Services.VoiceService.1.VoiceProfile.1.SIP" >
+        <row>
+        <col>
+        <parameter name="ProxyServer" type="string" webname="Proxy Address" maxlen="128"></parameter>
+        </col>
+        <col>
+        <parameter name="RegistrarServer"  required="false" type="string" webname="Registrar Address" maxlen="128"></parameter>
+        </col>
+        <col>
+        <parameter name="UserAgentDomain"  required="false" type="string" webname="Domain Name" maxlen="128"></parameter>
+        </col>
+        </row>
+    </object>
+
+    <object name="Device.Services.VoiceService.1.VoiceProfile.1.Line.1">
+        <row>
+        <col>
+        <parameter name="Enable"  required="false" type="radio" validvalues="Enabled,Disabled" webname="Status" maxlen="64"></parameter>
+        </col>
+        <col>
+        <parameter name="Status"  required="false" access="readonly" type="string" webname="Line Registration Status" maxlen="64"></parameter>
+        </col>
+        </row>
+    </object>
+    <object name="Device.Services.VoiceService.1.VoiceProfile.1.Line.1.SIP">
+        <row>
+        <col>
+        <parameter name="X_VENDOR_COM_SipDispName"  required="false" type="string" webname="Display Name" maxlen="31"></parameter>
+        </col>
+        <col>
+        <parameter name="X_VENDOR_COM_SipUserName" type="string" webname="User Name" maxlen="31"></parameter>
+        </col>
+        <col>
+        <parameter name="AuthPassword"  required="false" type="password" webname="Password" maxlen="16"></parameter>
+        </col>
+        </row>
+    </object>
+    <parameter name="Modify" action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" /></object>
+</view>
+

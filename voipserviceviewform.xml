@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>SIP Server</name>
+        <description>This page allows to configure SIP Servers and related configuration.</description>
+    </header>
+    <name>SIP Server</name>
+	<object title="SIP Server" name="Device.Services.VoiceService.1.VoiceProfile.1" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.VoiceProfile.1" viewtype="form" Type="string">
+	<row><col>	<parameter name="Enable" required="false" type="radio" validvalues="Enabled,Disabled" webname="Profile Enable" maxlen="128"/></col>
+		<col></col>
+		<col></col></row>
+    	<object name="Device.Services.VoiceService.1.VoiceProfile.1.SIP" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.VoiceProfile.1.SIP"   viewtype="form" Type="string">
+        <row><col>	<parameter name="RegisterExpires"  required="false" type="number" webname="Registration Time" maxlen="64"></parameter></col>
+	 	<col>	<parameter name="RegisterRetryInterval"  required="false" type="number" webname="Retry Timer" maxlen="64"></parameter></col></row>
+        	<row><col> <parameter name="ProxyServer"  required="false" type="string" webname="Proxy Address" maxlen="128"></parameter></col>
+        <col>	<parameter name="ProxyServerPort"  required="false" type="number" webname="Proxy Port" maxlen="64"></parameter></col>
+        <col>	<parameter name="ProxyServerTransport"  required="false" type="dropdown" validvalues="AUTO,UDP,TCP,TLS,SCTP" webname="Proxy Transport" maxlen="64"></parameter></col></row>
+        <row><col>	<parameter name="RegistrarServer"  required="false" type="string" webname="Primary Registrar Address" maxlen="128"></parameter></col>
+        <col>	<parameter name="RegistrarServerPort"  required="false" type="number" webname="Primary Registrar Port" maxlen="64"></parameter></col>
+       <col> 	<parameter name="RegistrarServerTransport"  required="false" type="dropdown" validvalues="AUTO,UDP,TCP,TLS,SCTP" webname="Primary Registrar Transport" maxlen="64"></parameter></col></row>
+        <row><col>	<parameter name="X_VENDOR_COM_BackupRegAddr"  required="false" type="string" webname="Secondary Registrar Address" maxlen="128"></parameter></col>
+        <col>	<parameter name="X_VENDOR_COM_BackupRegPort"  required="false" type="number" webname="Secondary Registrar Port" maxlen="64"></parameter></col>
+        <col>	<parameter name="X_VENDOR_COM_BackupRegProtocol"  required="false" type="dropdown" validvalues="AUTO,UDP,TCP,TLS,SCTP" webname="Secondary Registrar Transport" maxlen="64"></parameter></col></row>
+      <row><col>    <parameter name="UserAgentDomain"  required="false" type="string" webname="Domain Name" maxlen="128"></parameter></col>
+        <col>   <parameter name="UserAgentPort"  required="false" type="number" webname="Domain Port" maxlen="64"></parameter></col>
+        <col>   <parameter name="UserAgentTransport"  required="false" type="dropdown" validvalues="AUTO,UDP,TCP,TLS,SCTP" webname="Domain Transport" maxlen="64"></parameter> </col></row>
+
+       <row><col> 	<parameter name="OutboundProxy"  required="false" type="string" webname="Outbound Proxy Address" maxlen="128"></parameter></col>
+        <col>	<parameter name="OutboundProxyPort"  required="false" type="number" webname="Outbound Proxy Port" maxlen="64"></parameter></col></row>
+			<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply" action="post"/>
+    	</object>
+	</object>
+</view>
+

@@ -1,0 +1,9 @@
+{
+    "openwrt.ipsec.remote.*.Tunnel Name.placeholder": "Enter the unique tunnel Name",
+    "openwrt.ipsec.remote.*.Peer Address.placeholder": "Enter IPv6 address of remote server for IPsec connection",
+    "openwrt.ipsec.remote.*.Local Prefix.placeholder": "IPV6 prefix e.g. 2001::",
+    "openwrt.ipsec.remote.*.Peer Prefix.placeholder": "IPV6 prefix e.g. fc00::",
+    "openwrt.ipsec.remote.*.Key Lifetime(in mins).placeholder": "Enter key timeout value in mins" 
+	
+
+}

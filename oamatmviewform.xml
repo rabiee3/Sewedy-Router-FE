@@ -1,0 +1,23 @@
+<view viewid="oamatmviewform" translate="oamatmviewform">
+<helptext></helptext>
+    <header>
+    	<image>images/icons/system.png</image>
+        <name>ATM OAM F5 Loopback Diagnostics Test</name>
+    </header>
+    <object title="ATM OAM F5 Loopback Diagnostics Test" name="Device.ATM.Diagnostics.F5Loopback"  viewtype="form">
+		<row>
+		<col>
+       <!-- <parameter name="Interface" type="string" required="true" webname="ATM Interface" maxlen="200" placeholder="true"></parameter> -->
+       <parameter name="X_LANTIQ_COM_VpiVci" type="dropdown" firstselect="true" writable="true" webname="ATM PVC" maxlen="10" url="cgi_get_fillparams?Object=Device.ATM.Link&amp;DestinationAddress="></parameter>
+		</col>
+		<col>
+       <parameter name="NumberOfRepetitions" type="string" webname="Number of ATM OAM Cells to send"></parameter>
+		</col>
+		<col>
+       <parameter name="Timeout" type="string" webname="Timeout"></parameter>
+		</col>
+		</row>
+        <parameter  name="Modify"  type="submitbutton"  routeurl="Apply($event,'oamatmview')" webname="Test"></parameter>
+        <parameter  name="Close"  type="submitbutton" routeurl="Add('oamatmview')" webname="Cancel"></parameter>
+    </object>
+</view>

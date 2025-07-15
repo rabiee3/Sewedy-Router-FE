@@ -1,0 +1,379 @@
+{
+    "menu": [
+        {
+            "name": "Basic",
+            "id": "home",
+            "childrens": [
+                {
+                    "name": "LAN",
+                    "icon": "lan",
+                    "childrens": [
+                        {
+                            "name": "IP Address Configuration",
+                            "viewtype": "tableform",
+                            "view": "su/lan_ipaddressconfig_basic_1",
+                            "childrens": []
+                        }
+                    ]
+                }, 
+                {
+                    "name": "Internet",
+                    "icon": "internet",
+                    "childrens": [
+			{
+                            "name": "ATM Channel",
+                            "viewtype": "tableform",
+                            "view": "atm_channel",
+                            "childrens": []
+
+                        },
+                        {
+                            "name": "Internet Connections",
+                            "viewtype": "tableform",
+                            "view": "wan_wanconnections",
+                            "childrens": []
+
+                        }
+                    ]
+                },
+                {
+                    "name": "Wireless 2.4GHz",
+                    "icon": "wireless",
+                    "viewtype": "tableform",
+                    "view": "wifi2.4_basic",
+                    "childrens": []
+
+                },
+                {
+                    "name": "Wireless 5GHz",
+                    "icon": "wireless",
+                    "viewtype": "tableform",
+                    "view": "wifi5_basic",
+                    "childrens": []
+                },
+                {
+                    "name": "IPV6",
+                    "icon": "fa fa-desktop",
+                    "childrens": [
+                        {
+                            "name": "IPV6 RD Config",
+                            "viewtype": "tableform",
+                            "view": "6rdconfigform",
+                            "childrens": []
+                        },
+                        {
+                            "name": "DS Lite Config",
+                            "viewtype": "tableform",
+                            "view": "dsliteconfigform",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "System Time",
+                    "icon": "fa fa-desktop",
+                    "viewtype": "tableform",
+                    "view": "ntpviewform",
+                    "childrens": []
+                }
+            ]
+        },
+        {
+            "name": "Advanced",
+            "id": "profile",
+            "childrens": [
+                {
+                    "name": "MultiCast",
+                    "icon": "multicast",
+                    "childrens": [
+                        {
+                            "name": "Configuration",
+                            "viewtype": "tableform",
+                            "view": "multicast_mcconfiguration",
+                            "childrens": []
+                        }
+
+                    ]
+                },
+                {
+                    "name": "LAN",
+                    "icon": "lan",
+                    "childrens": [
+                        {
+                            "name": "IP Address Configuration",
+                            "viewtype": "tableform",
+                            "view": "lan_ipaddressconfig",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Devices Connected",
+                            "viewtype": "tableform",
+                            "view": "lan_devicesconnected",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "System",
+                    "icon": "systemconfig",
+                    "childrens": [
+                        {
+                            "name": "Backup & Restore",
+                            "viewtype": "custom",
+                            "view": "backupandrestore",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Reboot & Factory Reset",
+                            "viewtype": "custom",
+                            "view": "rebootandfactoryreset",
+                            "childrens": []
+                        },
+                        {
+                            "name": "System Log",
+                            "viewtype": "tableform",
+                            "view": "syslogngview",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Diagnostics",
+                            "viewtype": "custom",
+                            "view": "diagnose",
+                            "childrens": []
+                        },
+                        {
+                            "name": "System Stats",
+                            "viewtype": "custom",
+                            "view": "stats",
+                            "childrens": []
+                        }
+
+                    ]
+                },
+                {
+                    "name": "Wireless 2.4GHz",
+                    "icon": "wireless",
+                    "childrens": [
+                        {
+                            "name": "Advanced",
+                            "viewtype": "tableform",
+                            "view": "wifi2.4_advanced",
+                            "childrens": []
+                        },
+                        {
+                            "name": "SSIDs",
+                            "viewtype": "tableform",
+                            "view": "adv_ssid",
+                            "childrens": []
+                        },
+                        {
+                            "name": "WPS",
+                            "viewtype": "tableform",
+                            "view": "adv_wps",
+                            "childrens": []
+                        },
+                        {
+                            "name": "MAC Filtering",
+                            "viewtype": "tableform",
+                            "view": "adv_macFiltering",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Scan",
+                            "viewtype": "tableform",
+                            "view": "wifi2.4_scan",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Statistics",
+                            "viewtype": "tableform",
+                            "view": "adv_statistics",
+                            "childrens": []
+                        },
+                        {
+                            "name": "WLAN Logger",
+                            "viewtype": "tableform",
+                            "view": "wifi2.4_wlanLogger",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Wireless 5GHz",
+                    "icon": "wireless",
+                    "childrens": [
+                        {
+                            "name": "Advanced",
+                            "viewtype": "tableform",
+                            "view": "wifi5_advanced",
+                            "childrens": []
+                        },
+                        {
+                            "name": "SSIDs",
+                            "viewtype": "tableform",
+                            "view": "adv5_ssid",
+                            "childrens": []
+                        },
+                        {
+                            "name": "WPS",
+                            "viewtype": "tableform",
+                            "view": "adv5_wps",
+                            "childrens": []
+                        },
+                        {
+                            "name": "MAC Filtering",
+                            "viewtype": "tableform",
+                            "view": "adv5_macFiltering",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Scan",
+                            "viewtype": "tableform",
+                            "view": "wifi5_scan",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Statistics",
+                            "viewtype": "tableform",
+                            "view": "adv_statistics",
+                            "childrens": []
+                        },
+                        {
+                            "name": "WLAN Logger",
+                            "viewtype": "tableform",
+                            "view": "wifi5_wlanLogger",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "QoS",
+                    "icon": "qos",
+                    "childrens": [
+                        {
+                            "name": "QoS",
+                            "viewtype": "custom",
+                            "view": "qospage",
+                            "childrens": []
+                        },
+                        {
+                            "name": "QoS Graphs",
+                            "viewtype": "custom",
+                            "view": "qosgraphs",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Queue Stats",
+                            "viewtype": "tableform",
+                            "view": "queuestat",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Autowan",
+		    "icon":"fa fa-desktop",
+                    "childrens": [
+                        {
+                            "name": "Autowan View",
+                            "viewtype": "tableform",
+                            "view": "autowan_configuration",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Cellular",
+                    "icon": "lte",
+                    "childrens": [
+                        {
+                            "name": "Cellular View",
+                            "viewtype": "tableform",
+                            "view": "cellularview",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Cellular USIM View",
+                            "viewtype": "tableform",
+                            "view": "cellularusimview",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Firewall",
+                    "icon": "firewall",
+                    "childrens": [
+                        {
+                            "name": "Firewall",
+                            "viewtype": "custom",
+                            "view": "firewall",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Packet Filter",
+                            "viewtype": "tableform",
+                            "view": "packetfilterview",
+                            "childrens": []
+                        },
+                        {
+                            "name": "Parental Control",
+                            "viewtype": "custom",
+                            "view": "parentalcontrol",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "NAT",
+                    "icon": "fa fa-desktop",
+                    "childrens": [
+                        {
+                            "name": "DMZ",
+                            "viewtype": "tableform",
+                            "view": "NAT_DMZviewform",
+                            "childrens": []
+                        },
+                        {
+                            "name": "PortMapping",
+                            "viewtype": "tableform",
+                            "view": "virtualserver",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Management Server",
+                    "icon": "fa fa-desktop",
+                    "childrens": [
+                        {
+                            "name": "Management Server",
+                            "viewtype": "tableform",
+                            "view": "managementserverview",
+                            "childrens": []
+                        }
+                    ]
+                },
+                {
+                    "name": "DSL",
+                    "icon": "fa fa-desktop",
+                    "childrens": [
+                        {
+                            "name": "DSL Mode Setting",
+                            "viewtype": "tableform",
+                            "view": "dslmodesviewform",
+                            "childrens": []
+                        },
+                        {
+                            "name": "DSL Status",
+                            "viewtype": "tableform",
+                            "view": "dslviewform",
+                            "childrens": []
+                        }
+
+                    ]
+                }
+            ]
+        }
+    ]
+}

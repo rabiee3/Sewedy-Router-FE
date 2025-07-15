@@ -1,0 +1,9 @@
+{
+    "sfpwan.helpkey":"sfpwan_help_english.html",
+    "sfpwan.headername": "SFP WAN Management",
+    "sfpwan.panelheader": "Port Trunking",
+    "Device.X_INTEL_COM_PortTrunk.Enable": "Enable",
+    "Device.X_INTEL_COM_PortTrunk.Mode": "Mode",
+    "Device.X_INTEL_COM_PortTrunk.VLANID": "VLANID",
+    "sfpwan.errorLanport":""
+}

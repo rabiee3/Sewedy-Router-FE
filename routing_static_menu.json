@@ -1,0 +1,18 @@
+{
+	"menu": [{
+		"name": "Advanced",
+		"id": "profile",
+		"childrens": [{
+			"name": "Routing",
+			"icon": "nat",
+			"order": "13",
+			"childrens": [{
+			"name": "Static Routing",
+				"order": "1",
+				"viewtype": "tableform",
+				"view": "staticrouteview",
+				"childrens": []
+				}]
+			}]
+		}]
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+    	<name>VPN</name>
+        <description>IPsec Tunnel Configuration</description>
+    </header>
+    <object  viewtype="tabview"  title="IPsec Tunnel Configuration">
+        <tabs>
+            <tab title="IPv4" formtoopen="ipsecview_ipv4" ></tab>
+            <tab title="IPv6" formtoopen="ipsecview_ipv6"></tab>
+        </tabs>
+    </object>
+</view>

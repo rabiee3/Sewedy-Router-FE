@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view translation="multicast" >
+    <header>
+        <name>Multicast Configuration</name>
+        <description>This page allows to configure the Multicast services </description>
+    </header>
+    <object  viewtype="form" Type="string" title="MulticastConfiguration" >
+        <object name="Device.X_VENDOR_COM_Mcast.IGMPParameters">
+            <parameter  name="SnoopingStatus"   required="false" type="checkbox" webname="Snooping"></parameter>
+            <parameter  name="ProxyStatus"   required="false" type="checkbox" webname="IGMP Proxy"></parameter>
+        </object>
+        <object name="Device.X_VENDOR_COM_Mcast.MLDParameters">
+            <parameter  name="ProxyStatus"   required="false" type="checkbox" webname="MLD Proxy"></parameter>
+        </object>
+    	<object  name="Device.X_VENDOR_COM_Mcast" >
+        	<parameter  name="UpStreamIntrfName"  type="multi-checkbox" webname="Interface" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=false&amp;Name=Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name="></parameter>
+	</object>       
+    	<parameter  name="Modify"  action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" maxlen="64"></parameter>
+    	<parameter  name="Cancel"  routeurl="reset()" action="post" type="submitbutton" webname="Reset" maxlen="64"></parameter>
+    </object>       
+</view>
+

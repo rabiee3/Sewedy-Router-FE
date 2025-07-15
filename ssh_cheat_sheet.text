@@ -1,0 +1,27 @@
+//Router Admin
+admin
+Ar@sewedy24
+
+
+ssh -o HostKeyAlgorithms=+ssh-rsa root@192.168.1.1
+password:admin
+
+scp [file] -O HostKeyAlgorithms=+ssh-rsa root@192.168.1.1:[destination-path] 
+
+//From router to my current location
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r root@192.168.1.1:/opt/intel/www/*
+
+
+//From my location to router
+
+//frequently changed files
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r adv_homepage.html advwidget.html error-444.html index.html root@192.168.1.1:/opt/intel/www/
+
+//main css style file
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r css/Custom/lantiq_custom-1.css root@192.168.1.1:/opt/intel/www/css/Custom/
+
+//two logos
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r images/maxlinear-logo-footer.png images/maxlinear-logo.png root@192.168.1.1:/opt/intel/www/images/
+
+//all images - Note: session is short with router so it can't handle copying all images
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r images/* root@192.168.1.1:/opt/intel/www/images/.

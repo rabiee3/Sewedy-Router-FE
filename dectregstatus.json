@@ -1,0 +1,13 @@
+{
+	"X_VENDOR_COM_IsRegistered":
+[
+    {
+        "id": "1",
+        "name": "Registered"
+    },
+    {
+        "id": "0",
+        "name": "Unregister"
+    }
+]
+}

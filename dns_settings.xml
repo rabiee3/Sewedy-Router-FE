@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="lanprefsbasic">
+	<helptext></helptext>
+    <header>
+     <image>images/icons/lan.png</image>
+    <name>DNS Settings</name>
+        <description>This page allows to configure DNS</description>
+    </header>
+    <object  viewtype="form" title= "DNS Preferences" icon="settings-1">
+    <object name="Device.X_MXL_COM_DNSResolvPref" >
+        <row>
+        <col>
+        <parameter type="description" content="   "></parameter>
+        </col>
+        </row>
+        <row>
+        <col>
+        <parameter name="Pref" type="dropdown" required="No" webname="DNS IP Resolver Preference" validvalues="NoPref,IPv4,IPv6" xmlvalidation="true" changefun="true" Value="cgi_get_defval?Object=X_MXL_COM_DNSResolvPref&amp;Pref="></parameter>
+        </col>
+        </row>
+    </object>
+    <parameter name="Modify" action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" /></object>
+</view>
+

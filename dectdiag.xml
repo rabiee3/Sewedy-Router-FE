@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Diagnostics > DECT </name>
+        <description>This page allows to perform dect dignostics.</description>
+    </header>
+    <object title="Memory Access" name="Device.Services.VoiceService.1.X_VENDOR_COM_DectXRAM"  viewtype="form">
+	<row>
+	<col>
+	<parameter type="description" content="ADDRESS:"> </parameter>
+	</col>
+	<col>
+	<parameter name="X_VENDOR_COM_Byte1"  required="false" type="string" writable="true" webname="HI" maxlen="64"></parameter>
+	</col>
+	<col>
+	<parameter name="X_VENDOR_COM_Byte2"  required="false" type="string" writable="true" webname="LOW" maxlen="64"></parameter>
+	</col></row>
+	<row>
+	<col>
+	<parameter name="X_VENDOR_COM_Type"  required="false" type="dropdown" url="xrammemtype" writable="true" webname="TYPE" maxlen="64"></parameter>
+	</col></row>
+	<row><col>
+	<parameter type="description" content="VALUE:"> </parameter>
+	</col></row>
+	<row>
+	<col>
+	<parameter name="X_VENDOR_COM_Byte3"  required="false" type="string" writable="true" webname="Byte 3" maxlen="64"></parameter>
+	</col>
+    <col>
+    <parameter name="X_VENDOR_COM_Byte4"  required="false" type="string" writable="true" webname="Byte 4" maxlen="64"></parameter>
+    </col>
+    <col>
+    <parameter name="X_VENDOR_COM_Byte5"  required="false" type="string" writable="true" webname="Byte 5" maxlen="64"></parameter>
+    </col></row>
+	<row>
+    <col>
+    <parameter name="X_VENDOR_COM_Byte6"  required="false" type="string" writable="true" webname="Byte 6" maxlen="64"></parameter>
+    </col>
+    <col>
+    <parameter name="X_VENDOR_COM_Byte7"  required="false" type="string" writable="true" webname="Byte 7" maxlen="64"></parameter>
+    </col>
+    <col>
+    <parameter name="X_VENDOR_COM_Byte8"  required="false" type="string" writable="true" webname="Byte 8" maxlen="64"></parameter>
+    </col></row>
+	<row>
+    <col>
+    <parameter name="X_VENDOR_COM_Byte9"  required="false" type="string" writable="true" webname="Byte 9" maxlen="64"></parameter>
+    </col>
+	<col></col>
+	</row>
+	<parameter  name="Get"  action="post" routeurl="pushbtnclick('cgi_action','Object=Device.Services.VoiceService.1.X_VENDOR_COM_DectXRAM&amp;NOTIFICATION=NOTIFY_DECT_XRAM_TEST&amp;Action=GET&amp;X_VENDOR_COM_Type=&amp;X_VENDOR_COM_Byte1=&amp;X_VENDOR_COM_Byte2=&amp;X_VENDOR_COM_Byte3=&amp;X_VENDOR_COM_Byte4=&amp;X_VENDOR_COM_Byte5=&amp;X_VENDOR_COM_Byte6=&amp;X_VENDOR_COM_Byte7=&amp;X_VENDOR_COM_Byte8=&amp;X_VENDOR_COM_Byte9=',$event)" type="submitbutton" webname="Get" ></parameter>	
+	<parameter  name="Set"  action="post" routeurl="pushbtnclick('cgi_action','Object=Device.Services.VoiceService.1.X_VENDOR_COM_DectXRAM&amp;NOTIFICATION=NOTIFY_DECT_XRAM_TEST&amp;Action=SET&amp;X_VENDOR_COM_Type=&amp;X_VENDOR_COM_Byte1=&amp;X_VENDOR_COM_Byte2=&amp;X_VENDOR_COM_Byte3=&amp;X_VENDOR_COM_Byte4=&amp;X_VENDOR_COM_Byte5=&amp;X_VENDOR_COM_Byte6=&amp;X_VENDOR_COM_Byte7=&amp;X_VENDOR_COM_Byte8=&amp;X_VENDOR_COM_Byte9=',$event)" type="submitbutton" webname="Set" ></parameter>	
+	</object>
+
+    <object title="Modem Tuning" name="Device.Services.VoiceService.1.X_VENDOR_COM_ModemTuning"  viewtype="form">
+		<row><col>
+    	<parameter name="X_VENDOR_COM_TuningState"  required="false" type="radio" validvalues="Enable,Disable" writable="true" webname="Modem Tuning State" maxlen="64"></parameter></col>
+	</row>
+	<parameter name="Modify" type="submitbutton" required="false" routeurl="Apply($event)" webname="Set" action="post" maxlen="64"/>
+	<parameter  name="Modem Reset" action="post"  routeurl="pushbtnclick('cgi_action','Device.Services.VoiceService.1.X_VENDOR_COM_ModemTuning&amp;NOTIFICATION=NOTIFY_DECT_MODEM_RESET&amp;Action=Modem Reset',$event)" type="submitbutton" webname="Modem Reset" ></parameter>
+	</object>
+    <object title="RF Mode" name="Device.Services.VoiceService.1.X_VENDOR_COM_RFMode"  viewtype="form">
+	<row><col>
+        <parameter name="X_VENDOR_COM_TxTestMode"  required="false" type="string" writable="true" webname="Tx Test Mode" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_Channel"  required="false" type="string" writable="true" webname="Channel" maxlen="64"></parameter></col>
+        <col><parameter name="X_VENDOR_COM_Slot"  required="false" type="string" writable="true" webname="Slot" maxlen="64"></parameter></col>
+	</row>
+    <parameter name="Modify" type="submitbutton" required="false" routeurl="Apply($event)" webname="Set" action="post" maxlen="64"/>
+    </object>
+
+    <object name="Device.Services.VoiceService.1.X_VENDOR_COM_DectSystem" title="TBR6 Test" viewtype="form">
+		<parameter type="description" content="TBR06 test should be performed when no call session is being processed."></parameter>
+		<parameter  name="StartTest" action="post"  routeurl="pushbtnclick('cgi_action','Device.Services.VoiceService.1.X_VENDOR_COM_DectSystem&amp;NOTIFICATION=NOTIFY_DECT_TBR6_TEST&amp;Action=START',$event)" type="button" webname="Start Test" ></parameter>
+		<parameter  name="StopTest" action="post"  routeurl="pushbtnclick('cgi_action','Object=Device.Services.VoiceService.1.X_VENDOR_COM_DectSystem&amp;NOTIFICATION=NOTIFY_DECT_TBR6_TEST&amp;Action=STOP',$event)" type="button" webname="Stop Test" ></parameter>
+	</object>
+	<object name="Device.Services.VoiceService.1.X_VENDOR_COM_TransmitPowerParam" title="TPC" viewtype="form">
+	<row><col>
+	<parameter name="X_VENDOR_COM_TuneDigital"  required="false" type="string" access="readonly" webname="Tune Digital" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_SWPowerMode"  required="false" type="dropdown" validvalues="IFX_VMAPI_SW_POWERMODE_CONTANT,IFX_VMAPI_SW_POWERMODE_ADAPTIVE,IFX_VMAPI_SW_POWERMODE_USER" writable="true" webname="SW Power Mode" maxlen="64"></parameter></col>
+	<col><parameter name="X_VENDOR_COM_TxBias"  required="false" type="string" writable="true" webname="Tx Bias" maxlen="64"></parameter></col>
+	</row>
+    <parameter  name="Get"  action="post" routeurl="pushbtnclick('cgi_action','Object=Device.Services.VoiceService.1.X_VENDOR_COM_TransmitPowerParam&amp;NOTIFICATION=NOTIFY_DECT_TPC_TEST&amp;Action=GET&amp;X_VENDOR_COM_TuneDigital=&amp;X_VENDOR_COM_SWPowerMode=&amp;X_VENDOR_COM_TxBias=',$event)" type="button" webname="Get" ></parameter>
+    <parameter  name="Set"  action="post" routeurl="pushbtnclick('cgi_action','Object=Device.Services.VoiceService.1.X_VENDOR_COM_TransmitPowerParam&amp;NOTIFICATION=NOTIFY_DECT_TPC_TEST&amp;Action=SET&amp;X_VENDOR_COM_TuneDigital=&amp;X_VENDOR_COM_SWPowerMode=&amp;X_VENDOR_COM_TxBias=',$event)" type="button" webname="Set" ></parameter>
+	</object>
+</view>
+

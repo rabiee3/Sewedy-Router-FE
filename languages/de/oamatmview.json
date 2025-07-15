@@ -1,0 +1,18 @@
+{
+    "oamatmview.headername": "OAM Diagnose Testseite",
+    "oamatmview.headerdescription": "Auf dieser Seite können Benutzer Test- OAM",
+    "oamatmview.helpkey": "oamatm_help_german.html",
+    "ATM OAM F5 Loopback Diagnostic Results": "ATM OAM F5 Loopback Diagnose Ergebnisse",
+    "Device.ATM.Diagnostics.F5Loopback.Diagnostic State":"Diagnosestatus",
+    "Device.ATM.Diagnostics.F5Loopback.ATM Interface": "ATM Schnittstelle",
+    "Device.ATM.Diagnostics.F5Loopback.ATM PVC": "ATM PVC",
+    "Device.ATM.Diagnostics.F5Loopback.Number of ATM OAM Cells Sent":"Anzahl der ATM OAM Zellen gesendet",
+    "Device.ATM.Diagnostics.F5Loopback.Timeout":"Auszeit",
+    "Device.ATM.Diagnostics.F5Loopback.Number of ATM OAM Cells Received":"Anzahl der ATM OAM Zellen empfangen",
+    "Device.ATM.Diagnostics.F5Loopback.Number of ATM OAM Cells Failed":"Anzahl der ATM OAM Zellen fehlgeschlagen",
+    "Device.ATM.Diagnostics.F5Loopback.Average Response Time":"Durchschnittliche Antwortzeit",
+    "Device.ATM.Diagnostics.F5Loopback.Minimum Response Time":"Minimale Reaktionszeit",
+    "Device.ATM.Diagnostics.F5Loopback.Maximum Response Time":"Maximale Reaktionszeit",
+    "Actions": "Aktionen",
+    "Edit": "Bearbeiten"
+}

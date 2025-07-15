@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="mcast_mc">
+    <header>
+        <name>Dect Modem</name>
+        <description>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent sed turpis turpis, eu mattis sem. Sed tristique porta cursus. Class aptent <a href="#">taciti sociosqu</a> ad litora torquent per conubia nostra, per inceptos himenaeos. Donec vestibulum, enim nec condimentum ullamcorper, magna ipsum sagittis sapien, vel egestas lorem mi et neque.</description>
+    </header>    
+    <subtitle>This page allows the user to configure the CPE to provide multicast functionality</subtitle>
+    <object viewtype="form" name="Device.Services.VoiceService.X_VENDOR_COM_DectBMCParams" title="Burst Mode Controller Parameters">
+        <parameter  name="X_VENDOR_COM_DectRSSIFreeLevel"  type="string" webname="RSSI Free Level (0x)"></parameter>
+        <parameter  name="X_VENDOR_COM_DectRSSIBusyLevel"  type="string" webname="RSSI Busy Level (0x)"></parameter>
+        <parameter  name="X_VENDOR_COM_DectBearerChgLim"  type="string" webname="RSSI DB Change Limit (0x)"></parameter>
+        <parameter  name="X_VENDOR_COM_DectDefaultAntenna"  type="string" webname="Default Antenna (0x)"></parameter>
+        <parameter  name="X_VENDOR_COM_DectWOPNSF"  type="string" webname="Window Open Sync Free Mode (0x)"></parameter>
+        <parameter  name="X_VENDOR_COM_DectWWSF"  type="string" webname="Window Width Sync Free Mode (0x)"></parameter>
+        <parameter  name="X_VENDOR_COM_DectCNTUPCtrlReg"  type="string" webname="DRON Ctrl Register (0x)"></parameter>
+        <parameter  name="X_VENDOR_COM_DectDelayReg"  type="string" webname="Delay Compensation(0x)"></parameter>
+        <parameter  name="X_VENDOR_COM_DectHandOverEvalper"  type="string" webname="Handover Eval Period (0x):"></parameter>
+        <parameter  name="X_VENDOR_COM_DectSYNCMCtrlReg"  type="string" webname="General Sync Mode (0x):"></parameter>
+        <parameter  name="Modify"  action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" maxlen="64"></parameter>
+        <parameter  name="Cancel"  routeurl="reset()" action="post" type="submitbutton" webname="Reset" maxlen="64"></parameter>
+    </object>
+    
+    
+</view>
+

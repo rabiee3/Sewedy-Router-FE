@@ -1,0 +1,17 @@
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r adv_homepage.html advwidget.html error-444.html index.html all_menu.json quick_setup.html root@192.168.1.1:/opt/intel/www/
+
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r js/Custom/index.js root@192.168.1.1:/opt/intel/www/js/Custom/
+
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r controllers/quicksetupController.js controllers/advHomePageController.js controllers/menuController.js root@192.168.1.1:/opt/intel/www/controllers/
+
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r su/menu.json root@192.168.1.1:/opt/intel/www/su/
+
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r css/Custom/lantiq_custom-1.css css/Custom/adv_homepage.css root@192.168.1.1:/opt/intel/www/css/Custom/
+
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r images/step1.png images/step2.png images/step3.png root@192.168.1.1:/opt/intel/www/images/
+
+scp -o HostKeyAlgorithms=+ssh-rsa -O -r images/maxlinear-logo.png images/maxlinear-logo-footer.png root@192.168.1.1:/opt/intel/www/images/
+
+scp -o HostKeyAlgorithms=+ssh-rsa -O images/*.* root@192.168.1.1:/opt/intel/www/images/.
+
+scp -o HostKeyAlgorithms=+ssh-rsa -O images/icons/*.* root@192.168.1.1:/opt/intel/www/images/icons/.

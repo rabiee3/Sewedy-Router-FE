@@ -1,0 +1,11 @@
+{
+    "NAT_DMZpage.headername": "DMZ (Demilitarized Zone) Ge",
+    "NAT_DMZpage.headerdescription": "Auf dieser Seite kann der Benutzer den virtuellen DMZ Host sehen und konfigurieren. Eine solche Konfiguration öffnet den spezifizierten Host zu uneingeschränktem bidirektionalen Internetzugang.",
+    "NAT_DMZpage.helpkey": "NAT_DMZhelp_german.html",
+    "Settings":"Einstellungen",
+    "Rules":"Regeln",
+    "Device.NAT.X_LANTIQ_COM_DMZ.Enable": "Aktivieren",
+    "Device.NAT.X_LANTIQ_COM_DMZ.IP Address": "IP-Adresse",
+    "Device.NAT.X_LANTIQ_COM_DMZ.IP Address.placeholder": "Geben Sie eine gültige IPv4-Adresse ein",
+    "Device.NAT.X_LANTIQ_COM_DMZ.IP Address.$error.required": "IP-Adresse ist erforderlich"
+}

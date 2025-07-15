@@ -1,0 +1,13 @@
+{
+	"logd.headername": "Configure System Log Rules",
+	"logd.headerdescription": "The CPE device provides customized logging the messages to File, Remote",
+	"logd.helpkey":"logdhelp_english.html",
+	"DeviceInfo.VendorLogFile.File Name": "File Name",
+	"Device.DeviceInfo.VendorLogFile.File Size (in Bytes)": "File Size (in Bytes)",
+	"Device.DeviceInfo.VendorLogFile.Remote IP": "Remote IP",
+	"Device.DeviceInfo.VendorLogFile.Port No" : "Port No",
+	"Device.DeviceInfo.VendorLogFile.Filter String": "Filter String",
+	"Apply": "APPLY",
+	"Cancel": "CANCEL"
+}
+

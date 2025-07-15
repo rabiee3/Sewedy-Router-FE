@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="mcast_mc">
+    <header>
+        <name>Dect Modem</name>
+        <description>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent sed turpis turpis, eu mattis sem. Sed tristique porta cursus. Class aptent <a href="#">taciti sociosqu</a> ad litora torquent per conubia nostra, per inceptos himenaeos. Donec vestibulum, enim nec condimentum ullamcorper, magna ipsum sagittis sapien, vel egestas lorem mi et neque.</description>
+    </header>    
+    <subtitle>This page allows the user to configure the CPE to provide multicast functionality</subtitle>
+    <object viewtype="form">
+        <object name="Device.Services.VoiceService.X_VENDOR_COM_DectOscTrimVal" title="Oscillator Trim Parameters" >
+            <parameter  name="X_VENDOR_COM_OSCTrimByteHighValue"  type="string" webname="OSC Trim High(ox)"></parameter>  
+            <parameter  name="X_VENDOR_COM_OSCTrimByteLowValue"  type="string" webname="OSC Trim Low(ox)"></parameter>  
+        </object>
+        <object name="Device.Services.VoiceService.X_VENDOR_COM_DectGFSKVal" title="Gaussian FSK Parameters" >
+            <parameter  name="X_VENDOR_COM_GFSKByteHighValue"  type="string" webname="GFSK High(0x)"></parameter>  
+            <parameter  name="X_VENDOR_COM_GFSKByteLowValue"  type="string" webname="GFSK Low(0x)"></parameter>   
+        </object>
+        <parameter  name="Modify"  action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" maxlen="64"></parameter>
+        <parameter  name="Cancel"  routeurl="reset()" action="post" type="submitbutton" webname="Reset" maxlen="64"></parameter>
+    </object>
+</view>
+

@@ -1,0 +1,74 @@
+{
+    "menu": [
+        {
+            "childrens": [
+                {
+                    "childrens": [], 
+                    "icon": "internet", 
+                    "name": "Internet", 
+                    "order": "1", 
+                    "view": "wan_wanconnections", 
+                    "viewtype": "tableform"
+                }
+            ], 
+            "id": "home", 
+            "name": "Basic"
+        }, 
+        {
+            "childrens": [
+                {
+                    "childrens": [
+                        {
+                            "childrens": [], 
+                            "name": "Administration", 
+                            "order": "1", 
+                            "view": "adminactions", 
+                            "viewtype": "custom"
+                        }, 
+                        {
+                            "childrens": [], 
+                            "name": "User Management", 
+                            "order": "2", 
+                            "view": "userview", 
+                            "viewtype": "tableform"
+                        }, 
+                        {
+                            "childrens": [], 
+                            "icon": "fa fa-desktop", 
+                            "name": "System Time", 
+                            "order": "3", 
+                            "view": "ntpviewform", 
+                            "viewtype": "tableform"
+                        }, 
+                        {
+                            "childrens": [], 
+                            "name": "System Log", 
+                            "order": "4", 
+                            "view": "logdview", 
+                            "viewtype": "tableform"
+                        }, 
+                        {
+                            "childrens": [], 
+                            "name": "Diagnostics", 
+                            "order": "5", 
+                            "view": "diagnose", 
+                            "viewtype": "custom"
+                        }, 
+                        {
+                            "childrens": [], 
+                            "name": "Statistics", 
+                            "order": "6", 
+                            "view": "stats", 
+                            "viewtype": "custom"
+                        }
+                    ], 
+                    "icon": "system", 
+                    "name": "System", 
+                    "order": "3"
+                }
+            ], 
+            "id": "profile", 
+            "name": "Advanced"
+        }
+    ]
+}

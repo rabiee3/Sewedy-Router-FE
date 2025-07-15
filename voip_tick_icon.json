@@ -1,0 +1,122 @@
+{
+    "CallerIDEnable": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "DoNotDisturbEnable": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "CallWaitingEnable": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "AnonymousCallBlockEnable": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "MWIEnable": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "X_VENDOR_COM_CallFwrdVoiceMail": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "CallForwardUnconditionalEnable": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "CallForwardOnNoAnswerEnable": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "CallForwardOnBusyEnable": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "X_VENDOR_COM_Intrusion": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "X_VENDOR_COM_Intercept": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ],
+    "X_VENDOR_COM_EnableEchoCancel": [
+        {
+            "id": "1",
+            "symbol": "fa fa-check btn_color_grn"
+        },
+        {
+            "id": "0",
+            "symbol": "fa fa-times btn_color_red"
+        }
+    ]
+}

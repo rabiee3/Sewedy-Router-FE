@@ -1,0 +1,277 @@
+<style>
+  .d-flex {
+    display: flex;
+  }
+
+  .align-items-center {
+    align-items: center;
+  }
+
+  .mr-1 {
+    margin-right: 1em;
+  }
+
+  .ml-1 {
+    margin-left: 1em;
+  }
+
+  .my-0 {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .f-none {
+    float: none;
+  }
+
+  .w-150px {
+    width: 150px;
+  }
+
+  .wizard-data-continer {
+    margin: 20px;
+    padding: 20px;
+    width: 65%;
+    border: 1px solid #e3e3e3;
+    background: white;
+    border-radius: 14px;
+  }
+
+  .wizard-data-continer input {
+    height: auto;
+    width: auto;
+    margin-bottom: 0;
+  }
+
+  .switch {margin-top:7px}
+
+  .field-container {
+    width: 400px;
+    display: flex;
+    margin: 18px 0;
+  }
+
+  .field-container label {
+    width: 120px;
+  }
+
+  .field-container input {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  .step-title {
+    color: #5c2d91;
+  }
+
+  .wizard-data-continer td{
+    padding:7px;
+  }
+
+  .wizard-data-continer .title{
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  .text-grey{color:grey}
+</style>
+<div class="quick-setup-wizard">
+  <div class="wizard-step" ng-show="step === 1">
+    <div class="d-flex">
+      <img src="images/step1.png" />
+      <div>
+        <h2 class="step-title">Connection Information (Step1)</h2>
+        <p>Please enter your username and password to access the internet.</p>
+      </div>
+    </div>
+
+    <div class="wizard-data-continer clearfix">
+      <div class="field-container">
+        <label for="username">Internet Account</label>
+
+        <input
+          type="number"
+          id="username"
+          ng-model="credentials.username"
+          required
+        />
+        <span class="username-suffix">@tedata.net.eg</span>
+      </div>
+      <p class="error" ng-show="!isUsernameValid()">
+        Internet account is required.
+      </p>
+
+      <div class="field-container">
+        <label for="password">Internet Password</label>
+        <input
+          type="password"
+          id="password"
+          ng-model="credentials.password"
+          maxlength="8"
+          required
+        />
+      </div>
+
+      <p class="error" ng-show="!isPasswordValid()">
+        Internet Password must be 8 characters.
+      </p>
+
+      <button
+        class="btn-align custom_btn"
+        ng-click="nextStep()"
+        ng-disabled="!isFormValid()"
+      >
+        <span
+          class="waves-effect waves-light btn btn-info  waves-input-wrapper w-150px"
+          >Next</span
+        >
+      </button>
+      <button class="btn-align custom_btn" ng-click="skip()">
+        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Skip</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="wizard-step" ng-show="step === 2">
+    <div class="d-flex">
+      <img src="images/step2.png" />
+      <div>
+        <h2 class="step-title">WiFi Configuration (Step2)</h2>
+        <p>Configure your WiFi settings below.</p>
+      </div>
+    </div>
+
+    <div class="wizard-data-continer clearfix">
+      <table>
+        <tr>
+          <td class="title" width="30%">WLAN (2.4GHz) On/Off</td>
+          <td width="25%">
+            <switch class="x-small" ng-model="wifiSettings.enable2_4G"></switch>
+          </td>
+          <td width="45%"></td>
+        </tr>
+      
+        <tr ng-show="wifiSettings.enable2_4G">
+          <td>2.4GHz Wi-Fi Name</td>
+          <td>
+            <input id="24ssid" type="text" ng-model="wifiSettings.ssid2_4G" ng-required="wifiSettings.enable2_4G" />
+          </td>
+          <td class="text-grey">(1-32 Characters)</td>
+        </tr>
+        <tr ng-show="wifiSettings.enable2_4G">
+          <td>2.4GHz Wi-Fi Password</td>
+          <td>
+            <input id="24password" type="password" ng-model="wifiSettings.password2_4G" ng-required="wifiSettings.enable2_4G" />
+          </td>
+          <td></td>
+        </tr>
+        <tr ng-show="wifiSettings.enable2_4G">
+          <td colspan="3">
+            <p class="error" ng-show="!is24GWifiValid() && wifiSettings.enable2_4G">
+              Wi-Fi Name and Password are required for 2.4GHz if enabled.
+            </p>
+          </td>
+        </tr>
+      
+        <tr>
+          <td colspan="3"><hr /></td>
+        </tr>
+      
+        <tr>
+          <td class="title">WLAN (5GHz) On/Off</td>
+          <td>
+            <switch class="x-small" ng-model="wifiSettings.enable5G"></switch>
+          </td>
+          <td></td>
+        </tr>
+      
+        <tr ng-show="wifiSettings.enable5G">
+          <td>5GHz Wi-Fi Name</td>
+          <td>
+            <input id="5gssid" type="text" ng-model="wifiSettings.ssid5G" ng-required="wifiSettings.enable5G" />
+          </td>
+          <td class="text-grey">(1-32 Characters)</td>
+        </tr>
+        <tr ng-show="wifiSettings.enable5G">
+          <td>5GHz Wi-Fi Password</td>
+          <td>
+            <input id="5gpassword" type="password" ng-model="wifiSettings.password5G" ng-required="wifiSettings.enable5G" />
+          </td>
+          <td></td>
+        </tr>
+        <tr ng-show="wifiSettings.enable5G">
+          <td colspan="3">
+            <p class="error" ng-show="!is5GWifiValid() && wifiSettings.enable5G">
+              Wi-Fi Name and Password are required for 5GHz if enabled.
+            </p>
+          </td>
+        </tr>
+      </table>
+      
+      <br />
+      
+      <button class="btn-align custom_btn" ng-click="nextStep()" ng-disabled="!is5GWifiValid() || !is24GWifiValid()">
+        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Next</span>
+      </button>
+      <button class="btn-align custom_btn" ng-click="prevStep()">
+        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Previous</span>
+      </button>
+      <button class="btn-align custom_btn" ng-click="skip()">
+        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Skip</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="wizard-step" ng-show="step === 3">
+    <div class="d-flex">
+      <img src="images/step3.png" />
+      <div>
+        <h2 class="step-title">Review & Submit (Step 3)</h2>
+        <p>Confirm your settings before submitting.</p>
+      </div>
+    </div>
+
+    <div class="wizard-data-continer clearfix">
+      <h3>Connection Information</h3>
+      <p><strong>Username:</strong> {{ credentials.username }}@tedata.net.eg</p>
+      <p><strong>Password:</strong> ********</p>
+
+      <h3>WiFi Configuration</h3>
+      <p>
+        <strong>2.4G WiFi:</strong> {{ wifiSettings.enable2_4G ? 'Enabled' :
+        'Disabled' }}
+      </p>
+      <p ng-show="wifiSettings.enable2_4G">
+        <strong>SSID:</strong> {{ wifiSettings.ssid2_4G }} <br />
+        <strong>Password:</strong> ********
+      </p>
+
+      <p>
+        <strong>5G WiFi:</strong> {{ wifiSettings.enable5G ? 'Enabled' :
+        'Disabled' }}
+      </p>
+      <p ng-show="wifiSettings.enable5G">
+        <strong>SSID:</strong> {{ wifiSettings.ssid5G }} <br />
+        <strong>Password:</strong> ********
+      </p>
+
+      <br />
+
+      <button class="btn-align custom_btn" ng-click="submit()">
+        <span
+          class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px"
+          >Next</span
+        >
+      </button>
+      <button class="btn-align custom_btn" ng-click="prevStep()">
+        <span
+          class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px"
+          >Previous</span
+        >
+      </button>
+      <button class="btn-align custom_btn" ng-click="skip()">
+        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Skip</span>
+      </button>
+    </div>
+  </div>
+</div>

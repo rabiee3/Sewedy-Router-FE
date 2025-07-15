@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Incoming Call Block</name>
+        <description>This page allows to configure contacts for incoming call block.</description>
+    </header>
+    <object title="Incoming Call Block" name="Device.Services.VoiceService.1.X_VENDOR_COM_CallBlock.X_VENDOR_COM_CallBlockEntry.*"  viewtype="form" Type="string">
+
+        <parameter name="X_VENDOR_COM_CallBlockNum"  type="string" writable="true" webname="Enter the Number to Block" maxlen="64"></parameter>
+
+<parameter name="Add" action="post" routeurl="Apply($event,'voipcallblockentryview')" type="submitbutton" webname="Apply" maxlen="64"/>
+<parameter name="Close" type="submitbutton" routeurl="Add('voipcallblockentryview')" webname="Close" maxlen="64"/>
+
+ </object> 
+</view>
+

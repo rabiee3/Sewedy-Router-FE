@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>User Agent</name>
+        <description>This page allows to configure SIP User Agent.</description>
+    </header>
+    <name>User Agent</name>
+    <object title="User Agent" name="Device.Services.VoiceService.1.VoiceProfile.1.SIP" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.VoiceProfile.1.SIP"  viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_CohMethod"  required="false" type="dropdown" url="callonholdmethod" writable="true" webname="Call On Hold Indication" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_UseCompactHdrs"  required="false" type="checkbox" writable="true" webname="Use Compact Header" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_UserAgentHdr"  required="false" type="string" writable="true" webname="User Agent Header" maxlen="128"></parameter>
+        <parameter name="TimerT1"  type="string" required="false" writable="true" webname="SIP Initial Timer" minlen="1" maxlen="64"></parameter>
+        <parameter name="TimerB"  type="string" required="false" writable="true" webname="SIP Timer Maximum" minlen="1" maxlen="64"></parameter>
+	<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply" action="post"/>
+
+    </object>
+</view>
+

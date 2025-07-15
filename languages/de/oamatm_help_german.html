@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Hilfe Text in Englisch für ATM OAM F5 Loopback</title>
+    </head>
+    <body>
+        <div class="container_help">
+            <h1>ATM OAM F5 Loopback Diagnosetest</h1>
+            <div class="row">
+                <p>Auf dieser Seite können Sie ATM OAM F5 Loopback Pings zu überprüfen Sie die VPI/VCI Verbindungen zu tun.</p>
+                <p>Klicke auf:-</p><p><button class="btn btn-xs table-btn" ng-click="edit($event,'oamatmviewform')" name="edit" id="Device.ATM.Diagnostics.F5Loopback"><span class="fa fa-edit btn_color_wht"></span></button></p><p>Taste unter Aktionen und fÃ¼llen relevanten Feldern um den Test zu tragen.</p>
+                <p>Standardmäßig  zeigt die Seite vorherige Testergebnisse. Wenn die Ergebnisse zeigt, leer oder Nullen, dann wo früher durchgeführt keine Tests.</p>
+                <table class="table">
+                <tr><th colspan="2"><h4>Die Felder für den Test zu füllen</h4></th></tr>
+                <tr><td>ATM PVC</td><td>Wählen Sie ATM VPI/VCI aus der Dropdown-Liste. Sie können neue ATM-PVC ist von Internet-Verbindungen Seite hinzufügen</td></tr>
+                <tr><td>Anzahl der ATM OAM Zellen zu senden</td><td>Geben Gesamtzahl der ATM OAM Zellen, die für Test zu schicken.</td></tr>
+                <tr><td>Timeout</td><td>Gesamt Timeout (in ms), um den Test zu beenden. Optimale Fällen verwenden 300ms oder mehr.</td></tr>
+                </table>
+                <table class="table">
+                <tr><th colspan="2"><h4>Ergebnisse</h4></th></tr>
+                <tr><td>Diagnosestatus</td><td>Erscheint "Complete", wenn der Test erfolgreich abgeschlossen und "Error", wenn ein Fehler auftritt.</td></tr>
+                <tr><td>Anzahl der ATM OAM Zellen empfangen</td><td>Zeigt die Gesamtzahl der ATM OAM Zellen erhalten.</td></tr>
+                <tr><td>Anzahl der ATM OAM Zellen fehlgeschlagen</td><td>Zeigt die Gesamtzahl der ATM OAM Zellen fehlgeschlagen.</td></tr>
+                <tr><td>Durchschnittliche Antwortzeit</td><td>Durchschnittliche Antwortzeit des Servers die OAM Zellen zurückschicken (in ms).</td></tr>
+                <tr><td>Minimale Reaktionszeit</td><td>Minimale Reaktionszeit des Servers Senden der OAM-Zellen (in ms) zurück.</td></tr>
+                <tr><td>Maximale Reaktionszeit</td><td>Maximale Reaktionszeit des Servers Senden der OAM-Zellen (in ms) zurück.</td></tr>
+                </table>
+                <p></p>
+           </div>
+        </div>
+    </body>
+</html>

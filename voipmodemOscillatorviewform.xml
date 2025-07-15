@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view layout="2column">
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Dect Oscillator</name>
+        <description>This page allows to configure Dect Oscillator params.</description>
+    </header>
+    <row><col><object title="Trim" name="Device.Services.VoiceService.1.X_VENDOR_COM_DectOscTrimVal"  viewtype="form" Type="string">
+          <parameter name="X_VENDOR_COM_OSCTrimByteHighValue"  required="false" type="string" access="readonly" webname="OSC Trim High" maxlen="64"></parameter>
+          <parameter name="X_VENDOR_COM_OSCTrimByteLowValue" required="false" type="string" access="readonly" webname="OSC Trim Low" maxlen="64"></parameter>
+
+</object></col>
+<col><object title="GFSK" name="Device.Services.VoiceService.1.X_VENDOR_COM_DectGFSKVal"  viewtype="form" Type="string">
+        <parameter name="X_VENDOR_COM_GFSKByteHighValue" required="false" type="string" access="readonly" webname="GFSK High" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_GFSKByteLowValue" required="false" type="string" access="readonly" webname="GFSK Low" maxlen="64"></parameter>
+ </object></col></row>
+
+</view>
+

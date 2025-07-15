@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Dect Repeater</name>
+        <description>This page allows to configure Dect repeaters</description>
+    </header>
+    <object  viewtype="form">
+        <object title="Dect repeater" name="Device.Services.VoiceService.1.X_VENDOR_COM_Dect_Repeater.*" >
+            <parameter name="X_VENDOR_COM_EndPtId"  required="false" type="string" access="readonly" writable="false" webname="Number" maxlen="64"></parameter>
+            <parameter name="X_VENDOR_COM_EndPtName"  required="false" type="string" writable="true" webname="Repeater Name" maxlen="64"></parameter>
+            <parameter name="X_VENDOR_COM_IPEI"  required="false" type="string" access="readonly" writable="false" webname="IPEI" maxlen="64"></parameter>
+            <parameter name="X_VENDOR_COM_SubscriptionTime"  required="false" type="string" access="readonly" writable="false" webname="Subscription Time" maxlen="64"></parameter>
+        </object>
+        <object name="Device.Services.VoiceService.1.X_VENDOR_COM_Dect_Repeater.*.X_VENDOR_COM_DectSubsInfo.*">
+            <parameter name="X_VENDOR_COM_IsRegistered"  required="false" type="dropdown" url="dectregstatus" writable="false" webname="HandSet Unregistration" maxlen="64"></parameter>
+        </object>
+                <parameter name="Close" type="submitbutton" routeurl="Add('voipinterfaceview')" webname="Close" maxlen="64"/>
+                <parameter name="Modify" webname="Apply" type="submitbutton" maxlen="64" routeurl="Apply($event,'voipinterfaceview')" action="post"/>
+    </object>
+</view>

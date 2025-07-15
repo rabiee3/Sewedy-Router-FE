@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+  <header>
+         <image>images/icons/wireless.png</image>
+    <name>Advanced</name>
+    <description>6GHz - Advanced settings for the wireless LAN interfaces that operate in the 6GHz range. Typically you shouldn't need to change these settings.</description>
+  </header>
+  <object viewtype="form">
+    <object name="Device.WiFi.Radio.3" title="Vendor Details">
+      <row>
+        <col>
+          <parameter name="DTIMPeriod" type="number" minval="0" webname="DTIM"/>
+        </col>
+        <col>
+          <parameter name="BeaconPeriod" type="number" minval="0"  webname="Beacon Interval"/>
+        </col>
+	 <col>
+          <parameter name="TransmitPower" type="dropdown" validvalues="12,25,50,100" webname="Power scale"/>
+        </col>
+      </row>
+    </object>
+    <object name="Device.WiFi.Radio.3.X_LANTIQ_COM_Vendor">
+      <row>
+        <col>
+          <parameter name="NumOfAntennas" type="dropdown" validvalues="1,2,3,4" webname="Number of Antennas"/>
+        </col>
+      </row>
+    </object>
+    <object name="Device.WiFi.AccessPoint.3">
+      <parameter name="UAPSDEnable" type="toggle" webname="WMM PS"/>
+    </object>
+    <object name="Device.WiFi.Radio.3">
+      <parameter name="IEEE80211hEnabled" type="toggle" webname="DFS"/>
+    </object>
+    <parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+  </object>
+</view>

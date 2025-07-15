@@ -1,0 +1,18 @@
+{
+	"menu": [{
+		"name": "Advanced",
+		"id": "profile",
+		"childrens": [{
+			"name": "OAM Diagnostics",
+			"icon": "system",
+			"order": "9",
+			"childrens": [{
+				"name": "ATM OAM F5 Loopback",
+				"order": "1",
+				"viewtype": "tableform",
+				"view": "oamatmview",
+				"childrens": []
+			}]
+		}]
+	}]
+}

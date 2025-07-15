@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+	<image>images/icons/voip.png</image>
+    <name>Interface Settings</name>
+        <description>List of Interfaces configured.</description>
+    </header>
+    <object title="Phone Interface" name="Device.Services.VoiceService.1.X_VENDOR_COM_FxsPhyIf.*" viewtype="table">
+        <parameter name="X_VENDOR_COM_EndPtId"  type="string" writable="false" webname="Number" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_VoiceLineId"  type="string" writable="true" webname="Default Line" maxlen="64"></parameter>
+        <parameter name="X_VENDOR_COM_EnableEchoCancel"  type="string" iconicurl="voip_tick_icon" writable="false" webname="Echo Cancellation" maxlen="64"></parameter>
+        <parameter name="edit" maxlen="64" webname="Edit" type="button" routeurl="edit($event,'voipphninterfaceviewform')" action="post"/>
+    </object>
+</view>

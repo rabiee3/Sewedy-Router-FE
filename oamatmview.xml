@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="oamatmview" translation="oamatmview">
+<helptext/>
+    <header>
+    <image>images/icons/system.png</image>
+    <name>OAM Diagnostics</name>
+    </header>
+    <object title="ATM OAM F5 Loopback Diagnostics Results" name="Device.ATM.Diagnostics.F5Loopback" viewtype="table" icon="settings-1">
+        <parameter name="DiagnosticsState" type="string" writable="false" webname="Diagnostic State" maxlen="20"/>
+        <parameter name="X_LANTIQ_COM_VpiVci" type="string" writable="false" webname="ATM PVC" maxlen="10"/>
+        <parameter name="NumberOfRepetitions" type="string" writable="false" webname="Number of ATM OAM Cells Sent" maxlen="5"/>
+        <parameter name="Timeout" type="string" writable="false" webname="Timeout" maxlen="5"/>
+        <parameter name="SuccessCount" type="string" writable="false" webname="Number of ATM OAM Cells Received" maxlen="5"/>
+        <parameter name="FailureCount" type="string" writable="false" webname="Number of ATM OAM Cells Failed" maxlen="5"/>
+        <parameter name="AverageResponseTime" type="string" writable="false" webname="Average Response Time" maxlen="5"/>
+        <parameter name="MinimumResponseTime" type="string" writable="false" webname="Minimum Response Time" maxlen="5"/>
+        <parameter name="MaximumResponseTime" type="string" writable="false" webname="Maximum Response Time" maxlen="5"/>
+        <parameter name="edit" webname="Edit" type="button" routeurl="edit($event,'oamatmviewform')" action="post"/>
+        <parameter name="" type="string" writable="false" webname="" maxlen="5"/>
+    </object>
+</view>

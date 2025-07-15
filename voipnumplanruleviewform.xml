@@ -1,0 +1,17 @@
+<view>
+    <header>
+        <name> System-> Fax Over IP</name>
+        <description>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent sed turpis turpis, eu mattis sem. Sed tristique porta cursus. Class aptent <a href="#">taciti sociosqu</a> ad litora torquent per conubia nostra, per inceptos himenaeos. Donec vestibulum, enim nec condimentum ullamcorper, magna ipsum sagittis sapien, vel egestas lorem mi et neque.</description>
+    </header>    
+    <subtitle>This page allows the user to configure the CPE to provide multicast functionality</subtitle>
+    <object title="Number Plan Rule" name="Device.Services.VoiceService.VoiceProfile.1.NumberingPlan.PrefixInfo.*" viewtype="form" Type="string">
+        <parameter name="FacilityActionArgument" required="false" type="dropdown" validvalues="Activate Anonymus CallBlock,Deactivate Anonymus CallBlock,Auto-Redial Active,Auto-Redial DeActive,DND Activate,DND DeActivate,Callwaiting Activate,Callwaiting DeActivate,Callwaiting Activate Per Call,Callwaiting DeActivate Per Call,Activate Unconditional Call Forward,DeActivate Unconditional Call Forward,Activate Call Forward On Busy,DeActivate Call Forward On Busy,Activate Call Forward On NoAnswer,DeActivate Call Forward On NoAnswer,Activate Caller ID Block,DeActivate Caller ID Block,Activate Caller ID Block Per Call,DeActivate Caller ID Block Per Call,Blind Transfer,Call Return,CallWaiting Reject,VoiceMail Retrieval,Internal General Call,Disconnect Last Active Call,Resume Last Active Call,Resume NonLast Active Call,Conference,Speed Dial,EXTN Dial,Two Stage PSTN,Local PSTN,Emergency,DialOut Defult,FXS Delayed Hotline Activate,FXS Delayed Hotline DeActivate" writable="true" webname="Rule" maxlen="256"/>
+        <parameter name="PrefixRange" required="false" type="string" writable="false" webname="Prefix" maxlen="42"/>
+        <parameter name="PrefixMinNumberOfDigits" required="false" type="string" writable="false" webname="Min Len" maxlen="64" maxInclusive="40"/>
+        <parameter name="PrefixMaxNumberOfDigits" required="false" type="string" writable="false" webname="Max Len" maxlen="64" maxInclusive="40"/>
+        <parameter name="NumberOfDigitsToRemove" required="false" type="string" writable="true" webname="Rem Dgts" maxlen="64" maxInclusive="40"/>
+        <parameter name="PosOfDigitsToRemove" required="false" type="string" writable="true" webname="Pos to Rem" maxlen="64" maxInclusive="40"/>
+        <parameter name="Add" action="post" routeurl="Apply($event,'NumberingPlan')" type="submitbutton" webname="Apply" maxlen="64"/>
+        <parameter name="Close" type="submitbutton" routeurl="Add('NumberingPlan')" webname="Close" maxlen="64"/>
+    </object>
+</view>

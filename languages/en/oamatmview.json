@@ -1,0 +1,18 @@
+{
+    "oamatmview.headername": "OAM Diagnostics Test Page",
+    "oamatmview.headerdescription": "This page allows user to Test OAM",
+    "oamatmview.helpkey": "oamatm_help_english.html",
+    "ATM OAM F5 Loopback Diagnostic Results": "ATM OAM F5 Loopback Diagnostics Results",
+    "Device.ATM.Diagnostics.F5Loopback.Diagnostic State":"Diagnostic State",
+    "Device.ATM.Diagnostics.F5Loopback.ATM Interface": "ATM Interface",
+    "Device.ATM.Diagnostics.F5Loopback.ATM PVC": "ATM PVC",
+    "Device.ATM.Diagnostics.F5Loopback.Number of ATM OAM Cells Sent":"Number of ATM OAM Cells sent",
+    "Device.ATM.Diagnostics.F5Loopback.Timeout":"Timeout",
+    "Device.ATM.Diagnostics.F5Loopback.Number of ATM OAM Cells Received":"Number of ATM OAM Cells Received",
+    "Device.ATM.Diagnostics.F5Loopback.Number of ATM OAM Cells Failed":"Number of ATM OAM Cells Failed",
+    "Device.ATM.Diagnostics.F5Loopback.Average Response Time":"Average Response Time",
+    "Device.ATM.Diagnostics.F5Loopback.Minimum Response Time":"Minimum Response Time",
+    "Device.ATM.Diagnostics.F5Loopback.Maximum Response Time":"Maximum Response Time",
+    "Actions": "Actions",
+    "Edit": "Edit"
+}

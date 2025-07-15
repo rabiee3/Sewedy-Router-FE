@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view layout="2column">
+    <header>
+		<image>images/icons/voip.png</image>
+        <name>Service Media</name>
+        <description>This Page allows to configure media RTP,FAX and DTMF.</description>
+    </header>
+ 	<row><col>        
+        <object title="RTP/RTCP" name="Device.Services.VoiceService.1.VoiceProfile.1.RTP" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.VoiceProfile.1.RTP" viewtype="form" Type="string">
+            <parameter name="LocalPortMin" required="false" type="string" writable="true" webname="Start Port" maxlen="65535"/>
+            <parameter name="LocalPortMax" required="false" type="string" writable="true" webname="End Port" maxlen="65535"/>
+            <parameter name="DSCPMark" required="false" type="dropdown" writable="true" webname="DSCP Marking for RTP/RTCP" url="RTPDSCPMark"/>
+        <object name="Device.Services.VoiceService.1.VoiceProfile.1.SIP" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.VoiceProfile.1.SIP" viewtype="form" Type="string">
+            <parameter name="DSCPMark" required="false" type="dropdown" writable="true" webname="DSCP Marking for SIP" url="RTPDSCPMark"/>
+        </object>
+		<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+        </object></col>
+
+        <col><object title="Fax" name="Device.Services.VoiceService.1.VoiceProfile.1.FaxT38" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.VoiceProfile.1.FaxT38" viewtype="form" Type="string">
+           <row><col> <parameter name="X_VENDOR_COM_TCFMethodTcp" required="false" type="dropdown" validvalues="Local,Network" writable="true" webname="Rate Management TCP" maxlen="64"/></col>
+            <col> <parameter name="TCFMethod" type="dropdown" required="false" validvalues="Local,Network" writable="true" webname="Rate Management UDP" maxlen="64"/></col></row>
+          <row><col>  <parameter name="BitRate" type="string" required="false" writable="true" webname="Max Bit Rate TCP" maxInclusive="336000"/></col>
+           <col> <parameter name="X_VENDOR_COM_BitRateTcp" required="false" type="string" writable="true" webname="Max Bit Rate UDP" maxInclusive="336000"/></col></row>
+            <row><col> <parameter name="X_VENDOR_COM_UDPErrCorrection" required="false" type="dropdown" url="udperrorcorrection" writable="true" webname="UDP Error Correction" maxlen="64"/></col>
+           <col> <parameter name="HighSpeedRedundancy" type="string" required="false" writable="true" webname="UDP Max Buffer Size" maxInclusive="3"/></col></row>
+            <row><col><parameter name="LowSpeedRedundancy" type="string" required="false" writable="true" webname="UDP Max Datagram Size" maxInclusive="5"/></col></row>
+		<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+        </object></col></row>
+        <row><col><object title="DTMF" name="Device.Services.VoiceService.1.VoiceProfile.1" url="cgi_get_nosubobj?Object=Device.Services.VoiceService.1.VoiceProfile.1" viewtype="form" Type="string">
+            <parameter name="DTMFMethod" type="dropdown" required="false" validvalues="InBand,RFC2833,SIPInfo" writable="true" webname="DTMF Digit Exchange Mode" maxlen="64"/>
+            <parameter name="X_VENDOR_COM_DtmfPayloadType" required="false" type="string" writable="false" webname="DTMF Digit Exchange Payload"  parent="'RFC2833'" parentname="Device.Services.VoiceService.1.VoiceProfile.1" depends="DTMFMethod" maxlen="64"/>
+		<parameter name="Modify" type="submitbutton" routeurl="Apply($event)" webname="Apply"/>
+        </object></col></row>
+        
+</view>
+
