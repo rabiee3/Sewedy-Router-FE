@@ -165,7 +165,7 @@
             <parameter name="LowerLayers" type="string" Display="No" Value="" webname="LowerLayer"/>
             <row>
                 <col>
-                    <parameter name="Username" type="string" webname="Username"/>
+                    <parameter name="Username" type="string" webname="Username" HasSuffix="Yes" SuffixData="@tedata.com.eg" />
                 </col>
                 <col>
                     <parameter name="Password" type="password" webname="Password"/>
