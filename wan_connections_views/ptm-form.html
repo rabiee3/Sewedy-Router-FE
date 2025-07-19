@@ -1,65 +1,5 @@
-<div class="row ltq_breadcrumbs">
-  <div class="row">
-    <div ng-repeat="breadcrumb in $root.breadcrumbs">
-      <ng-switch on="$first">
-        <div class="btn-group btn-breadcrumb1" ng-switch-when="true">
-          <div class="ltq_brd_home">
-            <a class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">
-              <i class="fa fa-home"></i>
-              {{breadcrumb.name}}
-            </a>
-          </div>
-        </div>
-
-        <div class="btn-group btn-breadcrumb" ng-switch-when="false">
-          <span
-            class="btn btn-default not-active"
-            ng-if="breadcrumb.path == 'nothing' || $last == true"
-          >
-            {{breadcrumb.name}}
-          </span>
-          <span
-            ng-if="breadcrumb.path != 'nothing' &&
-                                                $last == false"
-          >
-            <a class="btn" ng-href="#/{{breadcrumb.path}}">
-              <i></i>
-              {{breadcrumb.name}}
-            </a>
-          </span>
-        </div>
-      </ng-switch>
-    </div>
-  </div>
-</div>
-
-<div class="subheader">
-  <div>
-    <img src="images/icons/internet.png" class="iconDetails" alt="img" />
-  </div>
-  <div><h4>Internet Connections Configure</h4></div>
-  <p>
-    This page allows you to view and configure various internet connections such
-    as Static/DHCP/PPPoE/PPPoA etc.
-  </p>
-</div>
-
-<div class="panel p-3">
-  <form name="customWanForm">
-    <div class="row">
-      <div class="col-sm-6 mb-3 required">
-        <label>Selection Mode</label>
-        <select
-          id="selectionMode"
-          materal_select=""
-          ng-required="true"
-          name="selectionMode"
-          class="dropdown-toggle"
-        >
-        </select>
-      </div>
-    </div>
-
+<div ng-controller="ptm_form_controller">
+  <div ng-form="ptmForm" novalidate>
     <div class="row my-3">
       <!--Enable VLAN -->
       <div class="col-sm-6 checkbox1 input-field1">
@@ -69,6 +9,7 @@
           type="checkbox"
           ng-true-value="'1'"
           ng-false-value="'0'"
+          ng-model="ptmData.enableVlan"
         />
         <label class="checkbox_left_align" for="enableVlan"
           >Enable VLAN :&nbsp;&nbsp;
@@ -86,14 +27,17 @@
           ng-required="true"
           name="connectionType"
           class="dropdown-toggle"
+          ng-model="ptmData.connectionType"
         >
+          <option value="PPPoE">PPPoE</option>
+          <!-- Add other options if needed -->
         </select>
       </div>
     </div>
 
     <div class="row my-4">
       <!--MAC Cloning-->
-      <div class="col-sm-6 d-flex align-items-center mt-4">
+      <div class="col-sm-6 d-flex align-items-center">
         <label for="macClone" class="control-label mr-3"
           >Mac Cloning Enable</label
         >
@@ -119,62 +63,86 @@
         </span>
       </div>
 
-      <!--MAC Address-->
+      <!--MAC Address (shown when cloning enabled)-->
       <div class="mb-3 col-sm-6" ng-if="macCloneEnabled">
-        <div class="input-field">
+        <div class="input-field required">
           <input
-            id="mtusize"
-            ng-model="form.mac_address"
-            placeholder="Please valid mac address"
+            id="macAddress"
+            name="macAddress"
+            ng-model="ptmData.mac_address"
+            placeholder="00:1A:2B:3C:4D:5E"
             type="text"
             class="form-control"
+            ng-pattern="patterns.macAddress"
             required
           />
-          <label class="active" for="mtusize">MAC Address</label>
+          <label class="active special" for="macAddress">MAC Address</label>
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.macAddress.$error.pattern && ptmForm.macAddress.$dirty"
+          >
+            Please enter a valid MAC address (format: 00:1A:2B:3C:4D:5E)
+          </div>
         </div>
       </div>
     </div>
 
     <div class="row">
       <!--Username-->
-      <div class="mb-3 col-sm-6 d-flex">
-        <div class="input-field d-flex w-100">
+      <div class="mb-3 col-sm-6">
+        <div class="input-field required d-flex w-100">
           <input
             id="username"
-            ng-model="form.username"
-            placeholder="Please enter username ex. 1154897"
+            name="username"
+            ng-model="ptmData.username"
+            placeholder="e.g. 1154897"
             type="text"
             class="form-control"
-            requiredF
+            ng-pattern="patterns.username"
+            required
           />
           <label class="active special" for="username">Username</label>
           <div class="input-suffix d-flex align-items-center">
             @tedata.com.eg
           </div>
         </div>
+        <div
+          class="text-danger small"
+          ng-show="ptmForm.username.$error.pattern && ptmForm.username.$dirty"
+        >
+          Username must contain only numbers
+        </div>
       </div>
 
       <!--Password-->
       <div class="mb-3 col-sm-6">
         <div class="d-flex">
-          <div class="input-field w-100">
+          <div class="input-field required w-100">
             <input
               id="password"
-              ng-model="form.password"
-              placeholder="Please enter password"
-              type="password"
+              name="password"
+              ng-model="ptmData.password"
+              placeholder="Enter password"
+              type="{{Passwordfieldstatus ? 'text' : 'password'}}"
               class="form-control"
+              ng-pattern="patterns.password"
               required
             />
-            <label class="active" for="password">Password</label>
+            <label class="active special" for="password">Password</label>
+            <div
+              class="text-danger small"
+              ng-show="ptmForm.password.$error.pattern && ptmForm.password.$dirty"
+            >
+              Minimum 8 chars & Must contain: 1 uppercase, 1 number, 1 special
+              character
+            </div>
           </div>
-          <div class="input-field1 form-group pwdtoggle_adv">
+          <div class="form-group pwdtoggle_adv">
             <input
               id="Passwordcheckbox"
               name="passwordcheckbox"
               type="checkbox"
               ng-model="Passwordfieldstatus"
-              ng-click="hideShowPassword()"
             />
             <label
               class="checkbox_right_align showpw mt-4 pt-1"
@@ -186,17 +154,25 @@
       </div>
 
       <!--MTU Size-->
-      <div class="mb-3 col-sm-6">
-        <div class="input-field">
+      <div class="mb-3 col-sm-6 clearfix">
+        <div class="input-field required required">
           <input
             id="mtusize"
-            ng-model="form.password"
-            placeholder="Please enter mtu size"
-            type="text"
+            name="mtusize"
+            ng-model="ptmData.mtu_size"
+            placeholder="1492"
+            type="number"
             class="form-control"
+            ng-pattern="patterns.mtuSize"
             required
           />
-          <label class="active" for="mtusize">MTU Size</label>
+          <label class="active special" for="mtusize">MTU Size</label>
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.mtusize.$error.pattern && ptmForm.mtusize.$dirty"
+          >
+            MTU Size must be exactly 1492
+          </div>
         </div>
       </div>
     </div>
@@ -207,10 +183,11 @@
         <div class="checkbox1 input-field1" style="width:215px">
           <input
             id="ipv6enable"
-            name="Enable"
+            name="ipv6enable"
             type="checkbox"
             ng-true-value="'1'"
             ng-false-value="'0'"
+            ng-model="ptmData.ipv6enable"
           />
           <label class="checkbox_left_align" for="ipv6enable"
             >IPv6 Enable :&nbsp;&nbsp;
@@ -222,34 +199,17 @@
         <div class="checkbox1 input-field1" style="width:215px">
           <input
             id="defaultGateway"
-            name="Enable"
+            name="defaultGateway"
             type="checkbox"
             ng-true-value="'1'"
             ng-false-value="'0'"
+            ng-model="ptmData.defaultGateway"
           />
           <label class="checkbox_left_align" for="defaultGateway"
             >Default Gateway :&nbsp;&nbsp;
           </label>
         </div>
       </div>
-    </div>
-  </form>
-</div>
-
-<div class="row">
-  <div class="col-sm-4 float-right px-0">
-    <div class="row d-flex">
-      <input
-        class="waves-effect waves-light btn btn-info col-sm-6"
-        value="Apply"
-        formname=""
-      />
-
-      <input
-        class="waves-effect waves-light btn btn-info mx-1 col-sm-6"
-        value="Cancel"
-        formname=""
-      />
     </div>
   </div>
 </div>

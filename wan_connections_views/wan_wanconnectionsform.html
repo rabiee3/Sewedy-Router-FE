@@ -1,0 +1,90 @@
+<div class="row ltq_breadcrumbs">
+  <div class="row">
+    <div ng-repeat="breadcrumb in $root.breadcrumbs">
+      <ng-switch on="$first">
+        <div class="btn-group btn-breadcrumb1" ng-switch-when="true">
+          <div class="ltq_brd_home">
+            <a class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">
+              <i class="fa fa-home"></i>
+              {{breadcrumb.name}}
+            </a>
+          </div>
+        </div>
+
+        <div class="btn-group btn-breadcrumb" ng-switch-when="false">
+          <span
+            class="btn btn-default not-active"
+            ng-if="breadcrumb.path == 'nothing' || $last == true"
+          >
+            {{breadcrumb.name}}
+          </span>
+          <span
+            ng-if="breadcrumb.path != 'nothing' &&
+                                                $last == false"
+          >
+            <a class="btn" ng-href="#/{{breadcrumb.path}}">
+              <i></i>
+              {{breadcrumb.name}}
+            </a>
+          </span>
+        </div>
+      </ng-switch>
+    </div>
+  </div>
+</div>
+
+<div class="subheader">
+  <div>
+    <img src="images/icons/internet.png" class="iconDetails" alt="img" />
+  </div>
+  <div><h4>Internet Connections Configure</h4></div>
+  <p>
+    This page allows you to view and configure various internet connections such
+    as Static/DHCP/PPPoE/PPPoA etc.
+  </p>
+</div>
+
+<div class="panel p-3" ng-if="connectionType == PPPoE">
+  <form name="customWanForm" novalidate>
+    <div class="row">
+      <div class="col-sm-6 mb-3 required">
+        <label>Selection Mode</label>
+        <select
+          ng-model="form.selectionMode" 
+          ng-change="loadForm()"
+          id="selectionMode"
+          ng-required="true"
+          name="selectionMode"
+          class="dropdown-toggle"
+        >
+        <option value="ATM">ATM</option>
+        <option value="PTM">PTM</option>
+        <option value="ETH">ETH</option>
+        </select>
+      </div>
+    </div>
+
+
+  </form>
+
+  <!--Include Subform Dynamically-->
+  <div ng-include="currentFormTemplate"></div>
+
+</div>
+
+<div class="row">
+  <div class="col-sm-4 float-right px-0">
+    <div class="row d-flex">
+      <button
+        class="waves-effect waves-light btn btn-info col-sm-6"
+        ng-click="submit()"
+      >
+        Apply
+      </button>
+
+      <button class="waves-effect waves-light btn btn-info mx-1 col-sm-6">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

@@ -115,8 +115,8 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                     },
                     template: "<div></div>"
                 })                
-                .when('/custom_template', {
-                    templateUrl: "wan_wanconnectionsform.html",
+                .when('/wan_connections_views', {
+                    templateUrl: "/wan_connections_views/wan_wanconnectionsform.html",
                     controller: 'wan_wanconnectionsform'
                 });
     }]);
