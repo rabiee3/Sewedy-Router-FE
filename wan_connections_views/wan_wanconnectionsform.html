@@ -44,32 +44,29 @@
   </p>
 </div>
 
-<div class="panel p-3" ng-if="connectionType == PPPoE">
+<div class="panel p-3" ng-show="connectionType == PPPoE">
   <form name="customWanForm" novalidate>
     <div class="row">
       <div class="col-sm-6 mb-3 required">
         <label>Selection Mode</label>
         <select
-          ng-model="form.selectionMode" 
+          ng-model="form.selectionMode"
           ng-change="loadForm()"
           id="selectionMode"
           ng-required="true"
           name="selectionMode"
           class="dropdown-toggle"
         >
-        <option value="ATM">ATM</option>
-        <option value="PTM">PTM</option>
-        <option value="ETH">ETH</option>
+          <option value="ATM">ATM</option>
+          <option value="PTM">PTM</option>
+          <option value="ETH">ETH</option>
         </select>
       </div>
     </div>
 
-
+    <!--Include Subform Dynamically-->
+    <div ng-include="currentFormTemplate"></div>
   </form>
-
-  <!--Include Subform Dynamically-->
-  <div ng-include="currentFormTemplate"></div>
-
 </div>
 
 <div class="row">

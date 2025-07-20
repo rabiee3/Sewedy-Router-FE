@@ -9,7 +9,7 @@
           type="checkbox"
           ng-true-value="'1'"
           ng-false-value="'0'"
-          ng-model="ptmData.enableVlan"
+          ng-model="$parent.ptmData.enableVlan"
         />
         <label class="checkbox_left_align" for="enableVlan"
           >Enable VLAN :&nbsp;&nbsp;
@@ -27,7 +27,7 @@
           ng-required="true"
           name="connectionType"
           class="dropdown-toggle"
-          ng-model="ptmData.connectionType"
+          ng-model="$parent.ptmData.connectionType"
         >
           <option value="PPPoE">PPPoE</option>
           <!-- Add other options if needed -->
@@ -42,11 +42,11 @@
           >Mac Cloning Enable</label
         >
         <span
-          ng-click="macCloneEnabled = !macCloneEnabled;"
+          ng-click="$parent.ptmData.macCloneEnabled = !$parent.ptmData.macCloneEnabled;"
           class="switch my-3"
           off="Off"
           on="On"
-          ng-class="{checked:macCloneEnabled}"
+          ng-class="{checked:$parent.ptmData.macCloneEnabled}"
         >
           <small></small
           ><input
@@ -54,7 +54,7 @@
             style="display:none"
             name="macClone"
             id="macClone"
-            ng-model="macCloneEnabled"
+            ng-model="$parent.ptmData.macCloneEnabled"
             class="ng-pristine ng-untouched ng-valid"
           />
           <span class="switch-text"
@@ -64,12 +64,12 @@
       </div>
 
       <!--MAC Address (shown when cloning enabled)-->
-      <div class="mb-3 col-sm-6" ng-if="macCloneEnabled">
+      <div class="mb-3 col-sm-6" ng-if="$parent.ptmData.macCloneEnabled">
         <div class="input-field required">
           <input
             id="macAddress"
             name="macAddress"
-            ng-model="ptmData.mac_address"
+            ng-model="$parent.ptmData.mac_address"
             placeholder="00:1A:2B:3C:4D:5E"
             type="text"
             class="form-control"
@@ -94,7 +94,7 @@
           <input
             id="username"
             name="username"
-            ng-model="ptmData.username"
+            ng-model="$parent.ptmData.username"
             placeholder="e.g. 1154897"
             type="text"
             class="form-control"
@@ -121,7 +121,7 @@
             <input
               id="password"
               name="password"
-              ng-model="ptmData.password"
+              ng-model="$parent.ptmData.password"
               placeholder="Enter password"
               type="{{Passwordfieldstatus ? 'text' : 'password'}}"
               class="form-control"
@@ -159,7 +159,7 @@
           <input
             id="mtusize"
             name="mtusize"
-            ng-model="ptmData.mtu_size"
+            ng-model="$parent.ptmData.mtu_size"
             placeholder="1492"
             type="number"
             class="form-control"
@@ -187,7 +187,7 @@
             type="checkbox"
             ng-true-value="'1'"
             ng-false-value="'0'"
-            ng-model="ptmData.ipv6enable"
+            ng-model="$parent.ptmData.ipv6enable"
           />
           <label class="checkbox_left_align" for="ipv6enable"
             >IPv6 Enable :&nbsp;&nbsp;
@@ -203,7 +203,7 @@
             type="checkbox"
             ng-true-value="'1'"
             ng-false-value="'0'"
-            ng-model="ptmData.defaultGateway"
+            ng-model="$parent.ptmData.defaultGateway"
           />
           <label class="checkbox_left_align" for="defaultGateway"
             >Default Gateway :&nbsp;&nbsp;

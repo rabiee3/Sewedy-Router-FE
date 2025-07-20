@@ -1,16 +1,6 @@
 myapp.controller("ptm_form_controller", function($scope) {
-  // Initialize form data
-  $scope.ptmData = {
-    connectionType: "PPPoE",
-    username: "",
-    password: "",
-    mac_address: "",
-    mtu_size: 1492, // Changed from string to number
-    macCloneEnabled: false,
-    enableVlan: "0",
-    ipv6enable: "0",
-    defaultGateway: "0",
-  };
+  // Bind ptmData to parent scope for shared access
+  $scope.ptmData = $scope.$parent.ptmData;
 
   // Password visibility toggle
   $scope.Passwordfieldstatus = false;

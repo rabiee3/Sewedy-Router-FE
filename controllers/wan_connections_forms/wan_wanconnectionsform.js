@@ -5,6 +5,19 @@ myapp.controller("wan_wanconnectionsform", function($scope) {
     selectionMode: "PTM",
   };
 
+  // Initialize ptmData for subform binding
+  $scope.ptmData = {
+    connectionType: "PPPoE",
+    username: "",
+    password: "",
+    mac_address: "",
+    mtu_size: 1492,
+    macCloneEnabled: false,
+    enableVlan: "0",
+    ipv6enable: "0",
+    defaultGateway: "0",
+  };
+
   // Initial template selection
   $scope.loadForm = function() {
     switch ($scope.form.selectionMode) {
@@ -35,13 +48,14 @@ myapp.controller("wan_wanconnectionsform", function($scope) {
 
   // Form submission
   $scope.submit = function() {
-    // if ($scope.customWanForm.$valid) {
-    //   alert("Form submitted successfully!\n" + JSON.stringify($scope.form, null, 2));
-    //   console.log($scope.form);
-    //   // Here you would typically make an API call
-    // } else {
-    //   alert("Please fix all errors before submitting.");
-    // }
+    if ($scope.form.selectionMode === "PTM") {
+
+      if ($scope.customWanForm.ptmForm && $scope.customWanForm.ptmForm.$valid) {
+        alert("Submitting PTM data: " + JSON.stringify($scope.ptmData, null, 2));
+      } else {
+        alert("Please fix all errors in the PTM form before submitting.");
+      }
+    }
   };
 
   // Cancel button action
