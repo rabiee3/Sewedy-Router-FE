@@ -5779,7 +5779,7 @@ $.each(newpost, function(i, el){
         localStorage.setItem('internetEdit', true);
         localStorage.setItem('internetObject', event.currentTarget.attributes['id'].value)
 
-        if(formToopen === "wan_wanconnectionsform" && event.currentTarget.attributes['id'].value == "Device.IP.Interface.8,Device.IP.Interface.8.IPv4Address.1"){
+        if(formToopen === "wan_wanconnectionsform"){
             $location.path("/wan_connections_views");
         }else 
         if(formToopen !== null && formToopen !== undefined){
