@@ -1,20 +1,11 @@
 myapp.controller("wan_wanconnectionsform", function($scope, $http, $location) {
-  // Initialize main form data
   $scope.form = {
     selectionMode: "PTM",
   };
 
-  //generic data on route change
-  $scope.DeviceIpInterface = "";
-  $scope.Alias = "";
-  $scope.IPv4Enable = "";
-  $scope.LowerLayers = "";
-  $scope.X_LANTIQ_COM_DefaultGateway = "";
-  $scope.X_LANTIQ_COM_Description = "";
-  $scope.PPP_Interface = "";
-  $scope.Username = "";
-  $scope.Password = "";
-  $scope.MaxMRUSize = "";
+  // Add/Edit mode detection
+  const internetObject = localStorage.getItem("internetObject");
+  $scope.isEditMode = !!internetObject;
 
   // Initialize ptmData for subform binding
   $scope.ptmData = {
@@ -29,9 +20,75 @@ myapp.controller("wan_wanconnectionsform", function($scope, $http, $location) {
     defaultGateway: "1",
   };
 
-  function extractLastNumber(str) {
-    const match = str.match(/(\d+)(?!.*\d)/);
-    return match ? parseInt(match[1], 10) : null;
+  $scope.dataReady = false;
+  $scope.WanGroupMappingLayer = "";
+
+  // Load form and data only in edit mode
+  async function initInterfaceAndDropdown() {
+    if ($scope.isEditMode) {
+      const id = internetObject;
+      let deviceIPInterface;
+      if (id) {
+        deviceIPInterface = id.split(",")[0];
+      }
+      if (window.$ && $("#ajaxLoaderSection").length) {
+        $("#ajaxLoaderSection").show();
+      }
+      const ipInterfaceData = await $http.get(
+        URL + "cgi_get?Object=" + deviceIPInterface
+      );
+      const ipObj = ipInterfaceData.data["Objects"][0];
+      const ipParams = ipObj.Param;
+      const getParam = (name) =>
+        ipParams.find((x) => x.ParamName === name)?.ParamValue || "";
+      $scope.DeviceIpInterface = ipObj.ObjName;
+      $scope.Alias = getParam("Alias");
+      $scope.IPv4Enable = getParam("IPv4Enable");
+      $scope.LowerLayers = getParam("LowerLayers");
+      $scope.X_LANTIQ_COM_DefaultGateway = getParam(
+        "X_LANTIQ_COM_DefaultGateway"
+      );
+      // X_LANTIQ_COM_Description is in Objects[1]
+      let X_LANTIQ_COM_Description = "";
+      if (ipInterfaceData.data["Objects"][1]) {
+        const descParam = ipInterfaceData.data["Objects"][1].Param.find(
+          (x) => x.ParamName === "X_LANTIQ_COM_Description"
+        );
+        X_LANTIQ_COM_Description = descParam ? descParam.ParamValue : "";
+      }
+      $scope.X_LANTIQ_COM_Description = X_LANTIQ_COM_Description;
+      // Set dropdown to PTM if description contains PTM
+      if (X_LANTIQ_COM_Description.includes("PTM")) {
+        $scope.form.selectionMode = "PTM";
+      } else if (X_LANTIQ_COM_Description.includes("ATM")) {
+        $scope.form.selectionMode = "ATM";
+      } else if (X_LANTIQ_COM_Description.includes("ETH")) {
+        $scope.form.selectionMode = "ETH";
+      }
+      $scope.loadForm();
+      $scope.dataReady = true;
+      if (window.$ && $("#ajaxLoaderSection").length) {
+        $("#ajaxLoaderSection").hide();
+      }
+    } else {
+      setTimeout(() => {
+        $scope.$broadcast("resetPtmForm");
+        $scope.ptmData = {
+          connectionType: "PPPoE",
+          username: "",
+          password: "",
+          mac_address: "",
+          mtu_size: 1492,
+          macCloneEnabled: false,
+          enableVlan: "0",
+          ipv6enable: "0",
+          defaultGateway: "1",
+        };
+      }, 100);
+
+      $scope.loadForm();
+      $scope.dataReady = true;
+    }
   }
 
   // Initial template selection
@@ -53,57 +110,6 @@ myapp.controller("wan_wanconnectionsform", function($scope, $http, $location) {
     }
   };
 
-  $scope.dataReady = false;
-
-  // Fetch IP interface data and set dropdown on controller init
-  async function initInterfaceAndDropdown() {
-    console.log("init forms");
-    const id = localStorage.getItem("internetObject");
-    let deviceIPInterface;
-    if (id) {
-      deviceIPInterface = id.split(",")[0];
-    }
-    if (window.$ && $("#ajaxLoaderSection").length) {
-      $("#ajaxLoaderSection").show();
-    }
-    const ipInterfaceData = await $http.get(
-      URL + "cgi_get?Object=" + deviceIPInterface
-    );
-    const ipObj = ipInterfaceData.data["Objects"][0];
-    const ipParams = ipObj.Param;
-    const getParam = (name) =>
-      ipParams.find((x) => x.ParamName === name)?.ParamValue || "";
-    $scope.DeviceIpInterface = ipObj.ObjName;
-    $scope.Alias = getParam("Alias");
-    $scope.IPv4Enable = getParam("IPv4Enable");
-    $scope.LowerLayers = getParam("LowerLayers");
-    $scope.X_LANTIQ_COM_DefaultGateway = getParam(
-      "X_LANTIQ_COM_DefaultGateway"
-    );
-    // X_LANTIQ_COM_Description is in Objects[1]
-    let X_LANTIQ_COM_Description = "";
-    if (ipInterfaceData.data["Objects"][1]) {
-      const descParam = ipInterfaceData.data["Objects"][1].Param.find(
-        (x) => x.ParamName === "X_LANTIQ_COM_Description"
-      );
-      X_LANTIQ_COM_Description = descParam ? descParam.ParamValue : "";
-    }
-    $scope.X_LANTIQ_COM_Description = X_LANTIQ_COM_Description;
-    // Set dropdown to PTM if description contains PTM
-    if (X_LANTIQ_COM_Description.includes("PTM")) {
-      $scope.form.selectionMode = "PTM";
-    } else if (X_LANTIQ_COM_Description.includes("ATM")) {
-      $scope.form.selectionMode = "ATM";
-    } else if (X_LANTIQ_COM_Description.includes("ETH")) {
-      $scope.form.selectionMode = "ETH";
-    }
-    $scope.loadForm();
-    $scope.dataReady = true;
-    if (window.$ && $("#ajaxLoaderSection").length) {
-      $("#ajaxLoaderSection").hide();
-    }
-  }
-
   initInterfaceAndDropdown();
 
   $scope.patterns = {
@@ -117,17 +123,13 @@ myapp.controller("wan_wanconnectionsform", function($scope, $http, $location) {
     const regex = /(ptm|wan)/i;
     let ptmInterfaceFound = null;
 
-    // Loop through the objects
     for (let object of pvcs.Objects) {
-      // Loop through the params inside each object
       for (let param of object.Param) {
         if (regex.test(param.ParamValue)) {
-          ptmInterfaceFound = object; // Set ptmInterfaceFound to the outer object
-          break; // Break out of the inner loop when a match is found
+          ptmInterfaceFound = object;
+          break;
         }
       }
-
-      // If a match was found, break out of the outer loop too
       if (ptmInterfaceFound) {
         break;
       }
@@ -150,21 +152,38 @@ myapp.controller("wan_wanconnectionsform", function($scope, $http, $location) {
     $("#ajaxLoaderSection").show();
     if ($scope.form.selectionMode === "PTM") {
       if ($scope.customWanForm.ptmForm && $scope.customWanForm.ptmForm.$valid) {
-        const getAllPVCs = `Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true`;
-        let res;
-        //Get ALL PVC Request
-        res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
+        if ($scope.isEditMode) {
+          // Edit mode: delete old connection first
+          const getAllPVCs = `Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true`;
+          const res = await $http.get(
+            URL + "cgi_get_filterbyparamval?" + getAllPVCs
+          );
 
-        //Delete Request
-        var DELETE_Request = `Object=${
-          $scope.getPTMInterfaceID(res.data)[0]
-        }&Operation=Del&Object=${
-          $scope.getPTMInterfaceID(res.data)[1]
-        }&Operation=Del`;
-        await $http.post(URL + "cgi_set", DELETE_Request);
+          //Delete Request
+          var DELETE_Request = `Object=${
+            $scope.getPTMInterfaceID(res.data)[0]
+          }&Operation=Del&Object=${
+            $scope.getPTMInterfaceID(res.data)[1]
+          }&Operation=Del`;
+          await $http.post(URL + "cgi_set", DELETE_Request);
+        }
 
-        //Edit PPPoE Request
-        const PPPoE_Request2 = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-18&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-18&IPv6Enable=${$scope.ptmData.ipv6enable}&X_LANTIQ_COM_DefaultGateway=${$scope.ptmData.defaultGateway}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-18&LowerLayers=Device.PTM.Link.1.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-18&Username=${$scope.ptmData.username}%40tedata.net.eg&Password=${$scope.ptmData.password}&MaxMRUSize=${$scope.ptmData.mtu_size}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-18`;
+        // Add new PPPoE connection (same for add/edit)
+        const randomNumber = parseInt(localStorage.getItem("randomvalue"));
+        // all depending on localstorage random number except for the Device.PTM.Link.1. that is get from Device_X_Lantiq
+
+        //get lower layer mapping for wanGroup1 PTM ex: Device.PTM.Link.1.
+        const lowerLayer = await $http.get(
+          URL +
+            `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup.${
+              $scope.form.selectionMode === "PTM" ? 1 : 3
+            }&MappingLowerLayer=`
+        );
+
+        $scope.WanGroupMappingLayer =
+          lowerLayer.data["Objects"][0].Param[0].ParamValue;
+
+        const PPPoE_Request2 = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber}&IPv6Enable=${$scope.ptmData.ipv6enable}&X_LANTIQ_COM_DefaultGateway=${$scope.ptmData.defaultGateway}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${$scope.WanGroupMappingLayer}&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber}&Username=${$scope.ptmData.username}%40tedata.net.eg&Password=${$scope.ptmData.password}&MaxMRUSize=${$scope.ptmData.mtu_size}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}`;
         const resultPPPoE_Request = await $http.post(
           URL + "cgi_set",
           PPPoE_Request2
@@ -175,8 +194,8 @@ myapp.controller("wan_wanconnectionsform", function($scope, $http, $location) {
           $scope.$apply();
         } else {
           alert("Something wrong happened");
+          $("#ajaxLoaderSection").hide();
         }
-        $("#ajaxLoaderSection").hide();
       } else {
         alert("Please fix all errors in the PTM form before submitting.");
         $("#ajaxLoaderSection").hide();
