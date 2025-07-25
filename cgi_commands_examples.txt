@@ -55,10 +55,11 @@ Object=Device.IP.Interface.30
 Object=Device.IP.Interface
 &Operation=Add
 &Enable=true
-&Alias=cpe-WEB-IPInterface-55
+&Alias=cpe-WEB-IPInterface-55 //number from localstorage random value
 &LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-55
 &Object=Device.Ethernet.Link
-&Operation=Add&Enable=true
+&Operation=Add
+&Enable=true
 &Alias=cpe-WEB-EthernetLink-55
 &LowerLayers=Device.Bridging.Bridge.1.Port.cpe-WEB-BridgingBridge1Port-55
 
@@ -97,3 +98,24 @@ Object=Device.IP.Interface
 &Enable=true
 &Alias=cpe-WEB-BridgingBridge1Port-19
 &LowerLayers=Device.Ethernet.Interface.5.
+
+
+
+//example set PTM bridge
+Object=Device.IP.Interface
+&Operation=Add
+&Enable=true
+&Alias=cpe-WEB-IPInterface-28
+&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-28
+
+&Object=Device.Ethernet.Link
+&Operation=Add
+&Enable=true
+&Alias=cpe-WEB-EthernetLink-28
+&LowerLayers=Device.Bridging.Bridge.1.Port.cpe-WEB-BridgingBridge1Port-28
+
+&Object=Device.Bridging.Bridge.1.Port
+&Operation=Add
+&Enable=true
+&Alias=cpe-WEB-BridgingBridge1Port-28
+&LowerLayers=Device.PTM.Link.1.
