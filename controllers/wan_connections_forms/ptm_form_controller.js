@@ -1,11 +1,26 @@
 myapp.controller("ptm_form_controller", function($scope, $http) {
-  // Bind ptmData to parent scope for shared access
-  $scope.ptmData = $scope.$parent.ptmData;
-  $scope.ptmData.defaultGateway = "1";
+  // Initialize local ptmData for the child controller
+  $scope.ptmData = {
+    connectionType: "PPPoE",
+    username: "",
+    password: "",
+    mac_address: "",
+    mtu_size: 1492,
+    macCloneEnabled: false,
+    enableVlan: "0",
+    ipv6enable: "0",
+    defaultGateway: "1",
+  };
+
+  $scope.connectionTypes = ["PPPoE", "Bridge"];
+  $scope.bridgeConnections = [];
+  //set defulat to PPPoE
+  //$scope.ptmData.connectionType = "PPPoE";
 
   // Password visibility toggle
   $scope.Passwordfieldstatus = false;
 
+  // Validation patterns
   $scope.patterns = {
     username: /^\d+$/, // Only numbers
     password: /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}/, // Complex password
@@ -13,29 +28,81 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     mtuSize: /^\d+$/, // Only numbers
   };
 
-  // Function to reset the form fields
-  $scope.resetForm = function() {
-    debugger;
-    $scope.ptmData.username = "";
-    $scope.ptmData.password = "";
-    $scope.ptmData.mac_address = "";
-    $scope.ptmData.mtu_size = 1492;
-    $scope.ptmData.macCloneEnabled = false;
-    $scope.ptmData.enableVlan = "0";
-    $scope.ptmData.ipv6enable = "0";
-    $scope.ptmData.defaultGateway = "1";
-    $scope.ptmData.connectionType = "PPPoE";
+  // Emit changes to the parent when ptmData is updated
+  $scope.updateParent = function() {
+    $scope.$emit("ptmDataChanged", $scope.ptmData);
   };
 
+  // Function to reset the form fields
+  $scope.resetForm = function() {
+    $scope.ptmData = {
+      connectionType: "PPPoE",
+      username: "",
+      password: "",
+      mac_address: "",
+      mtu_size: 1492,
+      macCloneEnabled: false,
+      enableVlan: "0",
+      ipv6enable: "0",
+      defaultGateway: "1",
+    };
+    $scope.updateParent(); // Notify parent of reset
+  };
+
+  // Function to fetch and populate user_pass data in edit mode
+  async function loadUserPassData() {
+    try {
+      if ($scope.$parent.internetObject) {
+        const DeviceIpInterface = $scope.$parent.internetObject.split(",")[0];
+        //get PPP interface data //res1
+        const pppInterfaceData = await $http.get(
+          URL + "cgi_get_nosubobj?Object=" + DeviceIpInterface
+        );
+        const pppObj = pppInterfaceData.data["Objects"][0];
+
+        const lowerLayerRes1 = pppObj.Param.find(
+          (x) => x.ParamName === "LowerLayers"
+        )?.ParamValue;
+
+        const userPassResponse = await $http.get(
+          URL + "cgi_get_nosubobj?Object=" + lowerLayerRes1
+        );
+
+        const userPassData = userPassResponse.data["Objects"][0];
+
+        setTimeout(() => {
+          $scope.$apply(() => {
+            $scope.ptmData.username =
+              userPassData.Param.find(
+                (x) => x.ParamName === "Username"
+              )?.ParamValue.split("@")[0] || "";
+            $scope.ptmData.password =
+              userPassData.Param.find((x) => x.ParamName === "Password")
+                ?.ParamValue || "";
+            $scope.ptmData.mtu_size =
+              parseInt(
+                userPassData.Param.find((x) => x.ParamName === "MaxMRUSize")
+                  ?.ParamValue
+              ) || 1492;
+          });
+        }, 200);
+
+        $scope.updateParent(); // Notify parent of updated data
+      }
+    } catch (error) {
+      console.error("Error loading user_pass data:", error);
+    }
+  }
+
+  // Listen for reset event from parent
   $scope.$on("resetPtmForm", function() {
     $scope.resetForm();
   });
 
-  $scope.bridgeConnections = [];
-
   // Function to load bridge connections
+
   async function loadBridgeConnections() {
-    if ($scope.$parent.ptmData.connectionType !== "Bridge") {
+    if ($scope.ptmData.connectionType !== "Bridge") {
       return; // Don't load PTM data for Bridge connections
     }
     try {
@@ -43,76 +110,32 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
         URL +
           "cgi_get_fillparams?Object=Device.Bridging.Bridge&X_LANTIQ_COM_Name="
       );
-      $scope.bridgeConnections = response.data["Objects"][0].Param;
+      // Ensure the response contains the expected structure
+      if (response.data && response.data.Objects) {
+        // Extract ParamValue from each object
+        $scope.bridgeConnections = response.data.Objects.map((bridge) => {
+          const param = bridge.Param.find(
+            (x) => x.ParamName === "X_LANTIQ_COM_Name"
+          );
+          return param ? param.ParamValue : null;
+        }).filter((value) => value !== null); // Remove null values
+      } else {
+        $scope.bridgeConnections = []; // Fallback to an empty array if no data
+      }
     } catch (error) {
       console.error("Error loading bridge connections:", error);
     }
   }
 
-  // Only fetch PTM-specific data using parent context
-  async function loadPPPoEData() {
-    if ($scope.$parent.ptmData.connectionType === "Bridge") {
-      return; // Don't load PTM data for Bridge connections
+  loadUserPassData();
+
+  // Watch for changes in connectionType and load data accordingly
+  $scope.$watch("ptmData.connectionType", function(newValue) {
+    debugger;
+    if (newValue === "Bridge") {
+      loadBridgeConnections();
+    } else {
+      loadUserPassData();
     }
-
-    const deviceIPInterface = $scope.$parent.DeviceIpInterface;
-    if (!deviceIPInterface) return;
-
-    //get PPP interface data //res1
-    const pppInterfaceData = await $http.get(
-      URL + "cgi_get_nosubobj?Object=" + deviceIPInterface
-    );
-    const pppObj = pppInterfaceData.data["Objects"][0];
-
-    const aliasRes1 = pppObj.Param.find((x) => x.ParamName === "Alias")
-      ?.ParamValue;
-    $scope.$parent.PPP_Interface = aliasRes1;
-
-    const lowerLayerRes1 = pppObj.Param.find(
-      (x) => x.ParamName === "LowerLayers"
-    )?.ParamValue;
-    $scope.$parent.LowerLayers = lowerLayerRes1;
-
-    //get username & password
-    const user_pass = await $http.get(
-      URL + "cgi_get_nosubobj?Object=" + $scope.$parent.LowerLayers
-    );
-    const userObj = user_pass.data["Objects"][0];
-    const usernameRaw =
-      userObj.Param.find((x) => x.ParamName === "Username")?.ParamValue || "";
-    const password =
-      userObj.Param.find((x) => x.ParamName === "Password")?.ParamValue || "";
-    const mtuSize = userObj.Param.find((x) => x.ParamName === "MaxMRUSize")
-      ?.ParamValue;
-    const mtu = parseInt(mtuSize) || 1492;
-    $scope.$evalAsync(function() {
-      $scope.ptmData.username = usernameRaw.split("@")[0];
-      $scope.ptmData.password = password;
-      $scope.ptmData.mtu_size = mtu;
-    });
-  }
-
-  //defaulted to load the
-
-  // Watch for parent DeviceIpInterface and connectionType to be set, then load data
-  $scope.$watchGroup(
-    [
-      function() {
-        return $scope.$parent.DeviceIpInterface;
-      },
-      function() {
-        return $scope.$parent.ptmData.connectionType;
-      },
-    ],
-    function(newValues) {
-      const deviceIpInterface = newValues[0];
-      const connectionType = newValues[1];
-
-      if (connectionType === "Bridge") {
-        loadBridgeConnections();
-      } else if (deviceIpInterface) {
-        loadPPPoEData();
-      }
-    }
-  );
+  });
 });

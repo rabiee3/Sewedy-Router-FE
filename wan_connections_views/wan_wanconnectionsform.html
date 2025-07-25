@@ -1,3 +1,4 @@
+<!-- Breadcrumb Navigation -->
 <div class="row ltq_breadcrumbs">
   <div class="row">
     <div ng-repeat="breadcrumb in $root.breadcrumbs">
@@ -19,8 +20,7 @@
             {{breadcrumb.name}}
           </span>
           <span
-            ng-if="breadcrumb.path != 'nothing' &&
-                                                $last == false"
+            ng-if="breadcrumb.path != 'nothing' && $last == false"
           >
             <a class="btn" ng-href="#/{{breadcrumb.path}}">
               <i></i>
@@ -33,53 +33,69 @@
   </div>
 </div>
 
+<!-- Subheader -->
 <div class="subheader">
   <div>
-    <img src="images/icons/internet.png" class="iconDetails" alt="img" />
+    <img src="images/icons/internet.png" class="iconDetails" alt="Internet Icon" />
   </div>
-  <div><h4>Internet Connections Configure</h4></div>
+  <div>
+    <h4>Internet Connections Configuration</h4>
+  </div>
   <p>
     This page allows you to view and configure various internet connections such
-    as Static/DHCP/PPPoE/PPPoA etc.
+    as Static/DHCP/PPPoE/PPPoA, etc.
   </p>
 </div>
 
-<div class="panel p-3" ng-show="connectionType == PPPoE">
+<!-- Main Form -->
+<div class="panel p-3">
   <form name="customWanForm" novalidate>
+    <!-- Selection Mode -->
     <div class="row">
       <div class="col-sm-6 mb-3 required">
-        <label>Selection Mode</label>
+        <label for="selectionMode">Selection Mode</label>
         <select
+          id="selectionMode"
+          name="selectionMode"
           ng-model="form.selectionMode"
           ng-change="loadForm()"
-          id="selectionMode"
           ng-required="true"
-          name="selectionMode"
-          class="dropdown-toggle"
+          class="form-control"
         >
           <option value="ATM">ATM</option>
           <option value="PTM">PTM</option>
           <option value="ETH">ETH</option>
         </select>
+        <div
+          class="text-danger small"
+          ng-show="customWanForm.selectionMode.$error.required && customWanForm.selectionMode.$touched"
+        >
+          Please select a mode.
+        </div>
       </div>
     </div>
 
-    <!--Include Subform Dynamically-->
+    <!-- Dynamically Included Subform -->
     <div ng-include="currentFormTemplate"></div>
   </form>
 </div>
 
-<div class="row">
+<!-- Action Buttons -->
+<div class="row mt-3">
   <div class="col-sm-4 float-right px-0">
     <div class="row d-flex">
       <button
         class="waves-effect waves-light btn btn-info col-sm-6"
         ng-click="submit()"
+        ng-disabled="!customWanForm.$valid"
       >
         Apply
       </button>
 
-      <button class="waves-effect waves-light btn btn-info mx-1 col-sm-6">
+      <button
+        class="waves-effect waves-light btn btn-secondary mx-1 col-sm-6"
+        ng-click="cancel()"
+      >
         Cancel
       </button>
     </div>
