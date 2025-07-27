@@ -157,7 +157,7 @@ myapp.controller("wan_wanconnectionsform", function(
           await deleteOldConnection();
         }
 
-        await addNewConnection();
+        $scope.$broadcast("addNewConnection");
       } else {
         alert("Please fix all errors in the PTM form before submitting.");
         $("#ajaxLoaderSection").hide();
@@ -165,47 +165,78 @@ myapp.controller("wan_wanconnectionsform", function(
     }
   };
 
+  // Listen for connectionAdded event from PTM form
+  $scope.$on("connectionAdded", function(event, success) {
+    if (success) {
+      $location.path("/tableform/wan_wanconnections");
+      $scope.$apply();
+    }
+  });
+
+  // Listen for connectionAdded event from PTM form
+  $scope.$on("connectionAdded", function(event, success) {
+    if (success) {
+      $location.path("/tableform/wan_wanconnections");
+      $scope.$apply();
+    }
+  });
+
   // Function to delete the old connection in edit mode
   async function deleteOldConnection() {
     const getAllPVCs = `Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true`;
     const res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
 
-    const DELETE_Request = `Object=${
-      $scope.getPTMInterfaceID(res.data)[0]
-    }&Operation=Del&Object=${
-      $scope.getPTMInterfaceID(res.data)[1]
-    }&Operation=Del`;
+    // Validate response data
+    if (!res.data || !res.data.Objects || !Array.isArray(res.data.Objects)) {
+      console.error("Invalid response data structure:", res.data);
+      return;
+    }
+
+    const interfaceIds = $scope.getPTMInterfaceID(res.data);
+    if (
+      !interfaceIds ||
+      !Array.isArray(interfaceIds) ||
+      interfaceIds.length !== 2
+    ) {
+      console.error("Invalid interface IDs returned:", interfaceIds);
+      return;
+    }
+
+    const DELETE_Request = `Object=${interfaceIds[0]}&Operation=Del&Object=${interfaceIds[1]}&Operation=Del`;
     await $http.post(URL + "cgi_set", DELETE_Request);
   }
 
-  // Function to add a new connection
-  async function addNewConnection() {
-    const randomNumber = parseInt(localStorage.getItem("randomvalue"));
+  $scope.getPTMInterfaceID = function(pvcs) {
+    const regex = /(ptm|wan)/i;
+    let ptmInterfaceFound = null;
 
-    const lowerLayer = await $http.get(
-      URL +
-        `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup.${
-          $scope.form.selectionMode === "PTM" ? 1 : 3
-        }&MappingLowerLayer=`
-    );
+    // Loop through the objects
+    for (let object of pvcs.Objects) {
+      // Loop through the params inside each object
+      for (let param of object.Param) {
+        if (regex.test(param.ParamValue)) {
+          ptmInterfaceFound = object; // Set ptmInterfaceFound to the outer object
+          break; // Break out of the inner loop when a match is found
+        }
+      }
 
-    $scope.WanGroupMappingLayer =
-      lowerLayer.data["Objects"][0].Param[0].ParamValue;
-
-    const PPPoE_Request2 = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber}&IPv6Enable=${$scope.ptmData.ipv6enable}&X_LANTIQ_COM_DefaultGateway=${$scope.ptmData.defaultGateway}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${$scope.WanGroupMappingLayer}&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber}&Username=${$scope.ptmData.username}%40tedata.net.eg&Password=${$scope.ptmData.password}&MaxMRUSize=${$scope.ptmData.mtu_size}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}`;
-    const resultPPPoE_Request = await $http.post(
-      URL + "cgi_set",
-      PPPoE_Request2
-    );
-
-    if (resultPPPoE_Request.status == 200) {
-      $location.path("/tableform/wan_wanconnections");
-      $scope.$apply();
-    } else {
-      alert("Something wrong happened");
-      $("#ajaxLoaderSection").hide();
+      // If a match was found, break out of the outer loop too
+      if (ptmInterfaceFound) {
+        break;
+      }
     }
-  }
+
+    if (!ptmInterfaceFound) {
+      console.log("No PTM interface found.");
+      return null;
+    }
+
+    console.log(`PTM Interface ID: ${ptmInterfaceFound.ObjName}`);
+    let lowerLayer = ptmInterfaceFound.Param.find(
+      (x) => x.ParamName === "LowerLayers"
+    );
+    return [ptmInterfaceFound.ObjName, lowerLayer.ParamValue];
+  };
 
   // Cancel button action
   $scope.cancel = function() {

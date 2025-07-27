@@ -51,23 +51,7 @@ Object=Device.IP.Interface.30
 &Operation=Del&
 
 
-//example add ETH - Bridge (based on localstorage random value)
-Object=Device.IP.Interface
-&Operation=Add
-&Enable=true
-&Alias=cpe-WEB-IPInterface-55 //number from localstorage random value
-&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-55
-&Object=Device.Ethernet.Link
-&Operation=Add
-&Enable=true
-&Alias=cpe-WEB-EthernetLink-55
-&LowerLayers=Device.Bridging.Bridge.1.Port.cpe-WEB-BridgingBridge1Port-55
 
-&Object=Device.Bridging.Bridge.1.Port
-&Operation=Add
-&Enable=true
-&Alias=cpe-WEB-BridgingBridge1Port-55
-&LowerLayers=Device.Ethernet.Interface.5.
 
 
 //example get request for bridge connections
@@ -119,3 +103,24 @@ Object=Device.IP.Interface
 &Enable=true
 &Alias=cpe-WEB-BridgingBridge1Port-28
 &LowerLayers=Device.PTM.Link.1.
+
+
+
+//example add ETH - Bridge (based on localstorage random value)
+Object=Device.IP.Interface
+&Operation=Add
+&Enable=true
+&Alias=cpe-WEB-IPInterface-55 //number from localstorage random value
+&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-55
+
+&Object=Device.Ethernet.Link
+&Operation=Add
+&Enable=true
+&Alias=cpe-WEB-EthernetLink-55
+&LowerLayers=Device.Bridging.Bridge.1.Port.cpe-WEB-BridgingBridge1Port-55
+
+&Object=Device.Bridging.Bridge.1.Port
+&Operation=Add
+&Enable=true
+&Alias=cpe-WEB-BridgingBridge1Port-55
+&LowerLayers=Device.Ethernet.Interface.5.
