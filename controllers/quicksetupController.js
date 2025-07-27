@@ -16,7 +16,7 @@ myapp.controller("quicksetupController", function(
 
   // Default values
   $scope.credentials = {
-    username: "00000000",
+    username: 111111,
     password: "00000000",
   };
 
@@ -146,7 +146,32 @@ myapp.controller("quicksetupController", function(
   async function loadExistingCredentials() {
     try {
       if ($routeParams.id) {
-        const DeviceIpInterface = $routeParams.id.split(",")[0];
+        let DeviceIpInterface = null;
+
+        // Step 1: Get DeviceIpInterface dynamically
+        const upstreamRes = await $http.get(
+          URL +
+            "cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true"
+        );
+
+        if (
+          upstreamRes.data &&
+          upstreamRes.data.Objects &&
+          upstreamRes.data.Objects.length > 0
+        ) {
+          // Find the main interface object (not .Stats or .IPv4Address etc.)
+          const mainObj = upstreamRes.data.Objects.find((obj) =>
+            /^Device\.IP\.Interface\.\d+$/.test(obj.ObjName)
+          );
+          if (mainObj) {
+            DeviceIpInterface = mainObj.ObjName;
+          }
+        }
+
+        if (!DeviceIpInterface) {
+          console.error("No DeviceIpInterface found.");
+          return;
+        }
 
         // Get PPP interface data
         const pppInterfaceData = await $http.get(
@@ -164,12 +189,12 @@ myapp.controller("quicksetupController", function(
           );
 
           const userPassData = userPassResponse.data["Objects"][0];
-
+debugger;
           // Update credentials
           $scope.credentials.username =
-            userPassData.Param.find(
+            parseInt(userPassData.Param.find(
               (x) => x.ParamName === "Username"
-            )?.ParamValue.split("@")[0] || "";
+            )?.ParamValue.split("@")[0] || "");
 
           $scope.credentials.password =
             userPassData.Param.find((x) => x.ParamName === "Password")
