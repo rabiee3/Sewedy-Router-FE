@@ -136,13 +136,10 @@ myapp.controller("wan_wanconnectionsform", function(
         $scope.activeFormName = "atmForm";
         break;
       case "PTM":
-        $scope.currentFormTemplate = "wan_connections_views/ptm-form.html";
-        $scope.activeFormName = "ptmForm";
-        break;
       case "ETH":
       default:
-        $scope.currentFormTemplate = "wan_connections_views/eth-form.html";
-        $scope.activeFormName = "ethForm";
+        $scope.currentFormTemplate = "wan_connections_views/ptm-form.html";
+        $scope.activeFormName = "ptmForm";
         break;
     }
   };
@@ -151,17 +148,15 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.submit = async function() {
     $("#ajaxLoaderSection").show();
 
-    if ($scope.form.selectionMode === "PTM") {
-      if ($scope.customWanForm.ptmForm && $scope.customWanForm.ptmForm.$valid) {
-        if ($scope.isEditMode) {
-          await deleteOldConnection();
-        }
-
-        $scope.$broadcast("addNewConnection");
-      } else {
-        alert("Please fix all errors in the PTM form before submitting.");
-        $("#ajaxLoaderSection").hide();
+    if ($scope.customWanForm.ptmForm && $scope.customWanForm.ptmForm.$valid) {
+      if ($scope.isEditMode) {
+        await deleteOldConnection();
       }
+
+      $scope.$broadcast("addNewConnection");
+    } else {
+      alert("Please fix all errors in the PTM form before submitting.");
+      $("#ajaxLoaderSection").hide();
     }
   };
 
