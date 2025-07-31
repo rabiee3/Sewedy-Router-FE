@@ -5781,9 +5781,9 @@ $.each(newpost, function(i, el){
         localStorage.setItem('randomvalue', $scope.randomNumber(10, 99));
         localStorage.setItem('internetEdit', true);
         localStorage.setItem('internetObject', event.currentTarget.attributes['id'].value)
-        // if(formToopen === "wan_wanconnectionsform"){
-        //     $location.path("/wan_connections_views/"+event.currentTarget.attributes['id'].value);
-        // }else 
+        if(formToopen === "wan_wanconnectionsform"){
+            $location.path("/wan_connections_views/"+event.currentTarget.attributes['id'].value);
+        }else 
         if(formToopen !== null && formToopen !== undefined){
             $location.path("/tableform/" + formToopen);
         }
