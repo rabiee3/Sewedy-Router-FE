@@ -1,1 +1,261 @@
-<h2>atm form</h2>
+<div ng-controller="atm_form_controller">
+  <div ng-form="atmForm" novalidate>
+    <div class="row d-flex align-items-center">
+      <!-- Enable VLAN -->
+      <div class="col-sm-6 checkbox1 input-field1 my-3">
+        <input
+          id="enableVlan"
+          name="Enable"
+          type="checkbox"
+          ng-true-value="'1'"
+          ng-false-value="'0'"
+          ng-model="atmForm.enableVlan"
+          ng-change="updateParent()"
+        />
+        <label class="checkbox_left_align" for="enableVlan">Enable VLAN</label>
+      </div>
+
+      <!-- VLAN ID -->
+      <div class="col-sm-6" ng-if="atmForm.enableVlan == '1'">
+        <div class="input-field required">
+          <input
+            id="vlanId"
+            name="vlanId"
+            ng-model="atmForm.vlanId"
+            placeholder="Enter VLAN ID"
+            type="number"
+            class="form-control"
+            required
+            ng-change="updateParent()"
+          />
+          <label class="active special" for="vlanId">VLAN ID</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Connection Type -->
+      <div class="col-sm-6 mb-3 required">
+        <label for="connectionType">Connection Type</label>
+        <select
+          id="connectionType"
+          materal_select=""
+          ng-required="true"
+          name="connectionType"
+          class="dropdown-toggle"
+          ng-options="type for type in connectionTypes"
+          ng-model="atmForm.connectionType"
+          ng-change="updateParent()"
+        >
+          <option value="" disabled selected>Select Connection Type</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row my-4">
+      <!-- MAC Cloning -->
+      <div class="col-sm-6 d-flex align-items-center">
+        <label for="macClone" class="control-label mr-3"
+          >Mac Cloning Enable</label
+        >
+        <span
+          ng-click="atmForm.macCloneEnabled = !atmForm.macCloneEnabled; updateParent()"
+          class="switch my-3"
+          off="Off"
+          on="On"
+          ng-class="{checked: atmForm.macCloneEnabled}"
+        >
+          <small></small>
+          <input
+            type="checkbox"
+            style="display:none"
+            name="macClone"
+            id="macClone"
+            ng-model="atmForm.macCloneEnabled"
+            ng-change="updateParent()"
+          />
+          <span class="switch-text">
+            <span class="on">On</span><span class="off">Off</span>
+          </span>
+        </span>
+      </div>
+
+      <!-- MAC Address (shown when cloning enabled) -->
+      <div class="mb-3 col-sm-6" ng-if="atmForm.macCloneEnabled">
+        <div class="input-field required">
+          <input
+            id="macAddress"
+            name="macAddress"
+            ng-model="atmForm.mac_address"
+            placeholder="00:1A:2B:3C:4D:5E"
+            type="text"
+            class="form-control"
+            ng-pattern="patterns.macAddress"
+            required
+            ng-change="updateParent()"
+          />
+          <label class="active special" for="macAddress">MAC Address</label>
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.macAddress.$error.pattern && ptmForm.macAddress.$dirty"
+          >
+            Please enter a valid MAC address (format: 00:1A:2B:3C:4D:5E)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pppoe" ng-if="atmForm.connectionType != 'Bridge'">
+      <div class="row">
+        <!-- Username -->
+        <div class="mb-3 col-sm-6">
+          <div class="input-field required d-flex w-100">
+            <input
+              id="username"
+              name="username"
+              ng-model="atmForm.username"
+              placeholder="e.g. 1154897"
+              type="text"
+              class="form-control"
+              ng-pattern="patterns.username"
+              required
+              ng-change="updateParent()"
+            />
+            <label class="active special" for="username">Username</label>
+            <div class="input-suffix d-flex align-items-center">
+              @tedata.com.eg
+            </div>
+          </div>
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.username.$error.pattern && ptmForm.username.$dirty"
+          >
+            Username must contain only numbers
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3 col-sm-6">
+          <div class="d-flex">
+            <div class="input-field required w-100">
+              <input
+                id="password"
+                name="password"
+                ng-model="atmForm.password"
+                placeholder="Enter password"
+                type="{{Passwordfieldstatus ? 'text' : 'password'}}"
+                class="form-control"
+                ng-pattern="patterns.password"
+                required
+                ng-change="updateParent()"
+              />
+              <label class="active special" for="password">Password</label>
+              <div
+                class="text-danger small"
+                ng-show="ptmForm.password.$error.pattern && ptmForm.password.$dirty"
+              >
+                Minimum 8 chars & Must contain: 1 uppercase, 1 number, 1 special
+                character
+              </div>
+            </div>
+            <div class="form-group pwdtoggle_adv">
+              <input
+                id="Passwordcheckbox"
+                name="passwordcheckbox"
+                type="checkbox"
+                ng-model="Passwordfieldstatus"
+              />
+              <label
+                class="checkbox_right_align showpw mt-4 pt-1"
+                for="Passwordcheckbox"
+                ng-class="Passwordfieldstatus ? 'hidepw checkbox_right_align' : 'showpw checkbox_right_align'"
+              ></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- MTU Size -->
+        <div class="mb-3 col-sm-6 clearfix">
+          <div class="input-field required">
+            <input
+              id="mtusize"
+              name="mtusize"
+              ng-model="atmForm.mtu_size"
+              placeholder="1492"
+              type="number"
+              class="form-control"
+              ng-pattern="patterns.mtuSize"
+              required
+              ng-change="updateParent()"
+            />
+            <label class="active special" for="mtusize">MTU Size</label>
+            <div
+              class="text-danger small"
+              ng-show="ptmForm.mtusize.$error.pattern && ptmForm.mtusize.$dirty"
+            >
+              MTU Size must be exactly 1492
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-2">
+        <!-- IPv6 Enable -->
+        <div class="col-sm-6">
+          <div class="checkbox1 input-field1" style="width:215px">
+            <input
+              id="ipv6enable"
+              name="ipv6enable"
+              type="checkbox"
+              ng-true-value="'1'"
+              ng-false-value="'0'"
+              ng-model="atmForm.ipv6enable"
+              ng-change="updateParent()"
+            />
+            <label class="checkbox_left_align" for="ipv6enable"
+              >IPv6 Enable</label
+            >
+          </div>
+        </div>
+
+        <!-- Default Gateway -->
+        <div class="col-sm-6">
+          <div class="checkbox1 input-field1" style="width:215px">
+            <input
+              id="defaultGateway"
+              name="defaultGateway"
+              type="checkbox"
+              ng-true-value="'1'"
+              ng-false-value="'0'"
+              ng-model="atmForm.defaultGateway"
+              ng-change="updateParent()"
+            />
+            <label class="checkbox_left_align" for="defaultGateway"
+              >Default Gateway</label
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bridge" ng-if="atmForm.connectionType == 'Bridge'">
+      <!-- Bridge Connection Selection -->
+      <div class="row">
+        <div class="col-sm-6 mb-3 required">
+          <label for="bridgeConnection">Bridge Connection</label>
+          <select
+            id="bridgeConnection"
+            name="bridgeConnection"
+            class="dropdown-toggle"
+            ng-model="atmForm.selectedBridge"
+            ng-options="bridge for bridge in bridgeConnections"
+            required
+            ng-change="updateParent()"
+          >
+            <option value="" disabled selected>Select Bridge Connection</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
