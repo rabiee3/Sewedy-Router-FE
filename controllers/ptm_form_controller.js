@@ -24,7 +24,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
   // Validation patterns
   $scope.patterns = {
     username: /^\d+$/, // Only numbers
-    password: /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}/, // Complex password
+    password: /^\d+$/, // Only numbers
     macAddress: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, // MAC address
     mtuSize: /^\d+$/, // Only numbers
   };

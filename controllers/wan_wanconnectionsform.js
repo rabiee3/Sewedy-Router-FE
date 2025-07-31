@@ -132,13 +132,13 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.loadForm = function() {
     switch ($scope.form.selectionMode) {
       case "ATM":
-        $scope.currentFormTemplate = "wan_connections_views/atm-form.html";
+        $scope.currentFormTemplate = "atm-form.html";
         $scope.activeFormName = "atmForm";
         break;
       case "PTM":
       case "ETH":
       default:
-        $scope.currentFormTemplate = "wan_connections_views/ptm-form.html";
+        $scope.currentFormTemplate = "ptm-form.html";
         $scope.activeFormName = "ptmForm";
         break;
     }
