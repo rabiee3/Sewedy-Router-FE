@@ -2024,9 +2024,9 @@ myapp.controller('hybridController', function ($location,$scope, $http, $compile
         }
         localStorage.setItem('randomvalue', $scope.randomNumber(10, 99));
         localStorage.setItem('formMode', "add");
-        // if(param === "wan_wanconnectionsform"){
-        //     $location.path("/wan_connections_views");
-        // }else 
+        if(param === "wan_wanconnectionsform"){
+            $location.path("/wan_connections_views");
+        }else 
         if(param !== null && param !== undefined){
             $location.path("/tableform/" + param);
         }

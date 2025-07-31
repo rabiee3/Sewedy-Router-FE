@@ -120,11 +120,11 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                     template: "<div></div>"
                 })
                 .when('/wan_connections_views/', {
-                    templateUrl: "/wan_connections_views/wan_wanconnectionsform.html",
+                    templateUrl: "/wan_wanconnectionsform.html",
                     controller: 'wan_wanconnectionsform'
                 })              
                 .when('/wan_connections_views/:id', {
-                    templateUrl: "/wan_connections_views/wan_wanconnectionsform.html",
+                    templateUrl: "/wan_wanconnectionsform.html",
                     controller: 'wan_wanconnectionsform'
                 });
     }]);
