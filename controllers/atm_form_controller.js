@@ -1,8 +1,6 @@
-
 myapp.controller("atm_form_controller", function($scope, $http) {
-    
   $scope.atmData = {
-    connectionType: "PPPoE",
+    connectionType: "",
     username: "",
     password: "",
     mac_address: "",
@@ -11,9 +9,22 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     enableVlan: "0",
     ipv6enable: "0",
     defaultGateway: "1",
+    linkType: "",
+    encapsulation: "LLC",
+    atmQosClass:"UBR",
+    peakCellRate:1414,
+    maximumBSize:11,
+    sustainableCellRate:1121
   };
 
-  $scope.connectionTypes = ["PPPoE", "Bridge"];
+  $scope.connectionTypes = [],
+  $scope.encapsulationOptions = ["LLC","VCMUX"],
+  $scope.atmQosClassOptions = ["UBR","CBR","NRT-VBR","RT-VBR","UBR+"],
+  $scope.linkTypeOptions = ["EoA", "PPPoA"];
+  $scope.connectionTypeOptionsMap = {
+    EoA: ["PPPoE", "Bridge"],
+    PPPoA: ["PPPoA"],
+  };
   $scope.bridgeConnections = [];
 
   // Password visibility toggle
@@ -23,14 +34,21 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   // Validation patterns
   $scope.patterns = {
     username: /^\d+$/, // Only numbers
-    password: /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}/, // Complex password
+    password: /^\d+$/, // Only numbers
     macAddress: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, // MAC address
     mtuSize: /^\d+$/, // Only numbers
   };
 
-  // Emit changes to the parent when ptmData is updated
+  // Watcher to update connectionTypes dynamically
+  $scope.$watch("atmData.linkType", function(newVal) {
+    $scope.connectionTypes = $scope.connectionTypeOptionsMap[newVal] || [];
+    $scope.atmData.connectionType = $scope.connectionTypes[0];
+    $scope.updateParent();
+  });
+
+  // Emit changes to the parent when atmData is updated
   $scope.updateParent = function() {
-    $scope.$emit("ptmDataChanged", $scope.ptmData);
+    $scope.$emit("atmDataChanged", $scope.atmData);
   };
 
   // Function to reset the form fields
