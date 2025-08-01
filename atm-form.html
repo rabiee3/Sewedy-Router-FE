@@ -10,7 +10,12 @@
           Create/Select VPI/VCI
         </label>
         <div class="input-group input-field">
-          <input type="text" class="form-control" id="createVPIVCL" />
+          <input
+            type="text"
+            class="form-control"
+            id="createVPIVCL"
+            ng-model="atmData.vpiVci"
+          />
           <div class="input-group-btn">
             <button
               type="button"
@@ -26,8 +31,12 @@
               class="dropdown-menu dropdown-menu-right"
               role="menu"
             >
-              <li class="input-lg">
-                <a ng-click="dropdownliclick($event)"></a>
+              <li
+                class="input-lg"
+                ng-repeat="vpiVci in vpiVciOptions"
+                ng-click="selectVpiVci(vpiVci)"
+              >
+                <a>{{ vpiVci }}</a>
               </li>
             </ul>
           </div>

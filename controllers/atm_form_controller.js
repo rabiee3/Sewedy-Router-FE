@@ -11,21 +11,30 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     defaultGateway: "1",
     linkType: "",
     encapsulation: "LLC",
-    atmQosClass:"UBR",
-    peakCellRate:1414,
-    maximumBSize:11,
-    sustainableCellRate:1121
+    atmQosClass: "UBR",
+    peakCellRate: 1414,
+    maximumBSize: 11,
+    sustainableCellRate: 1121,
+    vpiVci: "",
   };
 
-  $scope.connectionTypes = [],
-  $scope.encapsulationOptions = ["LLC","VCMUX"],
-  $scope.atmQosClassOptions = ["UBR","CBR","NRT-VBR","RT-VBR","UBR+"],
-  $scope.linkTypeOptions = ["EoA", "PPPoA"];
+  ($scope.connectionTypes = []),
+    ($scope.encapsulationOptions = ["LLC", "VCMUX"]),
+    ($scope.atmQosClassOptions = ["UBR", "CBR", "NRT-VBR", "RT-VBR", "UBR+"]),
+    ($scope.linkTypeOptions = ["EoA", "PPPoA"]);
+
+  $scope.vpiVciOptions = []; // filled from CGI
+
   $scope.connectionTypeOptionsMap = {
     EoA: ["PPPoE", "Bridge"],
     PPPoA: ["PPPoA"],
   };
   $scope.bridgeConnections = [];
+
+  //onInit or on parent changes the selectioMode
+  if ($scope.$parent.form.selectionMode === "ATM") {
+    loadExistingVpiVci();
+  }
 
   // Password visibility toggle
   $scope.Passwordfieldstatus = false;
@@ -51,10 +60,15 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     $scope.$emit("atmDataChanged", $scope.atmData);
   };
 
+  $scope.selectVpiVci = function(vpiVci) {
+    $scope.atmData.vpiVci = vpiVci;
+    $scope.updateParent();
+  };
+
   // Function to reset the form fields
   $scope.resetForm = function() {
     $scope.ptmData = {
-      connectionType: "PPPoE",
+      connectionType: "",
       username: "",
       password: "",
       mac_address: "",
@@ -63,9 +77,38 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       enableVlan: "0",
       ipv6enable: "0",
       defaultGateway: "1",
+      linkType: "",
+      encapsulation: "LLC",
+      atmQosClass: "UBR",
+      peakCellRate: 1414,
+      maximumBSize: 11,
+      sustainableCellRate: 1121,
     };
     $scope.updateParent(); // Notify parent of reset
   };
+
+  //function to load VPI/VCI
+  async function loadExistingVpiVci() {
+    try {
+      const response = await $http.get(
+        URL + "cgi_get_fillparams?Object=Device.ATM.Link&DestinationAddress="
+      );
+
+      if (response.data?.Objects?.length) {
+        $scope.vpiVciOptions = response.data.Objects.map((obj) => {
+          const addrParam = obj.Param.find(
+            (p) => p.ParamName === "DestinationAddress"
+          );
+          return addrParam?.ParamValue;
+        }).filter(Boolean); // remove null/undefined
+      } else {
+        $scope.vpiVciOptions = [];
+      }
+    } catch (err) {
+      console.error("Failed to load existing VPI/VCI list", err);
+      $scope.vpiVciOptions = [];
+    }
+  }
 
   // Function to fetch and populate user_pass data in edit mode
   async function loadUserPassData() {
@@ -158,44 +201,71 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   $scope.addNewConnection = async function() {
     try {
       const randomNumber = parseInt(localStorage.getItem("randomvalue"));
+      const dslLowerLayer = "Device.DSL.Line.1."; // Assuming fixed DSL line
 
-      const lowerLayer = await $http.get(
-        URL +
-          `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup.${
-            $scope.$parent.form.selectionMode === "PTM" ? 1 : 3
-          }&MappingLowerLayer=`
+      // ATM Layer
+      const atmAlias = `cpe-WEB-ATMLink-${randomNumber}`;
+      const qosPath = `Device.ATM.Link.${atmAlias}.QoS`;
+
+      // Ethernet Link
+      const ethAlias = `cpe-WEB-EthernetLink-${randomNumber}`;
+
+      // PPP Interface
+      const pppAlias = `cpe-WEB-PPPInterface-${randomNumber}`;
+      const pppUsername = encodeURIComponent(
+        `${$scope.atmData.username}@tedata.com.eg`
       );
+      const pppPassword = encodeURIComponent($scope.atmData.password);
 
-      const WanGroupMappingLayer =
-        lowerLayer.data["Objects"][0].Param[0].ParamValue;
+      // IP Interface
+      const ipAlias = `cpe-WEB-IPInterface-${randomNumber}`;
 
+      // 1. Start request string
       let connectionRequest = "";
 
-      if ($scope.ptmData.connectionType === "PPPoE") {
-        connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber}&IPv6Enable=${$scope.ptmData.ipv6enable}&X_LANTIQ_COM_DefaultGateway=${$scope.ptmData.defaultGateway}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${WanGroupMappingLayer}&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber}&Username=${$scope.ptmData.username}%40tedata.net.eg&Password=${$scope.ptmData.password}&MaxMRUSize=${$scope.ptmData.mtu_size}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}`;
-      } else if ($scope.ptmData.connectionType === "Bridge") {
-        if (!$scope.bridgeObjectName) {
-          throw new Error("Bridge object name not found");
-        }
+      // 2. ATM Link Layer
+      connectionRequest += `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${atmAlias}`;
+      connectionRequest += `&LowerLayers=${dslLowerLayer}`;
+      connectionRequest += `&DestinationAddress=${$scope.atmData.vpiVci}`;
+      connectionRequest += `&Encapsulation=${$scope.atmData.encapsulation}`;
+      connectionRequest += `&LinkType=${$scope.atmData.linkType}`;
 
-        connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${$scope.bridgeObjectName}.Port.cpe-WEB-BridgingBridge1Port-${randomNumber}&Object=${$scope.bridgeObjectName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge1Port-${randomNumber}&LowerLayers=${WanGroupMappingLayer}`;
-      }
+      // 3. QoS Settings
+      connectionRequest += `Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
+      connectionRequest += `&QoSClass=${$scope.atmData.atmQosClass}`;
+      connectionRequest += `&PeakCellRate=${$scope.atmData.peakCellRate}`;
+      connectionRequest += `&MaximumBurstSize=${$scope.atmData.maximumBSize}`;
+      connectionRequest += `&SustainableCellRate=${$scope.atmData.sustainableCellRate}`;
 
+      // 4. IP Interface
+      connectionRequest += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
+      connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
+      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${$scope.atmData.defaultGateway}`;
+
+      // 5. Ethernet Link
+      connectionRequest += `Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
+      connectionRequest += `&LowerLayers=Device.ATM.Link.${atmAlias}`;
+
+      // 6. PPP Interface
+      connectionRequest += `Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${pppAlias}`;
+      connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
+      connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size}`;
+      connectionRequest += `&Username=${pppUsername}&Password=${pppPassword}`;
+
+      // 7. Send request
       const result = await $http.post(URL + "cgi_set", connectionRequest);
 
       if (result.status === 200) {
         $scope.$emit("connectionAdded", true);
       } else {
-        // Check if result contains error details
-        if (result.data?.Objects?.[0]?.Param?.[0]?.ParamValue) {
-          alert(result.data.Objects[0].Param[0].ParamValue);
-        } else {
-          alert("Something wrong happened");
-        }
+        alert(
+          result.data?.Objects?.[0]?.Param?.[0]?.ParamValue ||
+            "Something went wrong."
+        );
       }
-    } catch (error) {
-      console.error("Error adding new connection:", error);
-      alert("Failed to add connection.");
+    } catch (err) {
+      console.error("Error adding ATM connection:", err);
+      alert("Failed to add ATM connection.");
     } finally {
       $("#ajaxLoaderSection").hide();
     }
@@ -208,7 +278,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   loadUserPassData();
 
   // Watch for changes in connectionType and load data accordingly
-  $scope.$watch("ptmData.connectionType", function(newValue) {
+  $scope.$watch("atmData.connectionType", function(newValue) {
     if (newValue === "Bridge") {
       loadBridgeConnections();
     } else {
