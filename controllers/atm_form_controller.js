@@ -67,7 +67,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   // Function to reset the form fields
   $scope.resetForm = function() {
-    $scope.ptmData = {
+    $scope.atmData = {
       connectionType: "",
       username: "",
       password: "",
@@ -133,14 +133,14 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
         setTimeout(() => {
           $scope.$apply(() => {
-            $scope.ptmData.username =
+            $scope.atmData.username =
               userPassData.Param.find(
                 (x) => x.ParamName === "Username"
               )?.ParamValue.split("@")[0] || "";
-            $scope.ptmData.password =
+            $scope.atmData.password =
               userPassData.Param.find((x) => x.ParamName === "Password")
                 ?.ParamValue || "";
-            $scope.ptmData.mtu_size =
+            $scope.atmData.mtu_size =
               parseInt(
                 userPassData.Param.find((x) => x.ParamName === "MaxMRUSize")
                   ?.ParamValue
@@ -165,7 +165,8 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   // Update the loadBridgeConnections function to store the bridge object name
   async function loadBridgeConnections() {
-    if ($scope.ptmData.connectionType !== "Bridge") {
+    debugger;
+    if ($scope.atmData.connectionType !== "Bridge") {
       return;
     }
     try {
@@ -279,6 +280,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   // Watch for changes in connectionType and load data accordingly
   $scope.$watch("atmData.connectionType", function(newValue) {
+    debugger;
     if (newValue === "Bridge") {
       loadBridgeConnections();
     } else {
