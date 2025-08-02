@@ -146,10 +146,13 @@ myapp.controller("wan_wanconnectionsform", function(
 
   // Function to handle form submission
   $scope.submit = async function() {
+    if (window.$ && $("#ajaxLoaderSection").length) {
+      $("#ajaxLoaderSection").show();
+    }
+
     let activeForm = $scope.activeFormName; // "atmForm" or "ptmForm"
     let eventToBroadcast =
       activeForm === "atmForm" ? "addAtmConnection" : "addPtmConnection";
-    console.log($scope.customWanForm[activeForm]);
     if (
       $scope.customWanForm[activeForm] &&
       $scope.customWanForm[activeForm].$valid
@@ -187,7 +190,7 @@ myapp.controller("wan_wanconnectionsform", function(
   });
 
   // Function to delete the old connection in edit mode
-  async function deleteOldConnection() {
+  async function deleteOldPtmConnection() {
     const getAllPVCs = `Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true`;
     const res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
 
