@@ -165,7 +165,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   // Update the loadBridgeConnections function to store the bridge object name
   async function loadBridgeConnections() {
-    debugger;
     if ($scope.atmData.connectionType !== "Bridge") {
       return;
     }
@@ -201,7 +200,10 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   $scope.addNewConnection = async function() {
     try {
-      const randomNumber = parseInt(localStorage.getItem("randomvalue"));
+      let randomNumber = parseInt(localStorage.getItem("randomvalue"));
+      if (isNaN(randomNumber)) {
+        randomNumber = Math.floor(Math.random() * 1000); // fallback
+      }
       const dslLowerLayer = "Device.DSL.Line.1."; // Assuming fixed DSL line
 
       // ATM Layer
@@ -225,7 +227,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       let connectionRequest = "";
 
       // 2. ATM Link Layer
-      connectionRequest += `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${atmAlias}`;
+      connectionRequest += `&Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${atmAlias}`;
       connectionRequest += `&LowerLayers=${dslLowerLayer}`;
       connectionRequest += `&DestinationAddress=${$scope.atmData.vpiVci}`;
       connectionRequest += `&Encapsulation=${$scope.atmData.encapsulation}`;
@@ -239,16 +241,16 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       connectionRequest += `&SustainableCellRate=${$scope.atmData.sustainableCellRate}`;
 
       // 4. IP Interface
-      connectionRequest += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
+      connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
       connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${$scope.atmData.defaultGateway}`;
+      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${$scope.atmData.defaultGateway === '1' ? 'true' : 'false'}`;
 
       // 5. Ethernet Link
-      connectionRequest += `Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
+      connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
       connectionRequest += `&LowerLayers=Device.ATM.Link.${atmAlias}`;
 
       // 6. PPP Interface
-      connectionRequest += `Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${pppAlias}`;
+      connectionRequest += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${pppAlias}`;
       connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
       connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size}`;
       connectionRequest += `&Username=${pppUsername}&Password=${pppPassword}`;
@@ -272,7 +274,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     }
   };
 
-  $scope.$on("addNewConnection", function() {
+  $scope.$on("addAtmConnection", function() {
     $scope.addNewConnection();
   });
 
@@ -280,7 +282,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   // Watch for changes in connectionType and load data accordingly
   $scope.$watch("atmData.connectionType", function(newValue) {
-    debugger;
     if (newValue === "Bridge") {
       loadBridgeConnections();
     } else {

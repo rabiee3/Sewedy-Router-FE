@@ -146,16 +146,26 @@ myapp.controller("wan_wanconnectionsform", function(
 
   // Function to handle form submission
   $scope.submit = async function() {
-    $("#ajaxLoaderSection").show();
-
-    if ($scope.customWanForm.ptmForm && $scope.customWanForm.ptmForm.$valid) {
+    let activeForm = $scope.activeFormName; // "atmForm" or "ptmForm"
+    let eventToBroadcast =
+      activeForm === "atmForm" ? "addAtmConnection" : "addPtmConnection";
+    console.log($scope.customWanForm[activeForm]);
+    if (
+      $scope.customWanForm[activeForm] &&
+      $scope.customWanForm[activeForm].$valid
+    ) {
       if ($scope.isEditMode) {
-        await deleteOldConnection();
+        if ($scope.form.selectionMode === "ATM") {
+          await deleteOldAtmConnection();
+        } else {
+          await deleteOldPtmConnection();
+        }
       }
 
-      $scope.$broadcast("addNewConnection");
+      $scope.$broadcast(eventToBroadcast);
     } else {
-      alert("Please fix all errors in the PTM form before submitting.");
+      const formName = activeForm === "atmForm" ? "ATM" : "PTM";
+      alert(`Please fix all errors in the ${formName} form before submitting.`);
       $("#ajaxLoaderSection").hide();
     }
   };

@@ -32,7 +32,6 @@
               role="menu"
             >
               <li
-                class="input-lg"
                 ng-repeat="vpiVci in vpiVciOptions"
                 ng-click="selectVpiVci(vpiVci)"
               >
@@ -53,7 +52,7 @@
           name="encapsulation"
           class="dropdown-toggle"
           ng-options="type for type in encapsulationOptions"
-          ng-model="atmData.connectionType"
+          ng-model="atmData.encapsulation"
           ng-change="updateParent()"
         >
           <option value="" disabled selected>Select Encapsulation</option>

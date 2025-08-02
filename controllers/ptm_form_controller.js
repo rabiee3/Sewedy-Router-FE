@@ -184,7 +184,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     }
   };
 
-  $scope.$on("addNewConnection", function() {
+  $scope.$on("addPtmConnection", function() {
     $scope.addNewConnection();
   });
 
