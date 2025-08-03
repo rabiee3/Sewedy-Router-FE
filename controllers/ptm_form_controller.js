@@ -5,7 +5,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     username: "",
     password: "",
     mac_address: "",
-    mtu_size: 1492,
+    mtu_size: "1492",
     macCloneEnabled: false,
     enableVlan: "0",
     ipv6enable: "0",
@@ -14,12 +14,14 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
 
   $scope.connectionTypes = ["PPPoE", "Bridge"];
   $scope.bridgeConnections = [];
-  //set defulat to PPPoE
-  //$scope.ptmData.connectionType = "PPPoE";
+
+  $scope.editEthernetInterface = "";
+  $scope.editPPPInterface = "";
+  $scope.editIPInterface = "";
+  $scope.editAlias = "";
 
   // Password visibility toggle
   $scope.Passwordfieldstatus = false;
-  $scope.lowerPTM_link = "";
 
   // Validation patterns
   $scope.patterns = {
@@ -41,7 +43,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       username: "",
       password: "",
       mac_address: "",
-      mtu_size: 1492,
+      mtu_size: "1492",
       macCloneEnabled: false,
       enableVlan: "0",
       ipv6enable: "0",
@@ -54,22 +56,37 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
   async function loadUserPassData() {
     try {
       if ($scope.$parent.internetObject) {
-        const DeviceIpInterface = $scope.$parent.internetObject.split(",")[0];
+        $scope.editIPInterface = $scope.$parent.internetObject.split(",")[0];
         //get PPP interface data //res1
         const pppInterfaceData = await $http.get(
-          URL + "cgi_get_nosubobj?Object=" + DeviceIpInterface
+          URL + "cgi_get_nosubobj?Object=" + $scope.editIPInterface
         );
         const pppObj = pppInterfaceData.data["Objects"][0];
 
-        $scope.lowerPTM_link = pppObj.Param.find(
+        $scope.editPPPInterface = pppObj.Param.find(
           (x) => x.ParamName === "LowerLayers"
         )?.ParamValue;
 
         const userPassResponse = await $http.get(
-          URL + "cgi_get_nosubobj?Object=" + $scope.lowerPTM_link
+          URL + "cgi_get_nosubobj?Object=" + $scope.editPPPInterface
         );
 
+        $scope.ptmData.defaultGateway =
+          pppObj.Param.find(
+            (x) => x.ParamName === "X_LANTIQ_COM_DefaultGateway"
+          )?.ParamValue === "true"
+            ? "1"
+            : "0";
+
+        $scope.ptmData.mtu_size = pppObj.Param.find(
+          (x) => x.ParamName === "MaxMTUSize"
+        )?.ParamValue;
+
         const userPassData = userPassResponse.data["Objects"][0];
+
+        $scope.editEthernetInterface = userPassData.Param.find(
+          (x) => x.ParamName === "LowerLayers"
+        )?.ParamValue;
 
         setTimeout(() => {
           $scope.$apply(() => {
@@ -80,15 +97,10 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
             $scope.ptmData.password =
               userPassData.Param.find((x) => x.ParamName === "Password")
                 ?.ParamValue || "";
-            $scope.ptmData.mtu_size =
-              parseInt(
-                userPassData.Param.find((x) => x.ParamName === "MaxMRUSize")
-                  ?.ParamValue
-              ) || 1492;
           });
         }, 200);
 
-        $scope.updateParent(); // Notify parent of updated data
+        $scope.updateParent();
       }
     } catch (error) {
       console.error("Error loading user_pass data:", error);
@@ -138,6 +150,13 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     }
   }
 
+  // Function to delete the old connection in edit mode
+  async function deleteOldPtmConnection() {
+    const DELETE_Request = `Object=${$scope.editIPInterface}&Operation=Del&Object=${$scope.editPPPInterface}&Operation=Del&Object=${$scope.editEthernetInterface}&Operation=Del`;
+    debugger;
+    return await $http.post(URL + "cgi_set", DELETE_Request);
+  }
+
   $scope.addNewConnection = async function() {
     try {
       const randomNumber = parseInt(localStorage.getItem("randomvalue"));
@@ -155,7 +174,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       let connectionRequest = "";
 
       if ($scope.ptmData.connectionType === "PPPoE") {
-        connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber}&IPv6Enable=${$scope.ptmData.ipv6enable}&X_LANTIQ_COM_DefaultGateway=${$scope.ptmData.defaultGateway}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${WanGroupMappingLayer}&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber}&Username=${$scope.ptmData.username}%40tedata.net.eg&Password=${$scope.ptmData.password}&MaxMRUSize=${$scope.ptmData.mtu_size}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}`;
+        connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber}&IPv6Enable=${$scope.ptmData.ipv6enable}&MaxMTUSize=${$scope.ptmData.mtu_size}&X_LANTIQ_COM_DefaultGateway=${$scope.ptmData.defaultGateway}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${WanGroupMappingLayer}&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber}&Username=${$scope.ptmData.username}%40tedata.net.eg&Password=${$scope.ptmData.password}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}`;
       } else if ($scope.ptmData.connectionType === "Bridge") {
         if (!$scope.bridgeObjectName) {
           throw new Error("Bridge object name not found");
@@ -164,14 +183,23 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
         connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${$scope.bridgeObjectName}.Port.cpe-WEB-BridgingBridge1Port-${randomNumber}&Object=${$scope.bridgeObjectName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge1Port-${randomNumber}&LowerLayers=${WanGroupMappingLayer}`;
       }
 
-      const result = await $http.post(URL + "cgi_set", connectionRequest);
+      let deleteRes = 1;
+      if ($scope.$parent.isEditMode) {
+        deleteRes = await deleteOldPtmConnection();
+        if (!deleteRes || deleteRes.status !== 200) {
+          alert("Problem Deleting Old PTM Connection");
+          throw new Error("Problem Deleting Old PTM Connection");
+        }
+      }
 
-      if (result.status === 200) {
+      const addResult = await $http.post(URL + "cgi_set", connectionRequest);
+
+      if (addResult.status === 200) {
         $scope.$emit("connectionAdded", true);
       } else {
         // Check if result contains error details
-        if (result.data?.Objects?.[0]?.Param?.[0]?.ParamValue) {
-          alert(result.data.Objects[0].Param[0].ParamValue);
+        if (addResult.data?.Objects?.[0]?.Param?.[0]?.ParamValue) {
+          alert(addResult.data.Objects[0].Param[0].ParamValue);
         } else {
           alert("Something wrong happened");
         }

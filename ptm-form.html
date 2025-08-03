@@ -181,7 +181,7 @@
               name="mtusize"
               ng-model="ptmData.mtu_size"
               placeholder="1492"
-              type="number"
+              type="text"
               class="form-control"
               ng-pattern="patterns.mtuSize"
               required
@@ -192,7 +192,7 @@
               class="text-danger small"
               ng-show="ptmForm.mtusize.$error.pattern && ptmForm.mtusize.$dirty"
             >
-              MTU Size must be exactly 1492
+              MTU Size must be a number
             </div>
           </div>
         </div>

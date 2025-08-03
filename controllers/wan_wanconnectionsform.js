@@ -95,17 +95,13 @@ myapp.controller("wan_wanconnectionsform", function(
     const getParam = (name) =>
       ipParams.find((x) => x.ParamName === name)?.ParamValue || "";
 
-    // $scope.DeviceIpInterface = ipObj.ObjName;
-    // $scope.Alias = getParam("Alias");
-    // $scope.IPv4Enable = getParam("IPv4Enable");
-    // $scope.LowerLayers = getParam("LowerLayers");
     $scope.X_LANTIQ_COM_DefaultGateway = getParam(
       "X_LANTIQ_COM_DefaultGateway"
     );
 
     let X_LANTIQ_COM_Description = "";
-    if (data["Objects"][1]) {
-      const descParam = data["Objects"][1].Param.find(
+    if (data["Objects"][2]) {
+      const descParam = data["Objects"][2].Param.find(
         (x) => x.ParamName === "X_LANTIQ_COM_Description"
       );
       X_LANTIQ_COM_Description = descParam ? descParam.ParamValue : "";
@@ -157,14 +153,6 @@ myapp.controller("wan_wanconnectionsform", function(
       $scope.customWanForm[activeForm] &&
       $scope.customWanForm[activeForm].$valid
     ) {
-      if ($scope.isEditMode) {
-        if ($scope.form.selectionMode === "ATM") {
-          await deleteOldAtmConnection();
-        } else {
-          await deleteOldPtmConnection();
-        }
-      }
-
       $scope.$broadcast(eventToBroadcast);
     } else {
       const formName = activeForm === "atmForm" ? "ATM" : "PTM";
@@ -188,31 +176,6 @@ myapp.controller("wan_wanconnectionsform", function(
       $scope.$apply();
     }
   });
-
-  // Function to delete the old connection in edit mode
-  async function deleteOldPtmConnection() {
-    const getAllPVCs = `Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true`;
-    const res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
-
-    // Validate response data
-    if (!res.data || !res.data.Objects || !Array.isArray(res.data.Objects)) {
-      console.error("Invalid response data structure:", res.data);
-      return;
-    }
-
-    const interfaceIds = $scope.getPTMInterfaceID(res.data);
-    if (
-      !interfaceIds ||
-      !Array.isArray(interfaceIds) ||
-      interfaceIds.length !== 2
-    ) {
-      console.error("Invalid interface IDs returned:", interfaceIds);
-      return;
-    }
-
-    const DELETE_Request = `Object=${interfaceIds[0]}&Operation=Del&Object=${interfaceIds[1]}&Operation=Del`;
-    await $http.post(URL + "cgi_set", DELETE_Request);
-  }
 
   $scope.getPTMInterfaceID = function(pvcs) {
     const regex = /(ptm|wan)/i;
