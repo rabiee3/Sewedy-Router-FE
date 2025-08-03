@@ -177,38 +177,6 @@ myapp.controller("wan_wanconnectionsform", function(
     }
   });
 
-  $scope.getPTMInterfaceID = function(pvcs) {
-    const regex = /(ptm|wan)/i;
-    let ptmInterfaceFound = null;
-
-    // Loop through the objects
-    for (let object of pvcs.Objects) {
-      // Loop through the params inside each object
-      for (let param of object.Param) {
-        if (regex.test(param.ParamValue)) {
-          ptmInterfaceFound = object; // Set ptmInterfaceFound to the outer object
-          break; // Break out of the inner loop when a match is found
-        }
-      }
-
-      // If a match was found, break out of the outer loop too
-      if (ptmInterfaceFound) {
-        break;
-      }
-    }
-
-    if (!ptmInterfaceFound) {
-      console.log("No PTM interface found.");
-      return null;
-    }
-
-    console.log(`PTM Interface ID: ${ptmInterfaceFound.ObjName}`);
-    let lowerLayer = ptmInterfaceFound.Param.find(
-      (x) => x.ParamName === "LowerLayers"
-    );
-    return [ptmInterfaceFound.ObjName, lowerLayer.ParamValue];
-  };
-
   // Cancel button action
   $scope.cancel = function() {
     $location.path("/tableform/wan_wanconnections");

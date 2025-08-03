@@ -231,7 +231,14 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   }
 
   $scope.addNewConnection = async function() {
+    debugger;
     try {
+      // If edit mode, delete old connection first
+      
+      if ($scope.$parent.isEditMode) {
+        await $scope.deleteConnection();
+      }
+
       let randomNumber = parseInt(localStorage.getItem("randomvalue"));
       if (isNaN(randomNumber)) {
         randomNumber = Math.floor(Math.random() * 1000); // fallback
@@ -307,6 +314,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   };
 
   $scope.$on("addAtmConnection", function() {
+    debugger;
     $scope.addNewConnection();
   });
 
@@ -320,4 +328,50 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       loadUserPassData();
     }
   });
+
+  async function getAtmConnectionObjects(ipInterface) {
+    let objectsToDelete = [];
+    try {
+      // 1. IP Interface
+      objectsToDelete.push(ipInterface);
+
+      // 2. Get PPP Interface from IP's LowerLayers
+      const ipData = await $http.get(URL + "cgi_get_nosubobj?Object=" + ipInterface);
+      const ipObj = ipData.data.Objects[0];
+      const pppInterface = ipObj.Param.find(x => x.ParamName === "LowerLayers")?.ParamValue;
+      if (pppInterface) objectsToDelete.push(pppInterface);
+
+      // 3. Get Ethernet Interface from PPP's LowerLayers
+      const pppData = await $http.get(URL + "cgi_get_nosubobj?Object=" + pppInterface);
+      const pppObj = pppData.data.Objects[0];
+      const ethInterface = pppObj.Param.find(x => x.ParamName === "LowerLayers")?.ParamValue;
+      if (ethInterface) objectsToDelete.push(ethInterface);
+
+      // 4. Get ATM Link from Ethernet's LowerLayers
+      const ethData = await $http.get(URL + "cgi_get_nosubobj?Object=" + ethInterface);
+      const ethObj = ethData.data.Objects[0];
+      const atmLink = ethObj.Param.find(x => x.ParamName === "LowerLayers")?.ParamValue;
+      if (atmLink) objectsToDelete.push(atmLink);
+
+      return objectsToDelete;
+    } catch (err) {
+      console.error("Error traversing ATM connection chain", err);
+      return objectsToDelete;
+    }
+  }
+
+  $scope.deleteConnection = async function() {
+    try {
+      let objects = await getAtmConnectionObjects($scope.$parent.internetObject.split(",")[0]);
+      let deleteRequest = "";
+      objects.forEach(objName => {
+        if (objName) deleteRequest += `Object=${objName}&Operation=Del&`;
+      });
+      if (deleteRequest) {
+        await $http.post(URL + "cgi_set", deleteRequest);
+      }
+    } catch (err) {
+      console.error("Error deleting ATM connection:", err);
+    }
+  };
 });
