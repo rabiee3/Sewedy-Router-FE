@@ -18,6 +18,10 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     vpiVci: "",
   };
 
+  // Store all ATM Link and QoS objects
+  $scope.atmLinks = [];
+  $scope.atmLinksQos = [];
+
   ($scope.connectionTypes = []),
     ($scope.encapsulationOptions = ["LLC", "VCMUX"]),
     ($scope.atmQosClassOptions = ["UBR", "CBR", "NRT-VBR", "RT-VBR", "UBR+"]),
@@ -31,9 +35,9 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   };
   $scope.bridgeConnections = [];
 
-  //onInit or on parent changes the selectioMode
+  // Load ATM links and QoS objects on init if ATM mode
   if ($scope.$parent.form.selectionMode === "ATM") {
-    loadExistingVpiVci();
+    loadAtmLinksAndQos();
   }
 
   // Password visibility toggle
@@ -62,8 +66,40 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   $scope.selectVpiVci = function(vpiVci) {
     $scope.atmData.vpiVci = vpiVci;
+    // Find the selected link object
+    const linkObj = $scope.atmLinks.find(obj => {
+      const addrParam = obj.Param.find(p => p.ParamName === "DestinationAddress");
+      return addrParam && addrParam.ParamValue === vpiVci;
+    });
+    // Find the corresponding QoS object
+    let qosObj = null;
+    if (linkObj) {
+      const linkNumMatch = linkObj.ObjName.match(/Device\.ATM\.Link\.(\d+)$/);
+      if (linkNumMatch) {
+        const qosObjName = `Device.ATM.Link.${linkNumMatch[1]}.QoS`;
+        qosObj = $scope.atmLinksQos.find(obj => obj.ObjName === qosObjName);
+      }
+    }
+    // Fill fields from linkObj and qosObj
+    if (qosObj) {
+      $scope.atmData.atmQosClass = getParamValue(qosObj, "QoSClass");
+      $scope.atmData.peakCellRate = parseInt(getParamValue(qosObj, "PeakCellRate")) || "";
+      $scope.atmData.maximumBSize = parseInt(getParamValue(qosObj, "MaximumBurstSize")) || "";
+      $scope.atmData.sustainableCellRate = parseInt(getParamValue(qosObj, "SustainableCellRate")) || "";
+    } else {
+      $scope.atmData.atmQosClass = "";
+      $scope.atmData.peakCellRate = "";
+      $scope.atmData.maximumBSize = "";
+      $scope.atmData.sustainableCellRate = "";
+    }
     $scope.updateParent();
   };
+
+  // Helper to get param value from object
+  function getParamValue(obj, paramName) {
+    const param = obj.Param.find(p => p.ParamName === paramName);
+    return param ? param.ParamValue : "";
+  }
 
   // Function to reset the form fields
   $scope.resetForm = function() {
@@ -87,25 +123,21 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     $scope.updateParent(); // Notify parent of reset
   };
 
-  //function to load VPI/VCI
-  async function loadExistingVpiVci() {
+  // Load all ATM Link and QoS objects, fill VPI/VCI dropdown
+  async function loadAtmLinksAndQos() {
     try {
       const response = await $http.get(
-        URL + "cgi_get_fillparams?Object=Device.ATM.Link&DestinationAddress="
+        URL + "cgi_get?Object=Device.ATM.Link"
       );
-
-      if (response.data?.Objects?.length) {
-        $scope.vpiVciOptions = response.data.Objects.map((obj) => {
-          const addrParam = obj.Param.find(
-            (p) => p.ParamName === "DestinationAddress"
-          );
-          return addrParam?.ParamValue;
-        }).filter(Boolean); // remove null/undefined
-      } else {
-        $scope.vpiVciOptions = [];
-      }
+      const objects = response.data.Objects || [];
+      $scope.atmLinks = objects.filter(obj => /^Device\.ATM\.Link\.\d+$/.test(obj.ObjName));
+      $scope.atmLinksQos = objects.filter(obj => /\.QoS$/.test(obj.ObjName));
+      $scope.vpiVciOptions = $scope.atmLinks.map(obj => {
+        const addrParam = obj.Param.find(p => p.ParamName === "DestinationAddress");
+        return addrParam ? addrParam.ParamValue : null;
+      }).filter(Boolean);
     } catch (err) {
-      console.error("Failed to load existing VPI/VCI list", err);
+      console.error("Failed to load ATM Link/QoS objects", err);
       $scope.vpiVciOptions = [];
     }
   }
