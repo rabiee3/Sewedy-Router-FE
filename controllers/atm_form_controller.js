@@ -273,11 +273,17 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       connectionRequest += `&LinkType=${$scope.atmData.linkType}`;
 
       // 3. QoS Settings
-      connectionRequest += `Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
+      connectionRequest += `&Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
       connectionRequest += `&QoSClass=${$scope.atmData.atmQosClass}`;
-      connectionRequest += `&PeakCellRate=${$scope.atmData.peakCellRate}`;
-      connectionRequest += `&MaximumBurstSize=${$scope.atmData.maximumBSize}`;
-      connectionRequest += `&SustainableCellRate=${$scope.atmData.sustainableCellRate}`;
+      if ($scope.atmData.peakCellRate !== undefined && $scope.atmData.peakCellRate !== "" && $scope.atmData.peakCellRate !== null) {
+        connectionRequest += `&PeakCellRate=${$scope.atmData.peakCellRate}`;
+      }
+      if ($scope.atmData.maximumBSize !== undefined && $scope.atmData.maximumBSize !== "" && $scope.atmData.maximumBSize !== null) {
+        connectionRequest += `&MaximumBurstSize=${$scope.atmData.maximumBSize}`;
+      }
+      if ($scope.atmData.sustainableCellRate !== undefined && $scope.atmData.sustainableCellRate !== "" && $scope.atmData.sustainableCellRate !== null) {
+        connectionRequest += `&SustainableCellRate=${$scope.atmData.sustainableCellRate}`;
+      }
 
       // 4. IP Interface
       connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
