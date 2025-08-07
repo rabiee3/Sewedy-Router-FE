@@ -99,12 +99,16 @@ myapp.controller("wan_wanconnectionsform", function(
       "X_LANTIQ_COM_DefaultGateway"
     );
 
+    // Search all objects for X_LANTIQ_COM_Description
     let X_LANTIQ_COM_Description = "";
-    if (data["Objects"][2]) {
-      const descParam = data["Objects"][2].Param.find(
+    for (let obj of data["Objects"]) {
+      const descParam = obj.Param.find(
         (x) => x.ParamName === "X_LANTIQ_COM_Description"
       );
-      X_LANTIQ_COM_Description = descParam ? descParam.ParamValue : "";
+      if (descParam && descParam.ParamValue) {
+        X_LANTIQ_COM_Description = descParam.ParamValue;
+        break;
+      }
     }
     $scope.X_LANTIQ_COM_Description = X_LANTIQ_COM_Description;
 
