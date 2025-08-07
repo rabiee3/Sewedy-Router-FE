@@ -1,0 +1,103 @@
+<!-- Breadcrumb Navigation -->
+<div class="row ltq_breadcrumbs">
+  <div class="row">
+    <div ng-repeat="breadcrumb in $root.breadcrumbs">
+      <ng-switch on="$first">
+        <div class="btn-group btn-breadcrumb1" ng-switch-when="true">
+          <div class="ltq_brd_home">
+            <a class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">
+              <i class="fa fa-home"></i>
+              {{breadcrumb.name}}
+            </a>
+          </div>
+        </div>
+
+        <div class="btn-group btn-breadcrumb" ng-switch-when="false">
+          <span
+            class="btn btn-default not-active"
+            ng-if="breadcrumb.path == 'nothing' || $last == true"
+          >
+            {{breadcrumb.name}}
+          </span>
+          <span
+            ng-if="breadcrumb.path != 'nothing' && $last == false"
+          >
+            <a class="btn" ng-href="#/{{breadcrumb.path}}">
+              <i></i>
+              {{breadcrumb.name}}
+            </a>
+          </span>
+        </div>
+      </ng-switch>
+    </div>
+  </div>
+</div>
+
+<!-- Subheader -->
+<div class="subheader">
+  <div>
+    <img src="images/icons/internet.png" class="iconDetails" alt="Internet Icon" />
+  </div>
+  <div>
+    <h4>Internet Connections Configuration</h4>
+  </div>
+  <p>
+    This page allows you to view and configure various internet connections such
+    as Static/DHCP/PPPoE/PPPoA, etc.
+  </p>
+</div>
+
+<!-- Main Form -->
+<div class="panel p-3">
+  <form name="customWanForm" novalidate>
+    <!-- Selection Mode -->
+    <div class="row">
+      <div class="col-sm-6 mb-3 required">
+        <label for="selectionMode">Selection Mode</label>
+        <select
+          id="selectionMode"
+          name="selectionMode"
+          ng-model="form.selectionMode"
+          ng-change="loadForm()"
+          ng-required="true"
+          class="form-control"
+        >
+          <option value="ATM">ATM</option>
+          <option value="PTM">PTM</option>
+          <option value="ETH">ETH</option>
+        </select>
+        <div
+          class="text-danger small"
+          ng-show="customWanForm.selectionMode.$error.required && customWanForm.selectionMode.$touched"
+        >
+          Please select a mode.
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamically Included Subform -->
+    <div ng-include="currentFormTemplate"></div>
+  </form>
+</div>
+
+<!-- Action Buttons -->
+<div class="row mt-3">
+  <div class="col-sm-4 float-right px-0">
+    <div class="row d-flex">
+      <button
+        class="waves-effect waves-light btn btn-info col-sm-6"
+        ng-click="submit()"
+        ng-disabled="!customWanForm.$valid"
+      >
+        Apply
+      </button>
+
+      <button
+        class="waves-effect waves-light btn btn-secondary mx-1 col-sm-6"
+        ng-click="cancel()"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

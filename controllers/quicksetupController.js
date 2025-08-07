@@ -4,6 +4,7 @@ myapp.controller("quicksetupController", function(
   $route,
   $http,
   $location,
+  $routeParams,
   localStorageService,
   modifyService,
   $q,
@@ -15,7 +16,7 @@ myapp.controller("quicksetupController", function(
 
   // Default values
   $scope.credentials = {
-    username: "00000000",
+    username: 111111,
     password: "00000000",
   };
 
@@ -27,6 +28,8 @@ myapp.controller("quicksetupController", function(
     ssid5G: "WE_F771A0_5G",
     password5G: "c789d000",
   };
+
+  loadExistingCredentials();
 
   // Validation functions
   $scope.isUsernameValid = function() {
@@ -140,6 +143,125 @@ myapp.controller("quicksetupController", function(
     return [ptmInterfaceFound.ObjName, lowerLayer.ParamValue];
   };
 
+  async function loadExistingCredentials() {
+    try {
+      if ($routeParams.id) {
+        let DeviceIpInterface = null;
+
+        // Step 1: Get DeviceIpInterface dynamically
+        const upstreamRes = await $http.get(
+          URL +
+            "cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true"
+        );
+
+        if (
+          upstreamRes.data &&
+          upstreamRes.data.Objects &&
+          upstreamRes.data.Objects.length > 0
+        ) {
+          // Find the main interface object (not .Stats or .IPv4Address etc.)
+          const mainObj = upstreamRes.data.Objects.find((obj) =>
+            /^Device\.IP\.Interface\.\d+$/.test(obj.ObjName)
+          );
+          if (mainObj) {
+            DeviceIpInterface = mainObj.ObjName;
+          }
+        }
+
+        if (!DeviceIpInterface) {
+          console.error("No DeviceIpInterface found.");
+          return;
+        }
+
+        // Get PPP interface data
+        const pppInterfaceData = await $http.get(
+          URL + "cgi_get_nosubobj?Object=" + DeviceIpInterface
+        );
+        const pppObj = pppInterfaceData.data["Objects"][0];
+
+        const lowerPTM_link = pppObj.Param.find(
+          (x) => x.ParamName === "LowerLayers"
+        )?.ParamValue;
+
+        if (lowerPTM_link) {
+          const userPassResponse = await $http.get(
+            URL + "cgi_get_nosubobj?Object=" + lowerPTM_link
+          );
+
+          const userPassData = userPassResponse.data["Objects"][0];
+debugger;
+          // Update credentials
+          $scope.credentials.username =
+            parseInt(userPassData.Param.find(
+              (x) => x.ParamName === "Username"
+            )?.ParamValue.split("@")[0] || "");
+
+          $scope.credentials.password =
+            userPassData.Param.find((x) => x.ParamName === "Password")
+              ?.ParamValue || "";
+        }
+
+        // Get WiFi 2_4G SSID data
+        const ssidResponse = await $http.get(
+          URL + "cgi_get_nosubobj?Object=Device.WiFi.SSID.1"
+        );
+
+        if (ssidResponse.data?.Objects?.[0]?.Param) {
+          const ssidParam = ssidResponse.data.Objects[0].Param.find(
+            (x) => x.ParamName === "SSID"
+          );
+          if (ssidParam) {
+            $scope.wifiSettings.ssid2_4G = ssidParam.ParamValue;
+          }
+        }
+
+        // Get WiFi 2_4G Password data
+        const securityResponse = await $http.get(
+          URL + "cgi_get_nosubobj?Object=Device.WiFi.AccessPoint.1.Security"
+        );
+
+        if (securityResponse.data?.Objects?.[0]?.Param) {
+          const passwordParam = securityResponse.data.Objects[0].Param.find(
+            (x) => x.ParamName === "KeyPassphrase"
+          );
+          if (passwordParam) {
+            $scope.wifiSettings.password2_4G = passwordParam.ParamValue;
+          }
+        }
+
+        // Get WiFi 5G SSID data
+        const ssidResponse5g = await $http.get(
+          URL + "cgi_get_nosubobj?Object=Device.WiFi.SSID.2"
+        );
+
+        if (ssidResponse5g.data?.Objects?.[0]?.Param) {
+          const ssidParam = ssidResponse5g.data.Objects[0].Param.find(
+            (x) => x.ParamName === "SSID"
+          );
+          if (ssidParam) {
+            $scope.wifiSettings.ssid5G = ssidParam.ParamValue;
+          }
+        }
+
+        // Get WiFi 2_4G Password data
+        const securityResponse5G = await $http.get(
+          URL + "cgi_get_nosubobj?Object=Device.WiFi.AccessPoint.2.Security"
+        );
+
+        if (securityResponse5G.data?.Objects?.[0]?.Param) {
+          const passwordParam = securityResponse5G.data.Objects[0].Param.find(
+            (x) => x.ParamName === "KeyPassphrase"
+          );
+          if (passwordParam) {
+            $scope.wifiSettings.password5G = passwordParam.ParamValue;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error loading existing credentials:", error);
+    }
+  }
+
   $scope.submit = async function() {
     $("#ajaxLoaderSection").show();
 
@@ -161,13 +283,13 @@ myapp.controller("quicksetupController", function(
       res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
     }
 
-        //Delete Request
-        var DELETE_Request = `Object=${
-          $scope.getPTMInterfaceID(res.data)[0]
-        }&Operation=Del&Object=${
-          $scope.getPTMInterfaceID(res.data)[1]
-        }&Operation=Del`;
-        await $http.post(URL + "cgi_set", DELETE_Request);
+    //Delete Request
+    var DELETE_Request = `Object=${
+      $scope.getPTMInterfaceID(res.data)[0]
+    }&Operation=Del&Object=${
+      $scope.getPTMInterfaceID(res.data)[1]
+    }&Operation=Del`;
+    await $http.post(URL + "cgi_set", DELETE_Request);
 
     //Main PPOE Request
     const result = await $http.post(URL + "cgi_set", PPPoE_Request);

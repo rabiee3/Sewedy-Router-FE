@@ -2024,6 +2024,9 @@ myapp.controller('hybridController', function ($location,$scope, $http, $compile
         }
         localStorage.setItem('randomvalue', $scope.randomNumber(10, 99));
         localStorage.setItem('formMode', "add");
+        if(param === "wan_wanconnectionsform"){
+            $location.path("/wan_connections_views");
+        }else 
         if(param !== null && param !== undefined){
             $location.path("/tableform/" + param);
         }
@@ -5778,6 +5781,9 @@ $.each(newpost, function(i, el){
         localStorage.setItem('randomvalue', $scope.randomNumber(10, 99));
         localStorage.setItem('internetEdit', true);
         localStorage.setItem('internetObject', event.currentTarget.attributes['id'].value)
+        if(formToopen === "wan_wanconnectionsform"){
+            $location.path("/wan_connections_views/"+event.currentTarget.attributes['id'].value);
+        }else 
         if(formToopen !== null && formToopen !== undefined){
             $location.path("/tableform/" + formToopen);
         }

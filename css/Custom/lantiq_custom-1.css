@@ -790,23 +790,21 @@ a.menuitem-highlight .systemconfig{background:url("../../images/icons/syslog-1.p
 .input-group-btn ul > li{
     font-weight: normal;
     display: block;
-    white-space: pre;
-    min-height: 1.2em;
-    padding: 0px 2px 1px;
-    background-color: #EFEEEE;
-    border-color: #285e8e;
-   
 }
 
 .dropdown-menu {
       background:#EFEEEE;
      
  }
+
+ .open > .dropdown-menu{
+    overflow: hidden;
+ }
 .dropdown-menu > li > a{
     font: inherit;
     font-size: 14px;
     color: #26a69a;
-    padding: 0px 3px;
+    padding: 9px;
 }
 
 .dropdown-menu > li > a:hover,
@@ -3000,7 +2998,16 @@ ul#strength {
   -moz-animation-duration:4s;
 }
 
-/*Helpers*/
-.text-center{
-  text-align: center;
+/*Custom*/
+.input-field.required label:after {
+    content: "*";
+    display: block;
+    color: red;
+    position: absolute;
+    width: 100%;
+    height: 20px;
+    z-index: 1232456789;
+    top: -5px;
+    right: -110%;
+    opacity: 1;
 }

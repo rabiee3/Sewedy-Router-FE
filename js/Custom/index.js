@@ -81,6 +81,10 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                   templateUrl: "quick_setup.html",
                   controller: 'quicksetupController'
                 })
+                .when('/quicksetup/:id', {
+                  templateUrl: "quick_setup.html",
+                  controller: 'quicksetupController'
+                })
                 .when('/tableform/:param2', {
                     template: function (params) {
                         return displayResult(params.param2, 'makehtml');
@@ -114,6 +118,14 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                         
                     },
                     template: "<div></div>"
+                })
+                .when('/wan_connections_views/', {
+                    templateUrl: "wan_wanconnectionsform.html",
+                    controller: 'wan_wanconnectionsform'
+                })              
+                .when('/wan_connections_views/:id', {
+                    templateUrl: "wan_wanconnectionsform.html",
+                    controller: 'wan_wanconnectionsform'
                 });
     }]);
 	

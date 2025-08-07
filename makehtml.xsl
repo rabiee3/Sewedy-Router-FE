@@ -341,7 +341,18 @@
                 </div>
             </xsl:if>
             <div class="row">
-                <div class="col-sm-12 col-md-12 col-lg-12 col-xs-12 input-field">
+                <div>
+                    <xsl:attribute name="class">
+                        <xsl:choose>
+                            <xsl:when test="@HasSuffix='Yes'">
+                                <xsl:text>col-sm-12 col-md-12 col-lg-12 col-xs-12 input-field d-flex align-items-center</xsl:text>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:text>col-sm-12 col-md-12 col-lg-12 col-xs-12 input-field</xsl:text>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:attribute>
+
                      <xsl:if test="@polling and @interval">
                                 <xsl:attribute name="ng-init">
                                     <xsl:value-of select="concat('PollingForParameter(&quot;',$paramobjectname, '&quot;,&quot;',@name,'&quot;, &quot;', @interval,'&quot;)')"/>
@@ -478,6 +489,10 @@
                             '<xsl:value-of select="concat($paramoriginalobjectname,'.',@webname)"/>' | translate
                         </xsl:attribute>
                     </label>
+
+                    <xsl:if test="@HasSuffix='Yes'">
+                        <span class="suffix"><xsl:value-of select="@SuffixData"/></span>
+                    </xsl:if>
                     <xsl:if test="@description">
                         <span class="help_btn">
                             <div style="cursor:pointer" help_click="">
@@ -12663,4 +12678,3 @@
         </div>
     </xsl:template>
 </xsl:stylesheet>
-

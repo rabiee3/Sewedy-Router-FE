@@ -637,7 +637,7 @@ console.log(finalobject)
     });
 
     $scope.gotoQuickSetup = function () {
-      location.href = "#/quicksetup"
+      location.href = "#/quicksetup/1"
     }
  
 });
