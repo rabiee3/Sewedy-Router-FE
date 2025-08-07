@@ -82,6 +82,10 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
           (x) => x.ParamName === "MaxMTUSize"
         )?.ParamValue;
 
+        $scope.ptmData.ipv6enable = pppObj.Param.find(
+          (x) => x.ParamName === "IPv6Enable"
+        )?.ParamValue;
+
         const userPassData = userPassResponse.data["Objects"][0];
 
         $scope.editEthernetInterface = userPassData.Param.find(

@@ -99,14 +99,13 @@
 
       <!-- Peak Cell Rate -->
       <div class="mb-3 col-sm-3 clearfix">
-        <div class="input-field required">
+        <div class="input-field">
           <input
             id="peakCellRate"
             name="peakCellRate"
             ng-model="atmData.peakCellRate"
             type="number"
             class="form-control"
-            required
             ng-change="updateParent()"
           />
           <label class="active special" for="peakCellRate"
@@ -123,7 +122,7 @@
 
       <!-- Maximum Burst Size -->
       <div class="mb-3 col-sm-3 clearfix">
-        <div class="input-field required">
+        <div class="input-field">
           <input
             id="maximumBSize"
             name="maximumBSize"
@@ -131,7 +130,6 @@
             placeholder="0"
             type="number"
             class="form-control"
-            required
             ng-change="updateParent()"
           />
           <label class="active special" for="maximumBSize"
@@ -148,7 +146,7 @@
 
       <!-- Sustainable Cell Rate -->
       <div class="mb-3 col-sm-3 clearfix">
-        <div class="input-field required">
+        <div class="input-field">
           <input
             id="sustainableCellRate"
             name="sustainableCellRate"
@@ -156,7 +154,6 @@
             placeholder="0"
             type="number"
             class="form-control"
-            required
             ng-change="updateParent()"
           />
           <label class="active special" for="sustainableCellRate"
