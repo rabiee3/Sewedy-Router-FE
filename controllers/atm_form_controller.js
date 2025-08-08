@@ -255,7 +255,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       // PPP Interface
       const pppAlias = `cpe-WEB-PPPInterface-${randomNumber}`;
       const pppUsername = encodeURIComponent(
-        `${$scope.atmData.username}@tedata.com.eg`
+        `${$scope.atmData.username}@tedata.net.eg`
       );
       const pppPassword = encodeURIComponent($scope.atmData.password);
 
