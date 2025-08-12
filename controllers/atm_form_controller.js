@@ -40,9 +40,9 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     loadAtmLinksAndQos();
   }
 
-  // Password visibility toggle
   $scope.Passwordfieldstatus = false;
   $scope.lowerPTM_link = "";
+  $scope.ethInterfaceLink = "";
 
   // Validation patterns
   $scope.patterns = {
@@ -67,8 +67,10 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   $scope.selectVpiVci = function(vpiVci) {
     $scope.atmData.vpiVci = vpiVci;
     // Find the selected link object
-    const linkObj = $scope.atmLinks.find(obj => {
-      const addrParam = obj.Param.find(p => p.ParamName === "DestinationAddress");
+    const linkObj = $scope.atmLinks.find((obj) => {
+      const addrParam = obj.Param.find(
+        (p) => p.ParamName === "DestinationAddress"
+      );
       return addrParam && addrParam.ParamValue === vpiVci;
     });
     // Find the corresponding QoS object
@@ -77,15 +79,18 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       const linkNumMatch = linkObj.ObjName.match(/Device\.ATM\.Link\.(\d+)$/);
       if (linkNumMatch) {
         const qosObjName = `Device.ATM.Link.${linkNumMatch[1]}.QoS`;
-        qosObj = $scope.atmLinksQos.find(obj => obj.ObjName === qosObjName);
+        qosObj = $scope.atmLinksQos.find((obj) => obj.ObjName === qosObjName);
       }
     }
     // Fill fields from linkObj and qosObj
     if (qosObj) {
       $scope.atmData.atmQosClass = getParamValue(qosObj, "QoSClass");
-      $scope.atmData.peakCellRate = parseInt(getParamValue(qosObj, "PeakCellRate")) || "";
-      $scope.atmData.maximumBSize = parseInt(getParamValue(qosObj, "MaximumBurstSize")) || "";
-      $scope.atmData.sustainableCellRate = parseInt(getParamValue(qosObj, "SustainableCellRate")) || "";
+      $scope.atmData.peakCellRate =
+        parseInt(getParamValue(qosObj, "PeakCellRate")) || "";
+      $scope.atmData.maximumBSize =
+        parseInt(getParamValue(qosObj, "MaximumBurstSize")) || "";
+      $scope.atmData.sustainableCellRate =
+        parseInt(getParamValue(qosObj, "SustainableCellRate")) || "";
     } else {
       $scope.atmData.atmQosClass = "";
       $scope.atmData.peakCellRate = "";
@@ -97,7 +102,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   // Helper to get param value from object
   function getParamValue(obj, paramName) {
-    const param = obj.Param.find(p => p.ParamName === paramName);
+    const param = obj.Param.find((p) => p.ParamName === paramName);
     return param ? param.ParamValue : "";
   }
 
@@ -126,28 +131,57 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   // Load all ATM Link and QoS objects, fill VPI/VCI dropdown
   async function loadAtmLinksAndQos() {
     try {
-      const response = await $http.get(
-        URL + "cgi_get?Object=Device.ATM.Link"
-      );
+      const response = await $http.get(URL + "cgi_get?Object=Device.ATM.Link");
       const objects = response.data.Objects || [];
-      $scope.atmLinks = objects.filter(obj => /^Device\.ATM\.Link\.\d+$/.test(obj.ObjName));
-      $scope.atmLinksQos = objects.filter(obj => /\.QoS$/.test(obj.ObjName));
-      $scope.vpiVciOptions = $scope.atmLinks.map(obj => {
-        const addrParam = obj.Param.find(p => p.ParamName === "DestinationAddress");
-        return addrParam ? addrParam.ParamValue : null;
-      }).filter(Boolean);
+      $scope.atmLinks = objects.filter((obj) =>
+        /^Device\.ATM\.Link\.\d+$/.test(obj.ObjName)
+      );
+      $scope.atmLinksQos = objects.filter((obj) => /\.QoS$/.test(obj.ObjName));
+      $scope.vpiVciOptions = $scope.atmLinks
+        .map((obj) => {
+          const addrParam = obj.Param.find(
+            (p) => p.ParamName === "DestinationAddress"
+          );
+          return addrParam ? addrParam.ParamValue : null;
+        })
+        .filter(Boolean);
     } catch (err) {
       console.error("Failed to load ATM Link/QoS objects", err);
       $scope.vpiVciOptions = [];
     }
   }
 
-  // Function to fetch and populate user_pass data in edit mode
+  async function fetchVpiVciName(atmLinkObjName) {
+    try {
+      const response = await $http.get(
+        URL + `cgi_get_fillparams?Object=${atmLinkObjName}`
+      );
+
+      const resObj = response.data["Objects"][0];
+
+      const getParam = (name) => {
+        const param = resObj.Param.find((p) => p.ParamName === name);
+        return param ? param.ParamValue : "";
+      };
+
+      $scope.selectVpiVci(getParam("DestinationAddress"));
+      $scope.atmData.linkType = getParam("LinkType");
+      $scope.atmData.encapsulation = getParam("Encapsulation");
+      $("#ajaxLoaderSection").hide();
+    } catch (err) {
+      console.error("Error fetching VPI/VCI name:", err);
+      $("#ajaxLoaderSection").hide();
+    }
+  }
+
   async function loadUserPassData() {
+    if (window.$ && $("#ajaxLoaderSection").length) {
+      $("#ajaxLoaderSection").show();
+    }
     try {
       if ($scope.$parent.internetObject) {
         const DeviceIpInterface = $scope.$parent.internetObject.split(",")[0];
-        //get PPP interface data //res1
+        // Get PPP interface data
         const pppInterfaceData = await $http.get(
           URL + "cgi_get_nosubobj?Object=" + DeviceIpInterface
         );
@@ -157,10 +191,33 @@ myapp.controller("atm_form_controller", function($scope, $http) {
           (x) => x.ParamName === "LowerLayers"
         )?.ParamValue;
 
+        // Get ATM Link data (LinkType, Encapsulation, DestinationAddress)
+        if ($scope.lowerPTM_link) {
+          const atmLinkResponse = await $http.get(
+            URL + "cgi_get_nosubobj?Object=" + $scope.lowerPTM_link
+          );
+          const atmLinkObj = atmLinkResponse.data["Objects"][0];
+
+          if (atmLinkObj && atmLinkObj.Param) {
+            $scope.ethInterfaceLink = atmLinkObj.Param.find(
+              (x) => x.ParamName === "LowerLayers"
+            )?.ParamValue;
+
+            const ethLinkRes = await $http.get(
+              URL + "cgi_get_nosubobj?Object=" + $scope.ethInterfaceLink
+            );
+
+            const atmLink = ethLinkRes.data["Objects"][0].Param.find(
+              (x) => x.ParamName === "LowerLayers"
+            )?.ParamValue;
+
+            await fetchVpiVciName(atmLink);
+          }
+        }
+
         const userPassResponse = await $http.get(
           URL + "cgi_get_nosubobj?Object=" + $scope.lowerPTM_link
         );
-
         const userPassData = userPassResponse.data["Objects"][0];
 
         setTimeout(() => {
@@ -168,7 +225,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
             $scope.atmData.username =
               userPassData.Param.find(
                 (x) => x.ParamName === "Username"
-              )?.ParamValue.split("@")[0] || "";
+              )?.ParamValue?.split("@")[0] || "";
             $scope.atmData.password =
               userPassData.Param.find((x) => x.ParamName === "Password")
                 ?.ParamValue || "";
@@ -178,6 +235,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
                   ?.ParamValue
               ) || 1492;
           });
+          $("#ajaxLoaderSection").hide();
         }, 200);
 
         $scope.updateParent(); // Notify parent of updated data
@@ -231,10 +289,9 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   }
 
   $scope.addNewConnection = async function() {
-    debugger;
     try {
       // If edit mode, delete old connection first
-      
+
       if ($scope.$parent.isEditMode) {
         await $scope.deleteConnection();
       }
@@ -275,20 +332,34 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       // 3. QoS Settings
       connectionRequest += `&Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
       connectionRequest += `&QoSClass=${$scope.atmData.atmQosClass}`;
-      if ($scope.atmData.peakCellRate !== undefined && $scope.atmData.peakCellRate !== "" && $scope.atmData.peakCellRate !== null) {
+      if (
+        $scope.atmData.peakCellRate !== undefined &&
+        $scope.atmData.peakCellRate !== "" &&
+        $scope.atmData.peakCellRate !== null
+      ) {
         connectionRequest += `&PeakCellRate=${$scope.atmData.peakCellRate}`;
       }
-      if ($scope.atmData.maximumBSize !== undefined && $scope.atmData.maximumBSize !== "" && $scope.atmData.maximumBSize !== null) {
+      if (
+        $scope.atmData.maximumBSize !== undefined &&
+        $scope.atmData.maximumBSize !== "" &&
+        $scope.atmData.maximumBSize !== null
+      ) {
         connectionRequest += `&MaximumBurstSize=${$scope.atmData.maximumBSize}`;
       }
-      if ($scope.atmData.sustainableCellRate !== undefined && $scope.atmData.sustainableCellRate !== "" && $scope.atmData.sustainableCellRate !== null) {
+      if (
+        $scope.atmData.sustainableCellRate !== undefined &&
+        $scope.atmData.sustainableCellRate !== "" &&
+        $scope.atmData.sustainableCellRate !== null
+      ) {
         connectionRequest += `&SustainableCellRate=${$scope.atmData.sustainableCellRate}`;
       }
 
       // 4. IP Interface
       connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
       connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${$scope.atmData.defaultGateway === '1' ? 'true' : 'false'}`;
+      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
+        $scope.atmData.defaultGateway === "1" ? "true" : "false"
+      }`;
 
       // 5. Ethernet Link
       connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
@@ -320,7 +391,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   };
 
   $scope.$on("addAtmConnection", function() {
-    debugger;
     $scope.addNewConnection();
   });
 
@@ -342,21 +412,32 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       objectsToDelete.push(ipInterface);
 
       // 2. Get PPP Interface from IP's LowerLayers
-      const ipData = await $http.get(URL + "cgi_get_nosubobj?Object=" + ipInterface);
+      const ipData = await $http.get(
+        URL + "cgi_get_nosubobj?Object=" + ipInterface
+      );
       const ipObj = ipData.data.Objects[0];
-      const pppInterface = ipObj.Param.find(x => x.ParamName === "LowerLayers")?.ParamValue;
+      const pppInterface = ipObj.Param.find(
+        (x) => x.ParamName === "LowerLayers"
+      )?.ParamValue;
       if (pppInterface) objectsToDelete.push(pppInterface);
 
       // 3. Get Ethernet Interface from PPP's LowerLayers
-      const pppData = await $http.get(URL + "cgi_get_nosubobj?Object=" + pppInterface);
+      const pppData = await $http.get(
+        URL + "cgi_get_nosubobj?Object=" + pppInterface
+      );
       const pppObj = pppData.data.Objects[0];
-      const ethInterface = pppObj.Param.find(x => x.ParamName === "LowerLayers")?.ParamValue;
+      const ethInterface = pppObj.Param.find(
+        (x) => x.ParamName === "LowerLayers"
+      )?.ParamValue;
       if (ethInterface) objectsToDelete.push(ethInterface);
 
       // 4. Get ATM Link from Ethernet's LowerLayers
-      const ethData = await $http.get(URL + "cgi_get_nosubobj?Object=" + ethInterface);
+      const ethData = await $http.get(
+        URL + "cgi_get_nosubobj?Object=" + ethInterface
+      );
       const ethObj = ethData.data.Objects[0];
-      const atmLink = ethObj.Param.find(x => x.ParamName === "LowerLayers")?.ParamValue;
+      const atmLink = ethObj.Param.find((x) => x.ParamName === "LowerLayers")
+        ?.ParamValue;
       if (atmLink) objectsToDelete.push(atmLink);
 
       return objectsToDelete;
@@ -368,9 +449,11 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   $scope.deleteConnection = async function() {
     try {
-      let objects = await getAtmConnectionObjects($scope.$parent.internetObject.split(",")[0]);
+      let objects = await getAtmConnectionObjects(
+        $scope.$parent.internetObject.split(",")[0]
+      );
       let deleteRequest = "";
-      objects.forEach(objName => {
+      objects.forEach((objName) => {
         if (objName) deleteRequest += `Object=${objName}&Operation=Del&`;
       });
       if (deleteRequest) {
