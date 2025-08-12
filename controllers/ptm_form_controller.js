@@ -82,9 +82,11 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
           (x) => x.ParamName === "MaxMTUSize"
         )?.ParamValue;
 
-        $scope.ptmData.ipv6enable = pppObj.Param.find(
-          (x) => x.ParamName === "IPv6Enable"
-        )?.ParamValue;
+        $scope.ptmData.ipv6enable =
+          pppObj.Param.find((x) => x.ParamName === "IPv6Enable")?.ParamValue ===
+          "true"
+            ? "1"
+            : "0";
 
         const userPassData = userPassResponse.data["Objects"][0];
 

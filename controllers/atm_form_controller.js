@@ -234,6 +234,17 @@ myapp.controller("atm_form_controller", function($scope, $http) {
                 userPassData.Param.find((x) => x.ParamName === "MaxMRUSize")
                   ?.ParamValue
               ) || 1492;
+
+            $scope.atmData.ipv6enable = pppObj.Param.find(
+              (x) => x.ParamName === "IPv6Enable"
+            )?.ParamValue;
+
+            $scope.atmData.defaultGateway =
+              pppObj.Param.find(
+                (x) => x.ParamName === "X_LANTIQ_COM_DefaultGateway"
+              )?.ParamValue === "true"
+                ? "1"
+                : "0";
           });
           $("#ajaxLoaderSection").hide();
         }, 200);
@@ -360,6 +371,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
         $scope.atmData.defaultGateway === "1" ? "true" : "false"
       }`;
+      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
 
       // 5. Ethernet Link
       connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
