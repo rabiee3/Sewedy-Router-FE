@@ -1,0 +1,431 @@
+<div ng-controller="atm_form_controller">
+  <div ng-form="atmForm" novalidate>
+    <div class="row d-flex align-items-center">
+      <!--Create Select VPI/VCL-->
+      <div class="col-sm-6">
+        <label
+          for="createVPIVCL"
+          class="col-xs-12 col-sm-12 col-md-12 col-lg-12 control-label no-padding-hr"
+        >
+          Create/Select VPI/VCI
+        </label>
+        <div class="input-group input-field">
+          <input
+            type="text"
+            class="form-control"
+            id="createVPIVCL"
+            ng-model="atmData.vpiVci"
+          />
+          <div class="input-group-btn">
+            <button
+              type="button"
+              class="btn btn-default dropdown-toggle editableselect"
+              data-toggle="dropdown"
+            >
+              <span class="caret-icon">
+                <i class="fa fa-caret-down"></i>
+              </span>
+            </button>
+            <ul
+              id="color-dropdown-menu"
+              class="dropdown-menu dropdown-menu-right"
+              role="menu"
+            >
+              <li
+                ng-repeat="vpiVci in vpiVciOptions"
+                ng-click="selectVpiVci(vpiVci)"
+              >
+                <a>{{ vpiVci }}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Encapsulation -->
+      <div class="col-sm-6 mb-3 required">
+        <label for="encapsulation">Encapsulation</label>
+        <select
+          id="encapsulation"
+          materal_select=""
+          ng-required="true"
+          name="encapsulation"
+          class="dropdown-toggle"
+          ng-options="type for type in encapsulationOptions"
+          ng-model="atmData.encapsulation"
+          ng-change="updateParent()"
+        >
+          <option value="" disabled selected>Select Encapsulation</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row d-flex align-items-center">
+      <!-- LinkType -->
+      <div class="col-sm-6 mb-3 required">
+        <label for="linkType">Link Type</label>
+        <select
+          id="linkType"
+          materal_select=""
+          ng-required="true"
+          name="linkType"
+          class="dropdown-toggle"
+          ng-options="type for type in linkTypeOptions"
+          ng-model="atmData.linkType"
+          ng-change="updateParent()"
+        >
+          <option value="" selected>Select</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row d-flex align-items-center">
+      <!-- ATM QoS Class -->
+      <div class="mb-3 col-sm-3 required">
+        <label for="qosClass">Link Type</label>
+        <select
+          id="qosClass"
+          materal_select=""
+          ng-required="true"
+          name="qosClass"
+          class="dropdown-toggle"
+          ng-options="type for type in atmQosClassOptions"
+          ng-model="atmData.atmQosClass"
+          ng-change="updateParent()"
+        >
+          <option value="" disabled selected>Select</option>
+        </select>
+      </div>
+
+      <!-- Peak Cell Rate -->
+      <div class="mb-3 col-sm-3 clearfix">
+        <div class="input-field">
+          <input
+            id="peakCellRate"
+            name="peakCellRate"
+            ng-model="atmData.peakCellRate"
+            type="number"
+            class="form-control"
+            ng-change="updateParent()"
+          />
+          <label class="active special" for="peakCellRate"
+            >Peak Cell Rate</label
+          >
+          <div
+            class="text-danger small"
+            ng-show="atmForm.peakCellRate.$error.pattern && atmForm.peakCellRate.$dirty"
+          >
+            Must be a number
+          </div>
+        </div>
+      </div>
+
+      <!-- Maximum Burst Size -->
+      <div class="mb-3 col-sm-3 clearfix">
+        <div class="input-field">
+          <input
+            id="maximumBSize"
+            name="maximumBSize"
+            ng-model="atmData.maximumBSize"
+            type="number"
+            class="form-control"
+            ng-change="updateParent()"
+          />
+          <label class="active special" for="maximumBSize"
+            >Maximum Burst Size</label
+          >
+          <div
+            class="text-danger small"
+            ng-show="atmForm.maximumBSize.$error.pattern && atmForm.maximumBSize.$dirty"
+          >
+            Must be a number
+          </div>
+        </div>
+      </div>
+
+      <!-- Sustainable Cell Rate -->
+      <div class="mb-3 col-sm-3 clearfix">
+        <div class="input-field">
+          <input
+            id="sustainableCellRate"
+            name="sustainableCellRate"
+            ng-model="atmData.sustainableCellRate"
+            type="number"
+            class="form-control"
+            ng-change="updateParent()"
+          />
+          <label class="active special" for="sustainableCellRate"
+            >Sustainable Cell Rate</label
+          >
+          <div
+            class="text-danger small"
+            ng-show="atmForm.sustainableCellRate.$error.pattern && atmForm.sustainableCellRate.$dirty"
+          >
+            Must be a number
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row d-flex align-items-center">
+      <!-- Enable VLAN -->
+      <div class="col-sm-6 checkbox1 input-field1 my-3">
+        <input
+          id="enableVlan"
+          name="Enable"
+          type="checkbox"
+          ng-true-value="'1'"
+          ng-false-value="'0'"
+          ng-model="atmData.enableVlan"
+          ng-change="updateParent()"
+        />
+        <label class="checkbox_left_align" for="enableVlan">Enable VLAN</label>
+      </div>
+
+      <!-- VLAN ID -->
+      <div class="col-sm-6" ng-if="atmData.enableVlan == '1'">
+        <div class="input-field required">
+          <input
+            id="vlanId"
+            name="vlanId"
+            ng-model="atmData.vlanId"
+            placeholder="Enter VLAN ID"
+            type="number"
+            class="form-control"
+            required
+            ng-change="updateParent()"
+          />
+          <label class="active special" for="vlanId">VLAN ID</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Connection Type -->
+      <div class="col-sm-6 mb-3 required">
+        <label for="connectionType">Connection Type</label>
+        <select
+          id="connectionType"
+          materal_select=""
+          ng-required="true"
+          name="connectionType"
+          class="dropdown-toggle"
+          ng-options="type for type in connectionTypes"
+          ng-model="atmData.connectionType"
+          ng-change="updateParent()"
+        >
+          <option value="" selected>Select Connection Type</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row my-4">
+      <!-- MAC Cloning -->
+      <div class="col-sm-6 d-flex align-items-center">
+        <label for="macClone" class="control-label mr-3"
+          >Mac Cloning Enable</label
+        >
+        <span
+          ng-click="atmData.macCloneEnabled = !atmData.macCloneEnabled; updateParent()"
+          class="switch my-3"
+          off="Off"
+          on="On"
+          ng-class="{checked: atmData.macCloneEnabled}"
+        >
+          <small></small>
+          <input
+            type="checkbox"
+            style="display:none"
+            name="macClone"
+            id="macClone"
+            ng-model="atmData.macCloneEnabled"
+            ng-change="updateParent()"
+          />
+          <span class="switch-text">
+            <span class="on">On</span><span class="off">Off</span>
+          </span>
+        </span>
+      </div>
+
+      <!-- MAC Address (shown when cloning enabled) -->
+      <div class="mb-3 col-sm-6" ng-if="atmData.macCloneEnabled">
+        <div class="input-field required">
+          <input
+            id="macAddress"
+            name="macAddress"
+            ng-model="atmData.mac_address"
+            placeholder="00:1A:2B:3C:4D:5E"
+            type="text"
+            class="form-control"
+            ng-pattern="patterns.macAddress"
+            required
+            ng-change="updateParent()"
+          />
+          <label class="active special" for="macAddress">MAC Address</label>
+          <div
+            class="text-danger small"
+            ng-show="atmForm.macAddress.$error.pattern && atmForm.macAddress.$dirty"
+          >
+            Please enter a valid MAC address (format: 00:1A:2B:3C:4D:5E)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="pppoe"
+      ng-if="atmData.connectionType && atmData.connectionType != 'Bridge' "
+    >
+      <div class="row">
+        <!-- Username -->
+        <div class="mb-3 col-sm-6" ng-if="atmData.connectionType != 'PPPoA'">
+          <div class="input-field required d-flex w-100">
+            <input
+              id="username"
+              name="username"
+              ng-model="atmData.username"
+              placeholder="e.g. 1154897"
+              type="text"
+              class="form-control"
+              ng-pattern="patterns.username"
+              required
+              ng-change="updateParent()"
+            />
+            <label class="active special" for="username">Username</label>
+            <div class="input-suffix d-flex align-items-center">
+              @tedata.net.eg
+            </div>
+          </div>
+          <div
+            class="text-danger small"
+            ng-show="atmForm.username.$error.pattern && atmForm.username.$dirty"
+          >
+            Username must contain only numbers
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3 col-sm-6">
+          <div class="d-flex">
+            <div class="input-field required w-100">
+              <input
+                id="password"
+                name="password"
+                ng-model="atmData.password"
+                placeholder="Enter password"
+                type="{{Passwordfieldstatus ? 'text' : 'password'}}"
+                class="form-control"
+                ng-pattern="patterns.password"
+                required
+                ng-change="updateParent()"
+              />
+              <label class="active special" for="password">Password</label>
+              <div
+                class="text-danger small"
+                ng-show="atmForm.password.$error.pattern && atmForm.password.$dirty"
+              >
+                Minimum 8 chars & Must contain: 1 uppercase, 1 number, 1 special
+                character
+              </div>
+            </div>
+            <div class="form-group pwdtoggle_adv">
+              <input
+                id="Passwordcheckbox"
+                name="passwordcheckbox"
+                type="checkbox"
+                ng-model="Passwordfieldstatus"
+              />
+              <label
+                class="checkbox_right_align showpw mt-4 pt-1"
+                for="Passwordcheckbox"
+                ng-class="Passwordfieldstatus ? 'hidepw checkbox_right_align' : 'showpw checkbox_right_align'"
+              ></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- MTU Size -->
+        <div class="mb-3 col-sm-6 clearfix">
+          <div class="input-field required">
+            <input
+              id="mtusize"
+              name="mtusize"
+              ng-model="atmData.mtu_size"
+              placeholder="1492"
+              type="number"
+              class="form-control"
+              ng-pattern="patterns.mtuSize"
+              required
+              ng-change="updateParent()"
+            />
+            <label class="active special" for="mtusize">MTU Size</label>
+            <div
+              class="text-danger small"
+              ng-show="atmForm.mtusize.$error.pattern && atmForm.mtusize.$dirty"
+            >
+              MTU Size must be exactly 1492
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-2">
+        <!-- IPv6 Enable -->
+        <div class="col-sm-6">
+          <div class="checkbox1 input-field1" style="width:215px">
+            <input
+              id="ipv6enable"
+              name="ipv6enable"
+              type="checkbox"
+              ng-true-value="'1'"
+              ng-false-value="'0'"
+              ng-model="atmData.ipv6enable"
+              ng-change="updateParent()"
+            />
+            <label class="checkbox_left_align" for="ipv6enable"
+              >IPv6 Enable</label
+            >
+          </div>
+        </div>
+
+        <!-- Default Gateway -->
+        <div class="col-sm-6">
+          <div class="checkbox1 input-field1" style="width:215px">
+            <input
+              id="defaultGateway"
+              name="defaultGateway"
+              type="checkbox"
+              ng-true-value="'1'"
+              ng-false-value="'0'"
+              ng-model="atmData.defaultGateway"
+              ng-change="updateParent()"
+            />
+            <label class="checkbox_left_align" for="defaultGateway"
+              >Default Gateway</label
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bridge" ng-if="atmData.connectionType == 'Bridge'">
+      <!-- Bridge Connection Selection -->
+      <div class="row">
+        <div class="col-sm-6 mb-3 required">
+          <label for="bridgeConnection">Bridge Connection</label>
+          <select
+            id="bridgeConnection"
+            name="bridgeConnection"
+            class="dropdown-toggle"
+            ng-model="atmData.selectedBridge"
+            ng-options="bridge for bridge in bridgeConnections"
+            required
+            ng-change="updateParent()"
+          >
+            <option value="" disabled selected>Select Bridge Connection</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
