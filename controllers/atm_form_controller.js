@@ -16,6 +16,9 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     maximumBSize: 11,
     sustainableCellRate: 1121,
     vpiVci: "",
+    isUserDefinedDNS: false,
+    primaryDNS: "",
+    secondaryDNS: "",
   };
 
   // Store all ATM Link and QoS objects
@@ -50,6 +53,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     password: /^\d+$/, // Only numbers
     macAddress: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, // MAC address
     mtuSize: /^\d+$/, // Only numbers
+    ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
   };
 
   // Watcher to update connectionTypes dynamically
@@ -62,6 +66,23 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   // Emit changes to the parent when atmData is updated
   $scope.updateParent = function() {
     $scope.$emit("atmDataChanged", $scope.atmData);
+  };
+
+  $scope.showDNSFields = function() {
+    return (
+      $scope.atmData.isUserDefinedDNS &&
+      $scope.atmData.connectionType !== "Bridge"
+    );
+  };
+
+  $scope.isPrimaryDNSValid = function() {
+    return $scope.patterns.ipv4.test($scope.atmData.primaryDNS);
+  };
+
+  $scope.isSecondaryDNSValid = function() {
+    if (!$scope.atmData.secondaryDNS) return true;
+    if ($scope.atmData.secondaryDNS === $scope.atmData.primaryDNS) return false;
+    return $scope.patterns.ipv4.test($scope.atmData.secondaryDNS);
   };
 
   $scope.selectVpiVci = function(vpiVci) {
@@ -175,9 +196,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   }
 
   async function loadUserPassData() {
-    if (window.$ && $("#ajaxLoaderSection").length) {
-      $("#ajaxLoaderSection").show();
-    }
     try {
       if ($scope.$parent.internetObject) {
         const DeviceIpInterface = $scope.$parent.internetObject.split(",")[0];

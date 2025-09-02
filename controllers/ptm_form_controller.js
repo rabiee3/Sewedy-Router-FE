@@ -10,6 +10,9 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     enableVlan: "0",
     ipv6enable: "0",
     defaultGateway: "1",
+    isUserDefinedDNS: false,
+    primaryDNS: "",
+    secondaryDNS: "",
   };
 
   $scope.connectionTypes = ["PPPoE", "Bridge"];
@@ -29,11 +32,29 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     password: /^\d+$/, // Only numbers
     macAddress: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, // MAC address
     mtuSize: /^\d+$/, // Only numbers
+    ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
   };
 
   // Emit changes to the parent when ptmData is updated
   $scope.updateParent = function() {
     $scope.$emit("ptmDataChanged", $scope.ptmData);
+  };
+
+  $scope.showDNSFields = function() {
+    return (
+      $scope.ptmData.isUserDefinedDNS &&
+      $scope.ptmData.connectionType !== "Bridge"
+    );
+  };
+
+  $scope.isPrimaryDNSValid = function() {
+    return $scope.patterns.ipv4.test($scope.ptmData.primaryDNS);
+  };
+
+  $scope.isSecondaryDNSValid = function() {
+    if (!$scope.ptmData.secondaryDNS) return true;
+    if ($scope.ptmData.secondaryDNS === $scope.ptmData.primaryDNS) return false;
+    return $scope.patterns.ipv4.test($scope.ptmData.secondaryDNS);
   };
 
   // Function to reset the form fields

@@ -1933,7 +1933,7 @@ ul.weekdayslist li.active a span{background:#5C2D91;color:#ffffff; }
     color:red;
 }
 [type="checkbox"] + label.checkbox_left_align{min-width:215px; padding-left:0px;padding-right:35px; }
-[type="checkbox"] + label.checkbox_left_align::before{right:0;left:auto;padding-left:0px; }
+[type="checkbox"] + label.checkbox_left_align::before{right:0;left:auto;padding-left:0px;margin-top: 1px; }
 [type="checkbox"]:checked + label.checkbox_left_align::before{right:12px;left:auto;}
 .formlalignment .div1{}
 /*.formlalignment .div2 > label{margin-top:12px;}*/
