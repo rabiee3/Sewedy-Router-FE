@@ -173,14 +173,6 @@ myapp.controller("wan_wanconnectionsform", function(
     }
   });
 
-  // Listen for connectionAdded event from PTM form
-  $scope.$on("connectionAdded", function(event, success) {
-    if (success) {
-      $location.path("/tableform/wan_wanconnections");
-      $scope.$apply();
-    }
-  });
-
   // Cancel button action
   $scope.cancel = function() {
     $location.path("/tableform/wan_wanconnections");

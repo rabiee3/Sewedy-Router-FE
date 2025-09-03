@@ -80,78 +80,6 @@
     </div>
 
     <div class="row d-flex align-items-center">
-      <!-- User Defined DNS Checkbox (PPPoE only) -->
-      <div
-        class="col-sm-6 checkbox1 input-field1 my-3"
-        ng-if="atmData.connectionType === 'PPPoE'"
-      >
-        <input
-          type="checkbox"
-          id="isUserDefinedDNS"
-          class="form-control"
-          ng-model="atmData.isUserDefinedDNS"
-          ng-change="updateParent()"
-        />
-        <label class="checkbox_left_align" for="isUserDefinedDNS"
-          >User Defined DNS</label
-        >
-      </div>
-    </div>
-
-    <!-- DNS Fields -->
-    <div class="row" ng-if="showDNSFields()">
-      <div class="col-sm-6 mb-3 required">
-        <label for="primaryDNS">Primary DNS</label>
-        <input
-          type="text"
-          id="primaryDNS"
-          name="primaryDNS"
-          ng-model="atmData.primaryDNS"
-          ng-pattern="patterns.ipv4"
-          ng-required="atmData.isUserDefinedDNS"
-          class="form-control"
-          ng-change="updateParent()"
-        />
-        <div
-          class="text-danger small"
-          ng-show="atmForm.primaryDNS.$error.pattern && atmForm.primaryDNS.$dirty"
-        >
-          Please enter a valid IPv4 address
-        </div>
-        <div
-          class="text-danger small"
-          ng-show="atmForm.primaryDNS.$error.required && atmForm.primaryDNS.$dirty"
-        >
-          Primary DNS is required
-        </div>
-      </div>
-      <div class="col-sm-6 mb-3">
-        <label for="secondaryDNS">Secondary DNS (optional)</label>
-        <input
-          type="text"
-          id="secondaryDNS"
-          name="secondaryDNS"
-          ng-model="atmData.secondaryDNS"
-          ng-pattern="patterns.ipv4"
-          class="form-control"
-          ng-change="updateParent()"
-        />
-        <div
-          class="text-danger small"
-          ng-show="atmForm.secondaryDNS.$error.pattern && atmForm.secondaryDNS.$dirty"
-        >
-          Please enter a valid IPv4 address
-        </div>
-        <div
-          class="text-danger small"
-          ng-show="atmData.secondaryDNS === atmData.primaryDNS && atmForm.secondaryDNS.$dirty"
-        >
-          Secondary DNS must not be the same as Primary DNS
-        </div>
-      </div>
-    </div>
-
-    <div class="row d-flex align-items-center">
       <!-- ATM QoS Class -->
       <div class="mb-3 col-sm-3 required">
         <label for="qosClass">Link Type</label>
@@ -340,6 +268,78 @@
           >
             Please enter a valid MAC address (format: 00:1A:2B:3C:4D:5E)
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Defined DNS Checkbox (PPPoE only) -->
+    <div class="row d-flex align-items-center">
+      <div
+        class="col-sm-6 checkbox1 input-field1 my-3"
+        ng-if="atmData.connectionType === 'PPPoE'"
+      >
+        <input
+          type="checkbox"
+          id="isUserDefinedDNS"
+          class="form-control"
+          ng-model="atmData.isUserDefinedDNS"
+          ng-change="updateParent()"
+        />
+        <label class="checkbox_left_align" for="isUserDefinedDNS"
+          >User Defined DNS</label
+        >
+      </div>
+    </div>
+
+    <!-- DNS Fields -->
+    <div class="row" ng-if="showDNSFields()">
+      <div class="col-sm-6 mb-3 required">
+        <label for="primaryDNS">Primary DNS</label>
+        <input
+          type="text"
+          id="primaryDNS"
+          name="primaryDNS"
+          ng-model="atmData.primaryDNS"
+          ng-pattern="patterns.ipv4"
+          ng-required="atmData.isUserDefinedDNS"
+          class="form-control"
+          ng-change="updateParent()"
+        />
+        <div
+          class="text-danger small"
+          ng-show="atmForm.primaryDNS.$error.pattern && atmForm.primaryDNS.$dirty"
+        >
+          Please enter a valid IPv4 address
+        </div>
+        <div
+          class="text-danger small"
+          ng-show="atmForm.primaryDNS.$error.required && atmForm.primaryDNS.$dirty"
+        >
+          Primary DNS is required
+        </div>
+      </div>
+      <div class="col-sm-6 mb-3">
+        <label for="secondaryDNS">Secondary DNS (optional)</label>
+        <input
+          type="text"
+          id="secondaryDNS"
+          name="secondaryDNS"
+          ng-model="atmData.secondaryDNS"
+          ng-pattern="patterns.ipv4"
+          class="form-control"
+          ng-change="validateDNSForm(); updateParent()"
+        />
+        <div
+          class="text-danger small"
+          ng-show="atmForm.secondaryDNS.$error.pattern && atmForm.secondaryDNS.$dirty"
+        >
+          Please enter a valid IPv4 address
+        </div>
+        <div
+          class="text-danger small"
+          ng-show="atmData.secondaryDNS === atmData.primaryDNS && atmForm.secondaryDNS.$dirty"
+        >
+          Secondary DNS must not be the same as Primary DNS
         </div>
       </div>
     </div>

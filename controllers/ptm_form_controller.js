@@ -253,4 +253,14 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       loadUserPassData();
     }
   });
+
+  $scope.validateDNSForm = function() {
+    if (!$scope.ptmForm) return;
+
+    const same =
+      $scope.ptmData.secondaryDNS &&
+      $scope.ptmData.secondaryDNS === $scope.ptmData.primaryDNS;
+
+    $scope.ptmForm.$setValidity("dnsConflict", !same);
+  };
 });

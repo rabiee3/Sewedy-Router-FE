@@ -151,6 +151,9 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   // Load all ATM Link and QoS objects, fill VPI/VCI dropdown
   async function loadAtmLinksAndQos() {
+    if (window.$ && $("#ajaxLoaderSection").length) {
+      $("#ajaxLoaderSection").show();
+    }
     try {
       const response = await $http.get(URL + "cgi_get?Object=Device.ATM.Link");
       const objects = response.data.Objects || [];
@@ -166,9 +169,11 @@ myapp.controller("atm_form_controller", function($scope, $http) {
           return addrParam ? addrParam.ParamValue : null;
         })
         .filter(Boolean);
+      $("#ajaxLoaderSection").hide();
     } catch (err) {
       console.error("Failed to load ATM Link/QoS objects", err);
       $scope.vpiVciOptions = [];
+      $("#ajaxLoaderSection").hide();
     }
   }
 
@@ -434,6 +439,16 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       loadUserPassData();
     }
   });
+
+  $scope.validateDNSForm = function() {
+    if (!$scope.atmForm) return;
+
+    const same =
+      $scope.atmData.secondaryDNS &&
+      $scope.atmData.secondaryDNS === $scope.atmData.primaryDNS;
+
+    $scope.atmForm.$setValidity("dnsConflict", !same);
+  };
 
   async function getAtmConnectionObjects(ipInterface) {
     let objectsToDelete = [];
