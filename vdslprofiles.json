@@ -2,6 +2,11 @@
         "VDSL_Profiles":
 [
     {
+        "id": "0",
+        "name": "Auto",
+        "selected":true
+    },
+    {
         "id": "1",
         "name": "8a"
     },
@@ -32,10 +37,6 @@
     {
         "id": "8",
         "name": "35b"
-    },    
-    {
-        "id": "9",
-        "name": "Auto"
     }
 ]
 }

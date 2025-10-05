@@ -2079,6 +2079,9 @@
                                 <xsl:attribute name="checklist-value">
                                     <xsl:text>role</xsl:text>
                                 </xsl:attribute>
+                                <xsl:attribute name="ng-checked">
+                                    <xsl:text>role.selected</xsl:text>
+                                </xsl:attribute>
                             </input>
                             <label class="checkbox-listview">
                                 <xsl:attribute name="for">
