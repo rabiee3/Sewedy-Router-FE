@@ -27,16 +27,14 @@
           "order": "3",
           "checkurl": "cgi_get_nosubobj?Object=Device.WiFi.Radio.2&Status=",
           "viewtype": "tableform",
-          "view": "wifi5_basic",
-          "childrens": [
-            {
-              "name": "Band Steering",
-              "order": "1",
-              "view": "band_steering",
-              "viewtype": "tableform",
-              "childrens": []
-            }
-          ]
+          "view": "wifi5_basic"
+        },
+        {
+          "name": "Band Steering",
+          "order": "4",
+          "view": "band_steering",
+          "viewtype": "tableform",
+          "icon": "wireless"
         },
         {
           "name": "Firewall",
