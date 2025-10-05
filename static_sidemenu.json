@@ -1,0 +1,552 @@
+{
+  "menu": [
+    {
+      "name": "Basic",
+      "id": "home",
+      "childrens": [
+        {
+          "name": "Internet",
+          "icon": "internet",
+          "order": "1",
+          "view": "wan_wanconnections",
+          "viewtype": "tableform",
+          "childrens": []
+        },
+        {
+          "name": "WiFi 2.4GHz",
+          "icon": "wireless",
+          "order": "2",
+          "checkurl": "cgi_get_nosubobj?Object=Device.WiFi.Radio.1&Status=",
+          "viewtype": "tableform",
+          "view": "wifi2.4_basic",
+          "childrens": []
+        },
+        {
+          "name": "WiFi 5GHz",
+          "icon": "wireless",
+          "order": "3",
+          "checkurl": "cgi_get_nosubobj?Object=Device.WiFi.Radio.2&Status=",
+          "viewtype": "tableform",
+          "view": "wifi5_basic",
+          "childrens": [
+            {
+              "name": "Band Steering",
+              "order": "1",
+              "view": "band_steering",
+              "viewtype": "tableform",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "Firewall",
+          "icon": "firewall",
+          "order": "5",
+          "childrens": [
+            {
+              "name": "Main Firewall",
+              "order": "1",
+              "viewtype": "custom",
+              "view": "firewall",
+              "childrens": []
+            },
+            {
+              "name": "Parental Control",
+              "icon": "parentcontrol",
+              "order": "2",
+              "viewtype": "custom",
+              "view": "parentalcontrol",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "LAN",
+          "icon": "lan",
+          "order": "4",
+          "childrens": [
+            {
+              "name": "Configuration",
+              "order": "1",
+              "viewtype": "tableform",
+              "view": "lan",
+              "childrens": []
+            },
+            {
+              "name": "Devices Connected",
+              "order": "2",
+              "viewtype": "tableform",
+              "view": "lan_devicesconnected",
+              "childrens": []
+            },
+            {
+              "name": "DNS Settings",
+              "order": "3",
+              "viewtype": "tableform",
+              "view": "dns_settings",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "WiFi 6GHz",
+          "icon": "wireless",
+          "order": "3.1",
+          "checkurl": "cgi_get_nosubobj?Object=Device.WiFi.Radio.3&Status=",
+          "checkvalue": "NotPresent",
+          "viewtype": "tableform",
+          "view": "wifi5_2_basic",
+          "childrens": []
+        }
+      ]
+    },
+    {
+      "name": "Advanced",
+      "id": "profile",
+      "childrens": [
+        {
+          "name": "System",
+          "icon": "system",
+          "order": "3",
+          "childrens": [
+            {
+              "name": "Administration",
+              "order": "1",
+              "view": "adminactions",
+              "viewtype": "custom",
+              "childrens": []
+            },
+            {
+              "name": "User Management",
+              "order": "2",
+              "view": "userview",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "System Time",
+              "order": "3",
+              "icon": "fa fa-desktop",
+              "view": "ntpviewform",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "System Log",
+              "order": "4",
+              "view": "logdview",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "Diagnostics",
+              "order": "5",
+              "view": "diagnose",
+              "viewtype": "custom",
+              "childrens": []
+            },
+            {
+              "name": "Statistics",
+              "order": "6",
+              "view": "stats",
+              "viewtype": "custom",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "DSL",
+          "icon": "dsl",
+          "order": "1",
+          "childrens": [
+            {
+              "name": "Mode Setting",
+              "order": "1",
+              "view": "dslmodesviewform",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "Status",
+              "order": "2",
+              "view": "dsl_status",
+              "viewtype": "custom",
+              "childrens": []
+            },
+            {
+              "name": "ATM Channel",
+              "order": "3",
+              "view": "atm_channel",
+              "viewtype": "tableform",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "Client Mode",
+          "icon": "wireless",
+          "order": "5.3",
+          "view": "client_mode",
+          "viewtype": "tableform",
+          "childrens": []
+        },
+        {
+          "name": "Ethernet Management",
+          "icon": "internet",
+          "order": "3.89",
+          "view": "dual_eth_wan",
+          "viewtype": "custom",
+          "childrens": []
+        },
+        {
+          "name": "Guest Access",
+          "icon": "parentcontrol",
+          "order": "5.2",
+          "view": "guestaccessview",
+          "viewtype": "tableform",
+          "childrens": []
+        },
+        {
+          "name": "IPSec",
+          "icon": "tunneling",
+          "order": "11",
+          "view": "ipsecview",
+          "viewtype": "tableform",
+          "childrens": []
+        },
+        {
+          "name": "Device Management",
+          "icon": "managementserver",
+          "order": "11.1",
+          "view": "managementserverview",
+          "viewtype": "tableform",
+          "childrens": []
+        },
+        {
+          "name": "Multiple Bridge",
+          "icon": "internet",
+          "order": "1.1",
+          "childrens": [
+            {
+              "name": "LAN VLAN",
+              "order": "1",
+              "view": "vlantable",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "Bridges",
+              "order": "2",
+              "view": "bridgetable",
+              "viewtype": "tableform",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "Multicast",
+          "icon": "multicast",
+          "order": "2",
+          "childrens": [
+            {
+              "name": "Basic Settings",
+              "order": "1",
+              "view": "multicast_mcconfiguration",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "Advanced",
+              "order": "2",
+              "view": "multicast_mcsettings",
+              "viewtype": "tableform",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "Multi Wan",
+          "icon": "internet",
+          "order": "3.9",
+          "view": "dualwan",
+          "viewtype": "custom",
+          "childrens": []
+        },
+        {
+          "name": "Advanced Firewall",
+          "icon": "firewall",
+          "order": "9",
+          "childrens": [
+            {
+              "name": "Packet Filter",
+              "order": "1",
+              "viewtype": "tableform",
+              "view": "packetfilterview",
+              "childrens": []
+            },
+            {
+              "name": "URL Filter",
+              "order": "2",
+              "viewtype": "tableform",
+              "view": "urlfilterview",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "OAM Diagnostics",
+          "icon": "system",
+          "order": "9",
+          "childrens": [
+            {
+              "name": "ATM OAM F5 Loopback",
+              "order": "1",
+              "view": "oamatmview",
+              "viewtype": "tableform",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "NAT",
+          "icon": "nat",
+          "order": "10",
+          "childrens": [
+            {
+              "name": "DMZ",
+              "order": "1",
+              "viewtype": "tableform",
+              "view": "NAT_DMZviewform",
+              "childrens": []
+            },
+            {
+              "name": "Port Mapping",
+              "order": "2",
+              "viewtype": "tableform",
+              "view": "virtualserver",
+              "childrens": []
+            },
+            {
+              "name": "Port Triggering",
+              "order": "3",
+              "viewtype": "tableform",
+              "view": "porttriggerview",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "QoS",
+          "icon": "qos",
+          "order": "6",
+          "childrens": [
+            {
+              "name": "QoS",
+              "order": "1",
+              "view": "qospage",
+              "viewtype": "custom",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "Routing",
+          "icon": "nat",
+          "order": "13",
+          "childrens": [
+            {
+              "name": "Static Routing",
+              "order": "1",
+              "view": "staticrouteview",
+              "viewtype": "tableform",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "Tunneling",
+          "icon": "tunneling",
+          "order": "7",
+          "view": "tunneling_config_view",
+          "viewtype": "tableform",
+          "childrens": []
+        },
+        {
+          "name": "UPnP",
+          "icon": "upnp",
+          "order": "5.9",
+          "view": "upnp",
+          "viewtype": "custom",
+          "childrens": []
+        },
+        {
+          "name": "USB/SATA",
+          "icon": "share",
+          "order": "8",
+          "view": "usb_hosts_view",
+          "viewtype": "tableform",
+          "childrens": []
+        },
+        {
+          "name": "WiFi General",
+          "icon": "wireless",
+          "order": "3.99",
+          "view": "wifi_general",
+          "viewtype": "tableform",
+          "childrens": []
+        },
+        {
+          "name": "WiFi 2.4GHz",
+          "icon": "wireless",
+          "order": "4",
+          "checkurl": "cgi_get_nosubobj?Object=Device.WiFi.Radio.1&Status=",
+          "childrens": [
+            {
+              "name": "Advanced",
+              "order": "1",
+              "view": "wifi2.4_advanced",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "SSIDs",
+              "order": "2",
+              "view": "adv_ssid",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "WPS",
+              "order": "3",
+              "view": "adv_wps",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "MAC Filtering",
+              "order": "4",
+              "view": "adv_macFiltering",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "WDS",
+              "order": "5",
+              "view": "wdspage",
+              "viewtype": "custom",
+              "childrens": []
+            },
+            {
+              "name": "Statistics",
+              "order": "7",
+              "view": "adv_statistics",
+              "viewtype": "tableform",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "WiFi 5GHz",
+          "icon": "wireless",
+          "order": "5",
+          "checkurl": "cgi_get_nosubobj?Object=Device.WiFi.Radio.2&Status=",
+          "childrens": [
+            {
+              "name": "Advanced",
+              "order": "1",
+              "view": "wifi5_advanced",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "SSIDs",
+              "order": "2",
+              "view": "adv5_ssid",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "WPS",
+              "order": "3",
+              "view": "adv5_wps",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "MAC Filtering",
+              "order": "4",
+              "view": "adv5_macFiltering",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "WDS",
+              "order": "5",
+              "view": "wds5page",
+              "viewtype": "custom",
+              "childrens": []
+            },
+            {
+              "name": "Statistics",
+              "order": "7",
+              "view": "adv5_statistics",
+              "viewtype": "tableform",
+              "childrens": []
+            }
+          ]
+        },
+        {
+          "name": "WiFi 6GHz",
+          "icon": "wireless",
+          "order": "5.1",
+          "checkurl": "cgi_get_nosubobj?Object=Device.WiFi.Radio.3&Status=",
+          "checkvalue": "NotPresent",
+          "childrens": [
+            {
+              "name": "Advanced",
+              "order": "1",
+              "view": "wifi5_2_advanced",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "SSIDs",
+              "order": "2",
+              "view": "adv5_2_ssid",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "WPS",
+              "order": "3",
+              "view": "adv5_2_wps",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "MAC Filtering",
+              "order": "4",
+              "view": "adv5_2_macFiltering",
+              "viewtype": "tableform",
+              "childrens": []
+            },
+            {
+              "name": "WDS",
+              "order": "5",
+              "view": "wds5_2page",
+              "viewtype": "custom",
+              "childrens": []
+            },
+            {
+              "name": "Statistics",
+              "order": "7",
+              "view": "adv5_2_statistics",
+              "viewtype": "tableform",
+              "childrens": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

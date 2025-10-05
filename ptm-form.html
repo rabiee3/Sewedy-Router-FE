@@ -33,6 +33,43 @@
       </div>
     </div>
 
+    <div class="row d-flex align-items-center">
+      <!-- Enable NAT -->
+      <div class="col-sm-6 checkbox1 input-field1 my-3">
+        <input
+          id="enableNAT"
+          name="Enable"
+          type="checkbox"
+          ng-true-value="'1'"
+          ng-false-value="'0'"
+          ng-model="ptmData.enableNAT"
+          ng-change="updateParent()"
+        />
+        <label class="checkbox_left_align" for="enableNAT">Enable NAT</label>
+      </div>
+
+      <!-- NAT Type Dropdown -->
+      <div class="col-sm-6 mb-3 required" ng-if="ptmData.enableNAT == '1'">
+        <label for="natType">NAT Type</label>
+        <select
+          id="natType"
+          name="natType"
+          class="dropdown-toggle"
+          ng-model="ptmData.natType"
+          required
+          ng-change="updateParent()"
+        >
+          <option value="" disabled selected>Select NAT Type</option>
+          <option
+            ng-repeat="type in ['Port Restricted Cone NAT', 'Full Cone NAT']"
+            value="{{type}}"
+          >
+            {{type}}
+          </option>
+        </select>
+      </div>
+    </div>
+
     <div class="row">
       <!-- Connection Type -->
       <div class="col-sm-6 mb-3 required">
@@ -179,7 +216,7 @@
     <div class="pppoe" ng-if="ptmData.connectionType != 'Bridge'">
       <div class="row">
         <!-- Username -->
-        <div class="mb-3 col-sm-6">
+        <div class="mb-3 col-sm-6" ng-if="ptmData.connectionType != 'IPoE'">
           <div class="input-field required d-flex w-100">
             <input
               id="username"
@@ -206,7 +243,7 @@
         </div>
 
         <!-- Password -->
-        <div class="mb-3 col-sm-6">
+        <div class="mb-3 col-sm-6" ng-if="ptmData.connectionType != 'IPoE'">
           <div class="d-flex">
             <div class="input-field required w-100">
               <input
@@ -258,12 +295,12 @@
               required
               ng-change="updateParent()"
             />
-            <label class="active special" for="mtusize">MTU Size</label>
+            <label class="active special" for="mtusize">{{ptmData.connectionType != 'IPoE' ? 'MRU' : 'MTU'}} Size</label>
             <div
               class="text-danger small"
               ng-show="ptmForm.mtusize.$error.pattern && ptmForm.mtusize.$dirty"
             >
-              MTU Size must be a number
+              Size must be a number
             </div>
           </div>
         </div>

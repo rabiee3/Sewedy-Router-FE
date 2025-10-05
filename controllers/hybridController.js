@@ -797,19 +797,25 @@ myapp.controller('hybridController', function ($location,$scope, $http, $compile
         }
     };
 
-    $scope.getChannelList = function () {
-        // Read and parse breadcrumbarray from localStorage
-        const breadcrumb = JSON.parse(localStorage.getItem('breadcrumbarray') || '[]');
+  $scope.getChannelList = function () {
+    var currentPath = $location.path();
+    console.log("Current route:", currentPath);
 
-        // Check if any item has name === "WiFi 5GHz"
-        const hasWifi5 = breadcrumb.some(item => item.name === 'WiFi 5GHz');
+    let channelList = [];
 
-        // Return appropriate list
-        if (hasWifi5)
-            return ["36","40","44","48","52","56","60","64","100","104","108","112","116","120","124","128","132","136","140","144","149","153","157","161","165"];
+    if (currentPath.indexOf('adv5_ssid') !== -1) {
+      channelList = ["36","40","44","48","52","56","60","64","100","104","108","112","116","120","124","128","132","136","140","144","149","153","157","161","165"];
+    } 
+    else if (currentPath.indexOf('adv_ssid') !== -1) {
+      channelList = ["1","2","3","4","5","6","7","8","9","10","11"];
+    } 
+    else {
+      console.warn("Unknown route:", currentPath);
+    }
 
-        return ["1","2","3","4","5","6","7","8","9","10","11"];
-    };
+    console.log("Channel list for", currentPath, ":", channelList);
+    return channelList;
+  };
 
 
     /*

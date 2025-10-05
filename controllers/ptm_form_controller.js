@@ -15,7 +15,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     secondaryDNS: "",
   };
 
-  $scope.connectionTypes = ["PPPoE", "Bridge"];
+  $scope.connectionTypes = ["PPPoE", "Bridge", "IPoE"];
   $scope.bridgeConnections = [];
 
   $scope.editEthernetInterface = "";
@@ -110,13 +110,14 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
             : "0";
 
         const userPassData = userPassResponse.data["Objects"][0];
-
+        debugger;
         $scope.editEthernetInterface = userPassData.Param.find(
           (x) => x.ParamName === "LowerLayers"
         )?.ParamValue;
 
         setTimeout(() => {
           $scope.$apply(() => {
+            debugger;
             $scope.ptmData.username =
               userPassData.Param.find(
                 (x) => x.ParamName === "Username"

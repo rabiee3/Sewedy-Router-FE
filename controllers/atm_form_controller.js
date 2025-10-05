@@ -33,7 +33,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   $scope.vpiVciOptions = []; // filled from CGI
 
   $scope.connectionTypeOptionsMap = {
-    EoA: ["PPPoE", "Bridge"],
+    EoA: ["PPPoE", "IPoE","Bridge"],
     PPPoA: ["PPPoA"],
   };
   $scope.bridgeConnections = [];
