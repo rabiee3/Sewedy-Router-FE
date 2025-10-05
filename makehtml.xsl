@@ -2014,6 +2014,11 @@
                                     <xsl:value-of select="concat('checkboxurl(&quot;',@url,'&quot;,&quot;',@name,'&quot;,&quot;',@urlparam,'&quot;)')"/>
                                 </xsl:attribute>           
                             </xsl:when>
+                            <xsl:when test ="@fakeurl">
+                                <xsl:attribute name="ng-init">
+                                    <xsl:value-of select="concat('checkboxurl(&quot;',@fakeurl,'&quot;,&quot;',@name,'&quot;,&quot;',@urlparam,'&quot;)')"/>
+                                </xsl:attribute>           
+                            </xsl:when>
                             <xsl:otherwise>
                                 <xsl:attribute name="ng-init">
                                     <xsl:value-of select="concat(@name,'=','&quot;',@validvalues,'&quot;')"/>
@@ -2044,6 +2049,11 @@
                                             <xsl:value-of select="concat('getRoles(&quot;',translate(translate($paramobjectname,'*',''),'.',''),'.',@name,'&quot;,&quot;true','&quot;)')"/>
                                         </xsl:attribute>
                                     </xsl:when>
+                                    <xsl:when test="@fakeurl">
+                                        <xsl:attribute name="checklist-model" >
+                                            <xsl:value-of select="concat('getRoles(&quot;',translate(translate($paramobjectname,'*',''),'.',''),'.',@name,'&quot;,&quot;true','&quot;)')"/>
+                                        </xsl:attribute>
+                                    </xsl:when>
                                     <xsl:otherwise>
                                         <xsl:attribute name="checklist-model" >
                                             <xsl:value-of select="concat('getRoles(&quot;',translate(translate($paramobjectname,'*',''),'.',''),'.',@name,'&quot;)')"/>
@@ -2051,6 +2061,10 @@
                                     </xsl:otherwise>
                                 </xsl:choose>
                                 <xsl:choose>
+                                    <xsl:when test="@fakeurl">
+                                        <xsl:attribute name="ng-change" >
+                                        </xsl:attribute>
+                                    </xsl:when>
                                     <xsl:when test="(@urlparam or not(contains(@url,'cgi_get'))) and not(@validvalues)">
                                         <xsl:attribute name="ng-change" >
                                             <xsl:value-of select="concat('check(','role',',checked',',&quot;',translate(translate($paramobjectname,'*',''),'.',''),'.',@name,'&quot;,&quot;true','&quot;)')"/>
@@ -4381,6 +4395,11 @@
                             </xsl:attribute>
                         </xsl:if>
                        <xsl:choose>
+                            <xsl:when test="@dynamicvalues">
+                                <xsl:attribute name="ng-options">
+                                    <xsl:value-of select="concat('opt for opt in ', @dynamicvalues)"/>
+                                </xsl:attribute>
+                            </xsl:when>
                             <xsl:when test="@xmlvalidation and not(@url) and not(@validvalues)">
                                 <xsl:attribute name="ng-init" >
                                     <xsl:value-of
@@ -4407,7 +4426,7 @@
                             </xsl:when>
                            <xsl:when test="@xmlvalidation and @validvalues">
                                <xsl:attribute name="ng-init" >
-                                    <xsl:value-of                                       select="concat('depenencyUrl(&quot;',translate(translate($paramobjectname,'*',''),'.',''),'&quot;,','&quot;',@name,'&quot;,&quot;',@dependentparams,'&quot;,&quot;',$formname,'&quot;,&quot;',@validvalues,'&quot;)')"/>
+                                    <xsl:value-of select="concat('depenencyUrl(&quot;',translate(translate($paramobjectname,'*',''),'.',''),'&quot;,','&quot;',@name,'&quot;,&quot;',@dependentparams,'&quot;,&quot;',$formname,'&quot;,&quot;',@validvalues,'&quot;)')"/>
                                </xsl:attribute>
                                <xsl:attribute name="ng-options" >
                                     <xsl:value-of select="concat('obj.id as obj.name for obj in ', @name)" />

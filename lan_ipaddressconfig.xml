@@ -7,6 +7,16 @@
                     <parameter  name="IPAddress"  type="ipv4" webname="Device IP Address" ></parameter>
                     <parameter   name="SubnetMask"  type="ipv4" webname="Subnet Mask" ></parameter>
                 </object>
+
+                <object name="toggle">
+                    <parameter name="secondaryip" type="toggle" webname="Enable Secondary Address"></parameter>
+                </object>
+
+                <object name="Device.IP.Interface.1.IPv4Address.2">
+                    <parameter name="IPAddress2" type="ipv4" webname="Secondary IP Address" dependsonobject="toggle" dependsonparam="secondaryip" dependsonparamvalue="true"></parameter>
+                    <parameter name="SubnetMask2" type="ipv4" webname="Secondary Subnet Mask" dependsonobject="toggle" dependsonparam="secondaryip" dependsonparamvalue="true"></parameter>
+                </object>
+
                 <object name="temp" > 
                     <parameter  name="DHCPMode"  type="dropdown" validvalues="Server,Relay,Disable" webname="DHCP Mode" changefun="true" ></parameter>
                 </object>
