@@ -511,9 +511,8 @@ myapp.controller("hybridController", function(
                 tableObjects[i]["DeviceWiFiAccessPointWPS__Enable"] == "true" &&
                 tableObjects[i]["DeviceWiFiAccessPointSecurity__ModeEnabled"] !=
                   "None" &&
-                  tableObjects[i][
-                    "DeviceWiFiAccessPointSecurity__ModeEnabled"
-                  ] != "WPA2-Personal"
+                tableObjects[i]["DeviceWiFiAccessPointSecurity__ModeEnabled"] !=
+                  "WPA2-Personal"
               ) {
                 showWpsError = true;
               }
@@ -1232,6 +1231,25 @@ myapp.controller("hybridController", function(
           var dropdowndata = data.Objects;
           if (temparray.length < 1) temparray.push({ id: "", name: "Select" });
           angular.forEach(dropdowndata, function(dropObject) {
+            // New helper: safely find the right parameter to display
+            function getDisplayParamValue(params) {
+              if (!params || !params.length) return "";
+              // Try to pick the most logical display parameter
+              var nameParam = params.find((p) => p.ParamName === "Name");
+              var ssidParam = params.find((p) => p.ParamName === "SSID");
+              var aliasParam = params.find((p) => p.ParamName === "Alias");
+              var statusParam = params.find((p) => p.ParamName === "Status");
+
+              // Priority: Name > SSID > Alias > Status > first param (fallback)
+              var chosen =
+                nameParam ||
+                ssidParam ||
+                aliasParam ||
+                statusParam ||
+                params[0];
+              return chosen && chosen.ParamValue ? chosen.ParamValue : "";
+            }
+
             if (ifParam !== "" && ifValue !== "" && ifCondition !== "") {
               var isPresent = false;
               angular.forEach(dropObject.Param, function(param) {
@@ -1249,14 +1267,14 @@ myapp.controller("hybridController", function(
                 if (ddbackendvalue == "instance") {
                   var objindex = dropObject.ObjName.match(/\d+/g);
                   tempObj["id"] = objindex[objindex.length - 1];
-                  tempObj["name"] = dropObject.Param[0].ParamValue;
+                  tempObj["name"] = getDisplayParamValue(dropObject.Param);
                   temparray.push(tempObj);
                 } else if (ddbackendvalue == "objectname") {
                   tempObj["id"] = dropObject.ObjName;
-                  tempObj["name"] = dropObject.Param[0].ParamValue;
+                  tempObj["name"] = getDisplayParamValue(dropObject.Param);
                   temparray.push(tempObj);
                 } else {
-                  var dropParam = dropObject.Param[0].ParamValue;
+                  var dropParam = getDisplayParamValue(dropObject.Param);
                   if (dropParam.indexOf(",") > -1) {
                     angular.forEach(dropParam.split(","), function(csv) {
                       var tempObj = {};
@@ -1278,14 +1296,14 @@ myapp.controller("hybridController", function(
               if (ddbackendvalue == "instance") {
                 var objindex = dropObject.ObjName.match(/\d+/g);
                 tempObj["id"] = objindex[objindex.length - 1];
-                tempObj["name"] = dropObject.Param[0].ParamValue;
+                tempObj["name"] = getDisplayParamValue(dropObject.Param);
                 temparray.push(tempObj);
               } else if (ddbackendvalue == "objectname") {
                 tempObj["id"] = dropObject.ObjName;
-                tempObj["name"] = dropObject.Param[0].ParamValue;
+                tempObj["name"] = getDisplayParamValue(dropObject.Param);
                 temparray.push(tempObj);
               } else {
-                var dropParam = dropObject.Param[0].ParamValue;
+                var dropParam = getDisplayParamValue(dropObject.Param);
                 if (dropParam.indexOf(",") > -1) {
                   angular.forEach(dropParam.split(","), function(csv) {
                     var tempObj = {};
