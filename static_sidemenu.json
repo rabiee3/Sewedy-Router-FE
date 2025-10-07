@@ -494,6 +494,13 @@
           ]
         },
         {
+          "name": "Dynamic DNS",
+          "order": "15",
+          "icon": "wireless",
+          "view": "dyndns",
+          "viewtype": "tableform"
+        },
+        {
           "name": "WiFi 6GHz",
           "icon": "wireless",
           "order": "5.1",
