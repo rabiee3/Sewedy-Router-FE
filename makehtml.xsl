@@ -2011,7 +2011,7 @@
                         <xsl:choose>
                             <xsl:when test ="@url">
                                 <xsl:attribute name="ng-init">
-                                    <xsl:value-of select="concat('checkboxurl(&quot;',@url,'&quot;,&quot;',@name,'&quot;,&quot;',@urlparam,'&quot;)')"/>
+                                    <xsl:value-of select="concat('checkboxurl(&quot;',@url,'&quot;,&quot;',@name,'&quot;,&quot;',@urlparam,'&quot;,&quot;',@mappedvalue,'&quot;,&quot;',@allchecked,'&quot;)')"/>
                                 </xsl:attribute>           
                             </xsl:when>
                             <xsl:when test ="@fakeurl">

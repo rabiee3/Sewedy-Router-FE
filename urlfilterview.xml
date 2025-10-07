@@ -7,6 +7,7 @@
     </header>
 	<object name="Device.Firewall.X_LANTIQ_COM_URLFilter" viewtype="form">
     	<parameter name="Enable"  required="fasle" type="checkbox" writable="true" webname="URLFilter Enable" ></parameter>
+        <parameter name="SSID" urlparam="instance" allchecked="true" mappedvalue="Name" type="multi-checkbox" webname="SSIDs" url="cgi_get_filterbyparamvalnosubobj?Object=Device.WiFi.SSID&amp;X_LANTIQ_COM_Vendor_IsEndPoint=false"></parameter>
 		<parameter  name="Modify"  action="post" routeurl="Apply($event)" type="submitbutton" webname="Save"></parameter>
 		<parameter  name="Cancel"  routeurl="reset()" action="post" type="submitbutton" webname="Reset"></parameter>
     </object>

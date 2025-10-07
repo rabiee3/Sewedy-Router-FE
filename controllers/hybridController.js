@@ -9169,7 +9169,7 @@ myapp.controller("hybridController", function(
       .join()
       .replace(/(^[,\s]+)|([,\s]+$)/g, "");
   };
-  $scope.checkboxurl = function(req, param, dependentstatus) {
+  $scope.checkboxurl = function(req, param, dependentstatus, mappedValue, selectAllByDefault) {
     console.log(dependentstatus);
     $scope[param] = "";
     if (req.indexOf(httpService.get_url) > -1) {
@@ -9179,13 +9179,21 @@ myapp.controller("hybridController", function(
           if (status === 200) {
             $scope[param] = [];
             var dropdowndata = data.Objects;
+            function getParamValue(params, name) {
+              if (!params || !params.length) return "";
+              var found = params.find((p) => p.ParamName === name);
+              return found && found.ParamValue ? found.ParamValue : "";
+            }
+
             if (dependentstatus != "") {
               var Objects = data.Objects;
               angular.forEach(Objects, function(object) {
                 var mcboxobject = {};
-                if (dependentstatus == "instance") {
+                if (dependentstatus === "instance") {
                   var objindex = object.ObjName.match(/\d+/g);
-                  mcboxobject["id"] = objindex[objindex.length - 1];
+                  mcboxobject["id"] = objindex
+                    ? objindex[objindex.length - 1]
+                    : object.ObjName;
                 } else {
                   mcboxobject["id"] = object.ObjName;
                   httpService
@@ -9193,15 +9201,30 @@ myapp.controller("hybridController", function(
                       "Object=" + mcboxobject.id + "&" + dependentstatus + "="
                     )
                     .success(function(data) {
-                      mcboxobject.id = data.Objects[0].Param[0].ParamValue;
+                      if (
+                        data.Objects &&
+                        data.Objects[0] &&
+                        data.Objects[0].Param &&
+                        data.Objects[0].Param[0]
+                      ) {
+                        mcboxobject.id = data.Objects[0].Param[0].ParamValue;
+                      }
                     });
                 }
-                mcboxobject["name"] = object.Param[0].ParamValue;
+                if (mappedValue) {
+                  var val = getParamValue(object.Param, mappedValue);
+                  mcboxobject["name"] = val || object.Param[0].ParamValue;
+                  mcboxobject["id"] = val || mcboxobject["id"];
+                } else {
+                  mcboxobject["name"] = object.Param[0].ParamValue;
+                }
+
+              if (selectAllByDefault) {
+                mcboxobject["selected"] = true;
+              }
+
                 $scope[param].push(mcboxobject);
               });
-              //                    angular.forEach($scope[param], function (object) {
-
-              //                    })
             } else {
               angular.forEach(dropdowndata, function(dropObject) {
                 var dropParam = dropObject.Param[0].ParamValue;
