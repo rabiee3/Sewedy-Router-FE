@@ -860,6 +860,96 @@ myapp.controller("hybridController", function(
       originalObjects[position].replace(/\./g, "") + key.split("__")[1]
     );
   };
+
+  $scope.send_cgiset = function($event) {
+    $event.preventDefault();
+
+    var btn = angular.element($event.target);
+    var formName = btn.attr("formname");
+    var formElem = angular.element(document.getElementById(formName));
+
+    if (!formElem.length) {
+      alert("Form not found: " + formName);
+      return;
+    }
+
+    var source = btn.attr("source") || "";
+    var qIndex = source.indexOf("?");
+    if (qIndex === -1) {
+      alert("Invalid source format.");
+      return;
+    }
+
+    var objectName = source.substring(0, qIndex);
+    var paramList = source
+      .substring(qIndex + 1)
+      .split(",")
+      .filter(Boolean);
+
+    var payloadParts = [];
+    payloadParts.push("Object=Device.IPTV");
+    payloadParts.push("Operation=Set");
+
+    paramList.forEach(function(paramName) {
+      if (paramName.toLowerCase() === "modify") return;
+
+      let value = "";
+
+      var el = formElem.find('[name$=".' + paramName + '"]');
+      if (!el.length) el = formElem.find("#" + paramName);
+
+      if (paramName === "EnableIPTV") {
+        var switchSpan = formElem.find("#EnableIPTV.switch");
+        if (switchSpan.length) {
+          value = switchSpan.hasClass("checked") ? "true" : "false";
+        } else if (el.length) {
+          value = el.prop("checked") ? "true" : "false";
+        }
+      }
+      else {
+        var groupCheckboxes = formElem.find(
+          'input[type="checkbox"][checklist-model*="' + paramName + '"]'
+        );
+        if (groupCheckboxes.length) {
+          var checked = [];
+          groupCheckboxes.filter(":checked").each(function() {
+            var lbl = angular
+              .element(this)
+              .next("label")
+              .text()
+              .trim();
+            if (lbl) checked.push(lbl);
+          });
+          value = checked.join(",");
+        } else if (el.length && el.attr("type") !== "checkbox") {
+          value = el.val() || "";
+        }
+      }
+
+      payloadParts.push(
+        encodeURIComponent(paramName) + "=" + encodeURIComponent(value)
+      );
+    });
+
+    var payloadString = payloadParts.join("&");
+    console.log("Final CGI payload string:\n" + payloadString);
+
+    $http({
+      method: "POST",
+      url: "cgi/cgi_set",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      data: payloadString,
+    })
+      .then(function(response) {
+        console.log("cgi_set success:", response.data);
+        alert("IPTV settings applied successfully!");
+      })
+      .catch(function(error) {
+        console.error("cgi_set failed:", error);
+        alert("Failed to apply settings: " + error.statusText);
+      });
+  };
+
   var hasPrev = false;
   /*
    * Open table on click of More  button  in Accordion
