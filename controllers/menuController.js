@@ -8,67 +8,80 @@ myapp.controller("menuController", function(
   $scope.posts = {};
   $scope.username = "";
   $scope.dataTab = "";
+  $scope.logs = "";
 
   // Function to load menu
   $scope.menuOptions = function() {
     menuload();
   };
 
-function menuload() {
-  var staticMenuPath = "static_sidemenu.json";
+  function menuload() {
+    var staticMenuPath = "static_sidemenu.json";
 
-  console.log("Loading menu from:", staticMenuPath);
+    console.log("Loading menu from:", staticMenuPath);
 
-  $http.get(staticMenuPath)
-    .then(function(response) {
-      var data = response.data;
+    $http
+      .get(staticMenuPath)
+      .then(function(response) {
+        var data = response.data;
 
-      if (!data || !Array.isArray(data.menu)) {
-        console.warn("Invalid menu structure");
-        $scope.posts = { menu: [] };
-        return;
-      }
+        if (!data || !Array.isArray(data.menu)) {
+          console.warn("Invalid menu structure");
+          $scope.posts = { menu: [] };
+          return;
+        }
 
-      function processMenuItems(items) {
-        if (!Array.isArray(items)) return [];
+        function processMenuItems(items) {
+          if (!Array.isArray(items)) return [];
 
-        var filtered = items.filter(function(item) {
-          if (item.checkurl && item.checkvalue && item.checkvalue === "NotPresent") {
-            return false;
-          }
-          return true;
-        });
+          var filtered = items.filter(function(item) {
+            if (
+              item.checkurl &&
+              item.checkvalue &&
+              item.checkvalue === "NotPresent"
+            ) {
+              return false;
+            }
+            return true;
+          });
 
-        filtered.sort(function(a, b) {
-          return parseFloat(a.order || 0) - parseFloat(b.order || 0);
-        });
+          filtered.sort(function(a, b) {
+            return parseFloat(a.order || 0) - parseFloat(b.order || 0);
+          });
 
-        filtered.forEach(function(item) {
-          if (item.childrens && item.childrens.length > 0) {
-            item.childrens = processMenuItems(item.childrens);
-          }
-        });
+          filtered.forEach(function(item) {
+            if (item.childrens && item.childrens.length > 0) {
+              item.childrens = processMenuItems(item.childrens);
+            }
+          });
 
-        filtered = filtered.filter(function(item) {
-          if (item.childrens && item.childrens.length === 0 && !item.view) {
-            return false;
-          }
-          return true;
-        });
+          filtered = filtered.filter(function(item) {
+            if (item.childrens && item.childrens.length === 0 && !item.view) {
+              return false;
+            }
+            return true;
+          });
 
-        return filtered;
-      }
+          return filtered;
+        }
 
-      var cleanedMenu = processMenuItems(data.menu);
+        var cleanedMenu = processMenuItems(data.menu);
 
-      $scope.posts = { menu: cleanedMenu };
-      console.log("Filtered & sorted menu:", $scope.posts);
-    })
-    .catch(function(error) {
-      console.error("Error loading static menu:", error);
-    });
-}
+        $scope.posts = { menu: cleanedMenu };
+        console.log("Filtered & sorted menu:", $scope.posts);
+      })
+      .catch(function(error) {
+        console.error("Error loading static menu:", error);
+      });
+  }
 
+  function getSystemLogs() {
+    $http
+      .get(URL + "cgi_get_log")
+      .success(function(data) {
+        $scope.logs = data;
+      });
+  }
 
   // Watch for language change (optional)
   $rootScope.$on("rootScope:language_changed", function() {
@@ -139,4 +152,5 @@ function menuload() {
 
   // Initialize menu
   menuload();
+  getSystemLogs();
 });

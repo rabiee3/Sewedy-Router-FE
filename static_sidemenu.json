@@ -133,7 +133,7 @@
               "name": "System Log",
               "order": "4",
               "view": "logdview",
-              "viewtype": "tableform",
+              "viewtype": "custom",
               "childrens": []
             },
             {
@@ -330,6 +330,12 @@
               "viewtype": "tableform",
               "view": "porttriggerview",
               "childrens": []
+            },
+            {
+              "name": "IP Mapping",
+              "order": "3",
+              "view": "ipmapping",
+              "viewtype": "html"
             }
           ]
         },

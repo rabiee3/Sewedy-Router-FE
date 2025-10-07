@@ -1,0 +1,30 @@
+<div>
+  <div class="row ltq_breadcrumbs">
+    <div class="row"></div>
+  </div>
+
+  <!-- Subheader -->
+  <div class="subheader">
+    <div ng-click="addRule()">
+      <img
+        src="images/icons/internet.png"
+        class="iconDetails"
+        alt="Internet Icon"
+      />
+    </div>
+    <div>
+      <h4>System Log</h4>
+    </div>
+    <p>
+      This page displays the system logs
+    </p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body">
+      <pre class="systemlog">
+            {{logs}}
+      </pre>
+    </div>
+  </div>
+</div>

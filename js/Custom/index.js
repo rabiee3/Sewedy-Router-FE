@@ -126,6 +126,10 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                 .when('/wan_connections_views/:id', {
                     templateUrl: "wan_wanconnectionsform.html",
                     controller: 'wan_wanconnectionsform'
+                })
+                .when('/html/ipmapping', {
+                    templateUrl: "ipmapping.html",
+                    controller: 'ipmapping'
                 });
     }]);
 	

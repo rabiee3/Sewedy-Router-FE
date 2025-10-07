@@ -9169,7 +9169,13 @@ myapp.controller("hybridController", function(
       .join()
       .replace(/(^[,\s]+)|([,\s]+$)/g, "");
   };
-  $scope.checkboxurl = function(req, param, dependentstatus, mappedValue, selectAllByDefault) {
+  $scope.checkboxurl = function(
+    req,
+    param,
+    dependentstatus,
+    mappedValue,
+    selectAllByDefault
+  ) {
     console.log(dependentstatus);
     $scope[param] = "";
     if (req.indexOf(httpService.get_url) > -1) {
@@ -9219,9 +9225,9 @@ myapp.controller("hybridController", function(
                   mcboxobject["name"] = object.Param[0].ParamValue;
                 }
 
-              if (selectAllByDefault) {
-                mcboxobject["selected"] = true;
-              }
+                if (selectAllByDefault) {
+                  mcboxobject["selected"] = true;
+                }
 
                 $scope[param].push(mcboxobject);
               });
