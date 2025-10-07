@@ -87,6 +87,13 @@
           ]
         },
         {
+          "name": "IPTV",
+          "icon": "system",
+          "order": "6",
+          "viewtype": "tableform",
+          "view": "iptv"
+        },
+        {
           "name": "WiFi 6GHz",
           "icon": "wireless",
           "order": "3.1",

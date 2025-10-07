@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="wifibasic5">
+    <helptext></helptext>
+    <header>
+        <image>images/icons/system.png</image>
+
+        <name>Basic - IPTV</name>
+        <description>Configure IPTV for the LAN ports</description>
+    </header>
+    <object viewtype="form" title="IPTV">
+        <object name="toggle">
+            <parameter name="EnableIPTV" type="toggle" webname="Enable IPTV"
+                Value="false"></parameter>
+        </object>
+        <object name="temp2">
+            <row>
+                <col>
+                    <parameter name="LAN_PORTS" type="multi-checkbox" webname="Selected LAN" fakeurl="lanports"></parameter>
+                </col>
+            </row>
+        </object>
+
+        <parameter name="Modify" action="post" routeurl="Apply($event)" type="submitbutton"
+            webname="Apply" maxlen="64"></parameter>
+    </object>
+</view>
