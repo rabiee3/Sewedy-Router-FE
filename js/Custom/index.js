@@ -1144,6 +1144,7 @@ myapp.directive('dynamicPortStatusWidget', function () {
                                         if (obj.ParamName == "Status") {
                                             var image = getStatusImage(obj.ParamValue);
                                             temp.push(image);
+                                            $rootScope.eth_port_status.push(obj.ParamValue);
                                         }else
                                             temp.push(obj.ParamValue);
                                         $scope.dynamicPortData[refObjectName] =  temp;

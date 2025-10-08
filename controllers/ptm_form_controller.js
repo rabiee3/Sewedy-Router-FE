@@ -13,9 +13,12 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     isUserDefinedDNS: false,
     primaryDNS: "",
     secondaryDNS: "",
+    ipaddress: "",
+    subnetmask: "",
+    gatewayaddress: "",
   };
 
-  $scope.connectionTypes = ["PPPoE", "Bridge", "IPoE"];
+  $scope.connectionTypes = ["PPPoE", "Bridge", "DCHP", "Static"];
   $scope.bridgeConnections = [];
 
   $scope.editEthernetInterface = "";
@@ -178,6 +181,22 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     }
   }
 
+    // Update the loadBridgeConnections function to store the bridge object name
+  async function loadDNSServers() {
+    if ($scope.ptmData.connectionType !== "Static") {
+      return;
+    }
+    try {
+      const response = await $http.get(
+        URL +
+          "cgi_get_fillparams?Object=Device.Bridging.Bridge&X_LANTIQ_COM_Name="
+      );
+
+    } catch (error) {
+      console.error("Error loading DNS servers:", error);
+    }
+  }
+
   // Function to delete the old connection in edit mode
   async function deleteOldPtmConnection() {
     const DELETE_Request = `Object=${$scope.editIPInterface}&Operation=Del&Object=${$scope.editPPPInterface}&Operation=Del&Object=${$scope.editEthernetInterface}&Operation=Del`;
@@ -209,6 +228,8 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
         }
 
         connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${$scope.bridgeObjectName}.Port.cpe-WEB-BridgingBridge1Port-${randomNumber}&Object=${$scope.bridgeObjectName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge1Port-${randomNumber}&LowerLayers=${WanGroupMappingLayer}`;
+      } else if ($scope.ptmData.connectionType === "Static") {
+      } else if ($scope.ptmData.connectionType === "DHCP") {
       }
 
       let deleteRes = 1;

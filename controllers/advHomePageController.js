@@ -5,6 +5,8 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	$scope.inputType = 'password';
 	httpService.getRulesJson();
 	$scope.selectedTab = 1;
+	$scope.wifi2_4G = false;
+	$scope.wifi5G = false;
 	// Hide & show password function
 	$scope.hideShowPassword = function () {
 		if ($scope.inputType == 'password')
@@ -35,7 +37,7 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	$scope.clickstatus = "div1";
 	var changedFields = [];
 	$scope.showDetails = false;
-
+	$rootScope.eth_port_status = [];
 	function setWifiSecurityBasedOnRadioBandSelected(radioBandType) {
 		if (radioBandType === "WiFi2.4")
 			$scope._activeTab = 2;
@@ -361,6 +363,23 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 			}).
 			error(function (data, status, headers, config) { });
 	};
+	getWifi_Status = function () {
+		$http.get(URL + 'cgi_get_nosubobj?Object=Device.WiFi.Radio.1').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[0].ParamValue === "true" ? $scope.wifi2_4G = true : $scope.wifi2_4G = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_nosubobj?Object=Device.WiFi.Radio.2').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[0].ParamValue === "true" ? $scope.wifi5G = true : $scope.wifi5G = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+	};
 	getSecondQueryData = function (reqParams, firstObjectName) {
 		$http.get(URL + reqParams + firstObjectName).
 			success(function (data, status, headers, config) {
@@ -476,8 +495,11 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	//    getTableData("cgi_get?Object=Device.DHCPv4.Server.Pool.1");
 	getNumberOfClients("Device.Hosts.?HostNumberOfEntries&Device.Hosts.Host.*?PhysAddress,IPv4AddressNumberOfEntries,HostName,IPv4Address");
 	getFirstQueryData("cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true");
+
+	getWifi_Status();
 	var refreshData = function () {
 		getFirstQueryData("cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true");
+		getWifi_Status();
 	};
 
 	$scope.$on('enablePollingState', function (event, next, current) {

@@ -117,7 +117,7 @@
         </span>
       </div>
 
-      <!-- MAC Address (shown when cloning enabled) -->
+      <!-- MAC Address -->
       <div class="mb-3 col-sm-6" ng-if="ptmData.macCloneEnabled">
         <div class="input-field required">
           <input
@@ -213,10 +213,11 @@
       </div>
     </div>
 
-    <div class="pppoe" ng-if="ptmData.connectionType != 'Bridge'">
+    <!-- PPoE Fields -->
+    <div class="pppoe" ng-if="ptmData.connectionType == 'PPPoE'">
       <div class="row">
         <!-- Username -->
-        <div class="mb-3 col-sm-6" ng-if="ptmData.connectionType != 'IPoE'">
+        <div class="mb-3 col-sm-6">
           <div class="input-field required d-flex w-100">
             <input
               id="username"
@@ -243,7 +244,7 @@
         </div>
 
         <!-- Password -->
-        <div class="mb-3 col-sm-6" ng-if="ptmData.connectionType != 'IPoE'">
+        <div class="mb-3 col-sm-6">
           <div class="d-flex">
             <div class="input-field required w-100">
               <input
@@ -295,7 +296,7 @@
               required
               ng-change="updateParent()"
             />
-            <label class="active special" for="mtusize">{{ptmData.connectionType != 'IPoE' ? 'MRU' : 'MTU'}} Size</label>
+            <label class="active special" for="mtusize">MRU Size</label>
             <div
               class="text-danger small"
               ng-show="ptmForm.mtusize.$error.pattern && ptmForm.mtusize.$dirty"
@@ -305,46 +306,137 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="row mt-2">
-        <!-- IPv6 Enable -->
-        <div class="col-sm-6">
-          <div class="checkbox1 input-field1" style="width:215px">
-            <input
-              id="ipv6enable"
-              name="ipv6enable"
-              type="checkbox"
-              ng-true-value="'1'"
-              ng-false-value="'0'"
-              ng-model="ptmData.ipv6enable"
-              ng-change="updateParent()"
-            />
-            <label class="checkbox_left_align" for="ipv6enable"
-              >IPv6 Enable</label
-            >
-          </div>
+    <div class="row mt-2">
+      <!-- IPv6 Enable -->
+      <div class="col-sm-6">
+        <div class="checkbox1 input-field1" style="width:215px">
+          <input
+            id="ipv6enable"
+            name="ipv6enable"
+            type="checkbox"
+            ng-true-value="'1'"
+            ng-false-value="'0'"
+            ng-model="ptmData.ipv6enable"
+            ng-change="updateParent()"
+          />
+          <label class="checkbox_left_align" for="ipv6enable"
+            >IPv6 Enable</label
+          >
         </div>
+      </div>
 
-        <!-- Default Gateway -->
-        <div class="col-sm-6">
-          <div class="checkbox1 input-field1" style="width:215px">
-            <input
-              id="defaultGateway"
-              name="defaultGateway"
-              type="checkbox"
-              ng-true-value="'1'"
-              ng-false-value="'0'"
-              ng-model="ptmData.defaultGateway"
-              ng-change="updateParent()"
-            />
-            <label class="checkbox_left_align" for="defaultGateway"
-              >Default Gateway</label
-            >
-          </div>
+      <!-- Default Gateway -->
+      <div class="col-sm-6">
+        <div class="checkbox1 input-field1" style="width:215px">
+          <input
+            id="defaultGateway"
+            name="defaultGateway"
+            type="checkbox"
+            ng-true-value="'1'"
+            ng-false-value="'0'"
+            ng-model="ptmData.defaultGateway"
+            ng-change="updateParent()"
+          />
+          <label class="checkbox_left_align" for="defaultGateway"
+            >Default Gateway</label
+          >
         </div>
       </div>
     </div>
 
+    <!--Static Fields-->
+    <div class="static" ng-if="ptmData.connectionType == 'Static'">
+      <div class="row">
+        <div class="mb-3 col-sm-4">
+          <label for="ipaddress">IP Address</label>
+          <input
+            type="text"
+            id="ipaddress"
+            name="ipaddress"
+            ng-model="ptmData.ipaddress"
+            ng-pattern="patterns.ipv4"
+            ng-required="ptmData.connectionType == 'Static'"
+            class="form-control"
+            ng-change="updateParent()"
+          />
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.ipaddress.$error.pattern && ptmForm.ipaddress.$dirty"
+          >
+            Please enter a valid IPv4 address
+          </div>
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.ipaddress.$error.required && ptmForm.ipaddress.$dirty"
+          >
+            IP Address is required
+          </div>
+        </div>
+        <div class="mb-3 col-sm-4">
+          <label for="subnetmask">Subnet Mask</label>
+          <input
+            type="text"
+            id="subnetmask"
+            name="subnetmask"
+            ng-model="ptmData.subnetmask"
+            ng-pattern="patterns.ipv4"
+            ng-required="ptmData.connectionType == 'Static'"
+            class="form-control"
+            ng-change="updateParent()"
+          />
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.subnetmask.$error.pattern && ptmForm.subnetmask.$dirty"
+          >
+            Please enter a valid IPv4 Subnetmask
+          </div>
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.subnetmask.$error.required && ptmForm.subnetmask.$dirty"
+          >
+            Subnet Mask is required
+          </div>
+        </div>
+        <div class="mb-3 col-sm-4">
+          <label for="gatewayaddress">Gateway Address</label>
+          <input
+            type="text"
+            id="gatewayaddress"
+            name="gatewayaddress"
+            ng-model="ptmData.gatewayaddress"
+            ng-pattern="patterns.ipv4"
+            ng-required="ptmData.connectionType == 'Static'"
+            class="form-control"
+            ng-change="updateParent()"
+          />
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.gatewayaddress.$error.pattern && ptmForm.gatewayaddress.$dirty"
+          >
+            Please enter a valid IPv4 Gateway Address
+          </div>
+          <div
+            class="text-danger small"
+            ng-show="ptmForm.gatewayaddress.$error.required && ptmForm.gatewayaddress.$dirty"
+          >
+            Gateway Address is required
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <table class="table table-bordered tableCount theme_intel">
+          <tr>
+            <td>DNS Server</td>
+            <td>Action</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bridge Fields -->
     <div class="bridge" ng-if="ptmData.connectionType == 'Bridge'">
       <!-- Bridge Connection Selection -->
       <div class="row">
