@@ -19,6 +19,9 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     isUserDefinedDNS: false,
     primaryDNS: "",
     secondaryDNS: "",
+    ipaddress: "",
+    subnetmask: "",
+    gatewayaddress: "",
   };
 
   // Store all ATM Link and QoS objects
@@ -33,10 +36,14 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   $scope.vpiVciOptions = []; // filled from CGI
 
   $scope.connectionTypeOptionsMap = {
-    EoA: ["PPPoE","Bridge","DHCP","Static"],
+    EoA: ["PPPoE", "Bridge", "DHCP", "Static"],
     PPPoA: ["PPPoA"],
   };
   $scope.bridgeConnections = [];
+  $scope.editEthernetInterface = "";
+  $scope.editPPPInterface = "";
+  $scope.editIPInterface = "";
+  $scope.editAlias = "";
 
   // Load ATM links and QoS objects on init if ATM mode
   if ($scope.$parent.form.selectionMode === "ATM") {
@@ -199,6 +206,157 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       $("#ajaxLoaderSection").hide();
     }
   }
+
+  // Function to fetch DNS data specific to the current Device.IP.Interface during edit mode
+  async function loadStaticDNSData() {
+    if ($scope.atmData.connectionType !== "Static") {
+      return;
+    }
+    try {
+      const response = await $http.get(
+        "https://192.168.1.1/cgi/cgi_get?Object=Device.DNS.Client.Server"
+      );
+
+      if (response.data && response.data.Objects) {
+        const currentInterface = $scope.editIPInterface.replace(/\.$/, ""); // Remove trailing dot if present
+
+        $scope.staticDNSData = response.data.Objects.filter((dns) => {
+          const interfaceParam = dns.Param.find(
+            (x) => x.ParamName === "Interface"
+          );
+          return (
+            interfaceParam &&
+            interfaceParam.ParamValue.replace(/\.$/, "") === currentInterface // Remove trailing dot for comparison
+          );
+        }).map((dns) => {
+          const serverParam = dns.Param.find(
+            (x) => x.ParamName === "DNSServer"
+          );
+          return {
+            id: dns.ObjName,
+            ip: serverParam ? serverParam.ParamValue : "",
+            editable: false, // Mark as non-editable for existing entries
+          };
+        });
+
+        // Save to localStorage
+        localStorage.setItem(
+          "staticDNSData",
+          JSON.stringify($scope.staticDNSData)
+        );
+      } else {
+        $scope.staticDNSData = [];
+      }
+    } catch (error) {
+      console.error("Error loading static DNS data:", error);
+    }
+  }
+
+  // Function to fetch user-defined DNS data during edit mode
+  async function loadUserDefinedDNS() {
+    try {
+      const response = await $http.get(URL + "cgi_get_dns");
+      const dnsData = response.data.split("\n");
+
+      dnsData.forEach((line) => {
+        const [key, value] = line.split("=");
+        if (key === "UsrDefDNS1") {
+          $scope.atmData.primaryDNS = value || "";
+        } else if (key === "UsrDefDNS2") {
+          $scope.atmData.secondaryDNS = value || "";
+        }
+      });
+
+      $scope.updateParent();
+    } catch (error) {
+      console.error("Error loading user-defined DNS data:", error);
+    }
+  }
+
+  // Ensure connectionType is set correctly during edit mode
+  async function initializeConnectionType() {
+    try {
+      if ($scope.$parent.internetObject) {
+        $scope.editIPInterface = $scope.$parent.internetObject.split(",")[0];
+        const response = await $http.get(
+          URL + `/cgi_get?Object=${$scope.editIPInterface}`
+        );
+
+        const ipInterfaceData = response.data["Objects"][1];
+
+        if (ipInterfaceData) {
+          const addressingType = ipInterfaceData.Param.find(
+            (x) => x.ParamName === "AddressingType"
+          )?.ParamValue;
+
+          if (addressingType) {
+            switch (addressingType) {
+              case "X_LANTIQ_COM_PPPoE":
+                $scope.atmData.connectionType = "PPPoE";
+                loadUserPassData();
+                break;
+              case "Bridge":
+                $scope.atmData.connectionType = "Bridge";
+                loadBridgeConnections();
+                break;
+              case "Static":
+                $scope.atmData.connectionType = "Static";
+                $scope.atmData.subnetmask =
+                  ipInterfaceData.Param.find(
+                    (x) => x.ParamName === "SubnetMask"
+                  )?.ParamValue || "";
+                $scope.atmData.ipaddress =
+                  ipInterfaceData.Param.find((x) => x.ParamName === "IPAddress")
+                    ?.ParamValue || "";
+                loadStaticDNSData();
+                break;
+              default:
+                $scope.atmData.connectionType = "DHCP";
+            }
+          }
+        }
+      }
+
+      // Load user-defined DNS data
+      await loadUserDefinedDNS();
+    } catch (error) {
+      console.error("Error initializing connection type:", error);
+    }
+  }
+
+  // Call initializeConnectionType during controller initialization
+  initializeConnectionType();
+
+  // Initialize static DNS data
+  $scope.staticDNSData =
+    JSON.parse(localStorage.getItem("staticDNSData")) || [];
+
+  // Add a new row for static DNS entry
+  $scope.addStaticDNSRow = function() {
+    $scope.staticDNSData.push({ id: null, ip: "", editable: true });
+  };
+
+  // Confirm a static DNS row (make it non-editable)
+  $scope.confirmStaticDNSRow = function(index) {
+    const dns = $scope.staticDNSData[index];
+    if ($scope.patterns.ipv4.test(dns.ip)) {
+      dns.editable = false;
+      // Save updated data to localStorage
+      localStorage.setItem(
+        "staticDNSData",
+        JSON.stringify($scope.staticDNSData)
+      );
+    } else {
+      alert("Please enter a valid IPv4 address.");
+    }
+  };
+
+  // Remove a static DNS row
+  $scope.removeStaticDNSRow = function(index) {
+    $scope.staticDNSData.splice(index, 1);
+    // Save updated data to localStorage
+    localStorage.setItem("staticDNSData", JSON.stringify($scope.staticDNSData));
+  };
 
   async function loadUserPassData() {
     try {

@@ -159,56 +159,54 @@
     </div>
 
     <!-- DNS Fields -->
-    <div class="row">
-      <div class="row" ng-if="showDNSFields()">
-        <div class="col-sm-6 mb-3 required">
-          <label for="primaryDNS">Primary DNS</label>
-          <input
-            type="text"
-            id="primaryDNS"
-            name="primaryDNS"
-            ng-model="ptmData.primaryDNS"
-            ng-pattern="patterns.ipv4"
-            ng-required="ptmData.isUserDefinedDNS"
-            class="form-control"
-            ng-change="updateParent()"
-          />
-          <div
-            class="text-danger small"
-            ng-show="ptmForm.primaryDNS.$error.pattern && ptmForm.primaryDNS.$dirty"
-          >
-            Please enter a valid IPv4 address
-          </div>
-          <div
-            class="text-danger small"
-            ng-show="ptmForm.primaryDNS.$error.required && ptmForm.primaryDNS.$dirty"
-          >
-            Primary DNS is required
-          </div>
+    <div class="row" ng-if="showDNSFields()">
+      <div class="col-sm-6 mb-3 required">
+        <label for="primaryDNS">Primary DNS</label>
+        <input
+          type="text"
+          id="primaryDNS"
+          name="primaryDNS"
+          ng-model="ptmData.primaryDNS"
+          ng-pattern="patterns.ipv4"
+          ng-required="ptmData.isUserDefinedDNS"
+          class="form-control"
+          ng-change="updateParent()"
+        />
+        <div
+          class="text-danger small"
+          ng-show="ptmForm.primaryDNS.$error.pattern && ptmForm.primaryDNS.$dirty"
+        >
+          Please enter a valid IPv4 address
         </div>
-        <div class="col-sm-6 mb-3">
-          <label for="secondaryDNS">Secondary DNS (optional)</label>
-          <input
-            type="text"
-            id="secondaryDNS"
-            name="secondaryDNS"
-            ng-model="ptmData.secondaryDNS"
-            ng-pattern="patterns.ipv4"
-            class="form-control"
-            ng-change="validateDNSForm();updateParent()"
-          />
-          <div
-            class="text-danger small"
-            ng-show="ptmForm.secondaryDNS.$error.pattern && ptmForm.secondaryDNS.$dirty"
-          >
-            Please enter a valid IPv4 address
-          </div>
-          <div
-            class="text-danger small"
-            ng-show="ptmData.secondaryDNS === ptmData.primaryDNS && ptmForm.secondaryDNS.$dirty"
-          >
-            Secondary DNS must not be the same as Primary DNS
-          </div>
+        <div
+          class="text-danger small"
+          ng-show="ptmForm.primaryDNS.$error.required && ptmForm.primaryDNS.$dirty"
+        >
+          Primary DNS is required
+        </div>
+      </div>
+      <div class="col-sm-6 mb-3">
+        <label for="secondaryDNS">Secondary DNS (optional)</label>
+        <input
+          type="text"
+          id="secondaryDNS"
+          name="secondaryDNS"
+          ng-model="ptmData.secondaryDNS"
+          ng-pattern="patterns.ipv4"
+          class="form-control"
+          ng-change="validateDNSForm();updateParent()"
+        />
+        <div
+          class="text-danger small"
+          ng-show="ptmForm.secondaryDNS.$error.pattern && ptmForm.secondaryDNS.$dirty"
+        >
+          Please enter a valid IPv4 address
+        </div>
+        <div
+          class="text-danger small"
+          ng-show="ptmData.secondaryDNS === ptmData.primaryDNS && ptmForm.secondaryDNS.$dirty"
+        >
+          Secondary DNS must not be the same as Primary DNS
         </div>
       </div>
     </div>
@@ -345,11 +343,9 @@
         </div>
       </div>
     </div>
-
-    
     <!--Static Fields-->
     <div class="static mt-4" ng-if="ptmData.connectionType == 'Static'">
-      <hr/>
+      <hr />
       <div class="row">
         <div class="mb-3 col-sm-4">
           <label for="ipaddress">IP Address</label>
