@@ -596,8 +596,15 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   loadUserPassData();
 
   // Watch for changes in connectionType and load data accordingly
-  $scope.$watch("atmData.connectionType", function(newValue) {
-    if (newValue === "Bridge") {
+  $scope.$watch("atmData.connectionType", function(newValue,oldValue) {
+
+    debugger;
+    console.log($scope.atmData.connectionType);
+    if (newValue === oldValue) return;
+
+    if (newValue === "Static") {
+      loadStaticDNSData();
+    } else if (newValue === "Bridge") {
       loadBridgeConnections();
     } else {
       loadUserPassData();
