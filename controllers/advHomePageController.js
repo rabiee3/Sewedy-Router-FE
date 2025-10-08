@@ -7,6 +7,8 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	$scope.selectedTab = 1;
 	$scope.wifi2_4G = false;
 	$scope.wifi5G = false;
+	$scope.dslStatus = false;
+	$scope.internetStatus = false;
 	// Hide & show password function
 	$scope.hideShowPassword = function () {
 		if ($scope.inputType == 'password')
@@ -303,6 +305,30 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 		}
 		getData();
 	};
+
+	function getDefaultGatewayStatus(data) {
+		for (const item of data) {
+			if (!item.Param) continue;
+
+			const isDefaultGateway = item.Param.some(p =>
+			p.ParamName === "X_LANTIQ_COM_DefaultGateway" && p.ParamValue === "true"
+			);
+
+			if (isDefaultGateway) {
+			const status = item.Param.find(p => p.ParamName === "Status");
+			const name = item.ObjName;
+			const ipv4 = item.Child && item.Child[0] ? item.Child[0].ObjName : null;
+
+			return {
+				interface: name,
+				status: status ? status.ParamValue : "Unknown",
+				ipv4: ipv4
+			};
+			}
+		}
+		return null;
+	}
+
 	getFirstQueryData = function (reqParams) {
 		$http.get(URL + reqParams).
 			success(function (data, status, headers, config) {
@@ -363,7 +389,7 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 			}).
 			error(function (data, status, headers, config) { });
 	};
-	getWifi_Status = function () {
+	get_Status = function () {
 		$http.get(URL + 'cgi_get_nosubobj?Object=Device.WiFi.Radio.1').
 			success(function (data, status, headers, config) {
 				if (status === 200) {
@@ -379,6 +405,57 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 				}
 			}).
 			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get?Object=Device.DSL.Line.1').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[2].Param[2].ParamValue === "READY" ? $scope.dslStatus = true : $scope.dslStatus = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_fillparams?Object=Device.Ethernet.Interface.1').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[1].ParamValue === "Up" ? $rootScope.eth_port_status[0] = true : $rootScope.eth_port_status[0] = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_fillparams?Object=Device.Ethernet.Interface.2').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[1].ParamValue === "Up" ? $rootScope.eth_port_status[1] = true : $rootScope.eth_port_status[1] = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_fillparams?Object=Device.Ethernet.Interface.3').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[1].ParamValue === "Up" ? $rootScope.eth_port_status[2] = true : $rootScope.eth_port_status[2] = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_fillparams?Object=Device.Ethernet.Interface.4').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[1].ParamValue === "Up" ? $rootScope.eth_port_status[3] = true : $rootScope.eth_port_status[3] = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					debugger;
+					$scope.internetStatus = getDefaultGatewayStatus(data.Objects) === "Up" ? true : false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+			
 	};
 	getSecondQueryData = function (reqParams, firstObjectName) {
 		$http.get(URL + reqParams + firstObjectName).
@@ -496,7 +573,7 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	getNumberOfClients("Device.Hosts.?HostNumberOfEntries&Device.Hosts.Host.*?PhysAddress,IPv4AddressNumberOfEntries,HostName,IPv4Address");
 	getFirstQueryData("cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true");
 
-	getWifi_Status();
+	get_Status();
 	var refreshData = function () {
 		getFirstQueryData("cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true");
 		getWifi_Status();
