@@ -336,12 +336,10 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
         // Post user-defined DNS data
         const dnsRequest = `UsrDefDNS1=${$scope.ptmData.primaryDNS}&UsrDefDNS2=${$scope.ptmData.secondaryDNS}`;
         const dnsResult = await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
-
-        if (dnsResult.status === 200) {
-          $scope.$emit("connectionAdded", true);
-        } else {
+        if (dnsResult.status !== 200) {
           alert("Failed to set user-defined DNS.");
         }
+        $scope.$emit("connectionAdded", true);
       } else {
         // Check if result contains error details
         if (addResult.data?.Objects?.[0]?.Param?.[0]?.ParamValue) {

@@ -483,7 +483,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   $scope.addNewConnection = async function() {
     try {
       // If edit mode, delete old connection first
-
       if ($scope.$parent.isEditMode) {
         await $scope.deleteConnection();
       }
@@ -492,6 +491,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       if (isNaN(randomNumber)) {
         randomNumber = Math.floor(Math.random() * 1000); // fallback
       }
+
       const dslLowerLayer = "Device.DSL.Line.1."; // Assuming fixed DSL line
 
       // ATM Layer
@@ -524,34 +524,20 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       // 3. QoS Settings
       connectionRequest += `&Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
       connectionRequest += `&QoSClass=${$scope.atmData.atmQosClass}`;
-      if (
-        $scope.atmData.peakCellRate !== undefined &&
-        $scope.atmData.peakCellRate !== "" &&
-        $scope.atmData.peakCellRate !== null
-      ) {
+      if ($scope.atmData.peakCellRate) {
         connectionRequest += `&PeakCellRate=${$scope.atmData.peakCellRate}`;
       }
-      if (
-        $scope.atmData.maximumBSize !== undefined &&
-        $scope.atmData.maximumBSize !== "" &&
-        $scope.atmData.maximumBSize !== null
-      ) {
+      if ($scope.atmData.maximumBSize) {
         connectionRequest += `&MaximumBurstSize=${$scope.atmData.maximumBSize}`;
       }
-      if (
-        $scope.atmData.sustainableCellRate !== undefined &&
-        $scope.atmData.sustainableCellRate !== "" &&
-        $scope.atmData.sustainableCellRate !== null
-      ) {
+      if ($scope.atmData.sustainableCellRate) {
         connectionRequest += `&SustainableCellRate=${$scope.atmData.sustainableCellRate}`;
       }
 
       // 4. IP Interface
       connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
       connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
-        $scope.atmData.defaultGateway === "1" ? "true" : "false"
-      }`;
+      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${$scope.atmData.defaultGateway === "1" ? "true" : "false"}`;
       connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
 
       // 5. Ethernet Link
@@ -564,10 +550,30 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size}`;
       connectionRequest += `&Username=${pppUsername}&Password=${pppPassword}`;
 
-      // 7. Send request
+      // 7. Static DNS (if applicable)
+      if ($scope.atmData.connectionType === "Static") {
+        const dnsEntries = $scope.staticDNSData
+          .map((dns, index) => {
+            return `&Object=Device.DNS.Client.Server&Operation=Add&Enable=true&Alias=StaticDNS-${randomNumber}-${index}&DNSServer=${dns.ip}`;
+          })
+          .join("");
+        connectionRequest += dnsEntries;
+      }
+
+      // 8. Send request
       const result = await $http.post(URL + "cgi_set", connectionRequest);
 
       if (result.status === 200) {
+        // Post user-defined DNS data (if applicable)
+        if ($scope.atmData.isUserDefinedDNS) {
+          const dnsRequest = `UsrDefDNS1=${$scope.atmData.primaryDNS}&UsrDefDNS2=${$scope.atmData.secondaryDNS}`;
+          const dnsResult = await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
+
+          if (dnsResult.status !== 200) {
+            alert("Failed to set user-defined DNS.");
+          }
+        }
+
         $scope.$emit("connectionAdded", true);
       } else {
         alert(
