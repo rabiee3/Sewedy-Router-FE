@@ -18,7 +18,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     gatewayaddress: "",
   };
 
-  $scope.connectionTypes = ["PPPoE", "Bridge", "DCHP", "Static"];
+  $scope.connectionTypes = ["PPPoE", "Bridge", "DHCP", "Static"];
   $scope.bridgeConnections = [];
 
   $scope.editEthernetInterface = "";
@@ -113,14 +113,13 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
             : "0";
 
         const userPassData = userPassResponse.data["Objects"][0];
-        debugger;
+
         $scope.editEthernetInterface = userPassData.Param.find(
           (x) => x.ParamName === "LowerLayers"
         )?.ParamValue;
 
         setTimeout(() => {
           $scope.$apply(() => {
-            debugger;
             $scope.ptmData.username =
               userPassData.Param.find(
                 (x) => x.ParamName === "Username"
@@ -181,29 +180,112 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     }
   }
 
-    // Update the loadBridgeConnections function to store the bridge object name
-  async function loadDNSServers() {
+  // Function to delete the old connection in edit mode
+  async function deleteOldPtmConnection() {
+    const DELETE_Request = `Object=${$scope.editIPInterface}&Operation=Del&Object=${$scope.editPPPInterface}&Operation=Del&Object=${$scope.editEthernetInterface}&Operation=Del`;
+    return await $http.post(URL + "cgi_set", DELETE_Request);
+  }
+
+  // Function to fetch DNS data specific to the current Device.IP.Interface during edit mode
+  async function loadStaticDNSData() {
     if ($scope.ptmData.connectionType !== "Static") {
       return;
     }
     try {
       const response = await $http.get(
-        URL +
-          "cgi_get_fillparams?Object=Device.Bridging.Bridge&X_LANTIQ_COM_Name="
+        "https://192.168.1.1/cgi/cgi_get?Object=Device.DNS.Client.Server"
       );
 
+      if (response.data && response.data.Objects) {
+        const currentInterface = $scope.editIPInterface.replace(/\.$/, ""); // Remove trailing dot if present
+
+        $scope.staticDNSData = response.data.Objects
+          .filter((dns) => {
+            const interfaceParam = dns.Param.find(
+              (x) => x.ParamName === "Interface"
+            );
+            return (
+              interfaceParam &&
+              interfaceParam.ParamValue.replace(/\.$/, "") === currentInterface // Remove trailing dot for comparison
+            );
+          })
+          .map((dns) => {
+            const serverParam = dns.Param.find(
+              (x) => x.ParamName === "DNSServer"
+            );
+            return {
+              id: dns.ObjName,
+              ip: serverParam ? serverParam.ParamValue : "",
+              editable: false, // Mark as non-editable for existing entries
+            };
+          });
+
+        // Save to localStorage
+        localStorage.setItem(
+          "staticDNSData",
+          JSON.stringify($scope.staticDNSData)
+        );
+      } else {
+        $scope.staticDNSData = [];
+      }
     } catch (error) {
-      console.error("Error loading DNS servers:", error);
+      console.error("Error loading static DNS data:", error);
     }
   }
 
-  // Function to delete the old connection in edit mode
-  async function deleteOldPtmConnection() {
-    const DELETE_Request = `Object=${$scope.editIPInterface}&Operation=Del&Object=${$scope.editPPPInterface}&Operation=Del&Object=${$scope.editEthernetInterface}&Operation=Del`;
-    debugger;
-    return await $http.post(URL + "cgi_set", DELETE_Request);
+  // Initialize static DNS data
+  $scope.staticDNSData =
+    JSON.parse(localStorage.getItem("staticDNSData")) || [];
+
+  // Add a new row for static DNS entry
+  $scope.addStaticDNSRow = function() {
+    $scope.staticDNSData.push({ id: null, ip: "", editable: true });
+  };
+
+  // Confirm a static DNS row (make it non-editable)
+  $scope.confirmStaticDNSRow = function(index) {
+    const dns = $scope.staticDNSData[index];
+    if ($scope.patterns.ipv4.test(dns.ip)) {
+      dns.editable = false;
+      // Save updated data to localStorage
+      localStorage.setItem(
+        "staticDNSData",
+        JSON.stringify($scope.staticDNSData)
+      );
+    } else {
+      alert("Please enter a valid IPv4 address.");
+    }
+  };
+
+  // Remove a static DNS row
+  $scope.removeStaticDNSRow = function(index) {
+    $scope.staticDNSData.splice(index, 1);
+    // Save updated data to localStorage
+    localStorage.setItem("staticDNSData", JSON.stringify($scope.staticDNSData));
+  };
+
+  // Function to fetch user-defined DNS data during edit mode
+  async function loadUserDefinedDNS() {
+    try {
+      const response = await $http.get(URL + "cgi_get_dns");
+      const dnsData = response.data.split("\n");
+
+      dnsData.forEach((line) => {
+        const [key, value] = line.split("=");
+        if (key === "UsrDefDNS1") {
+          $scope.ptmData.primaryDNS = value || "";
+        } else if (key === "UsrDefDNS2") {
+          $scope.ptmData.secondaryDNS = value || "";
+        }
+      });
+
+      $scope.updateParent();
+    } catch (error) {
+      console.error("Error loading user-defined DNS data:", error);
+    }
   }
 
+  // Include static DNS data in the apply request
   $scope.addNewConnection = async function() {
     try {
       const randomNumber = parseInt(localStorage.getItem("randomvalue"));
@@ -229,6 +311,13 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
 
         connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${$scope.bridgeObjectName}.Port.cpe-WEB-BridgingBridge1Port-${randomNumber}&Object=${$scope.bridgeObjectName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge1Port-${randomNumber}&LowerLayers=${WanGroupMappingLayer}`;
       } else if ($scope.ptmData.connectionType === "Static") {
+        const dnsEntries = $scope.staticDNSData
+          .map((dns, index) => {
+            return `Object=Device.DNS.Client.Server&Operation=Add&Enable=true&Alias=StaticDNS-${randomNumber}-${index}&DNSServer=${dns.ip}`;
+          })
+          .join("&");
+
+        connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=${WanGroupMappingLayer}&IPv6Enable=${$scope.ptmData.ipv6enable}&MaxMTUSize=${$scope.ptmData.mtu_size}&X_LANTIQ_COM_DefaultGateway=${$scope.ptmData.defaultGateway}&${dnsEntries}`;
       } else if ($scope.ptmData.connectionType === "DHCP") {
       }
 
@@ -244,7 +333,15 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       const addResult = await $http.post(URL + "cgi_set", connectionRequest);
 
       if (addResult.status === 200) {
-        $scope.$emit("connectionAdded", true);
+        // Post user-defined DNS data
+        const dnsRequest = `UsrDefDNS1=${$scope.ptmData.primaryDNS}&UsrDefDNS2=${$scope.ptmData.secondaryDNS}`;
+        const dnsResult = await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
+
+        if (dnsResult.status === 200) {
+          $scope.$emit("connectionAdded", true);
+        } else {
+          alert("Failed to set user-defined DNS.");
+        }
       } else {
         // Check if result contains error details
         if (addResult.data?.Objects?.[0]?.Param?.[0]?.ParamValue) {
@@ -265,11 +362,67 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     $scope.addNewConnection();
   });
 
-  loadUserPassData();
+  // Ensure connectionType is set correctly during edit mode
+  async function initializeConnectionType() {
+    try {
+      if ($scope.$parent.internetObject) {
+        $scope.editIPInterface = $scope.$parent.internetObject.split(",")[0];
+        const response = await $http.get(
+          URL + `/cgi_get?Object=${$scope.editIPInterface}`
+        );
 
-  // Watch for changes in connectionType and load data accordingly
-  $scope.$watch("ptmData.connectionType", function(newValue) {
-    if (newValue === "Bridge") {
+        const ipInterfaceData = response.data["Objects"][1];
+
+        if (ipInterfaceData) {
+          const addressingType = ipInterfaceData.Param.find(
+            (x) => x.ParamName === "AddressingType"
+          )?.ParamValue;
+
+          if (addressingType) {
+            switch (addressingType) {
+              case "X_LANTIQ_COM_PPPoE":
+                $scope.ptmData.connectionType = "PPPoE";
+                loadUserPassData();
+                break;
+              case "Bridge":
+                $scope.ptmData.connectionType = "Bridge";
+                loadBridgeConnections();
+                break;
+              case "Static":
+                $scope.ptmData.connectionType = "Static";
+                $scope.ptmData.subnetmask =
+                  ipInterfaceData.Param.find(
+                    (x) => x.ParamName === "SubnetMask"
+                  )?.ParamValue || "";
+                $scope.ptmData.ipaddress =
+                  ipInterfaceData.Param.find((x) => x.ParamName === "IPAddress")
+                    ?.ParamValue || "";
+                loadStaticDNSData();
+                break;
+              default:
+                $scope.ptmData.connectionType = "DHCP";
+            }
+          }
+        }
+      }
+
+      // Load user-defined DNS data
+      await loadUserDefinedDNS();
+    } catch (error) {
+      console.error("Error initializing connection type:", error);
+    }
+  }
+
+  // Call initializeConnectionType during controller initialization
+  initializeConnectionType();
+
+  // Refine $watch logic to prevent unnecessary calls
+  $scope.$watch("ptmData.connectionType", function(newValue, oldValue) {
+    if (newValue === oldValue) return;
+
+    if (newValue === "Static") {
+      loadStaticDNSData();
+    } else if (newValue === "Bridge") {
       loadBridgeConnections();
     } else {
       loadUserPassData();

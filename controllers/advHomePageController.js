@@ -449,7 +449,6 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 		$http.get(URL + 'cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true').
 			success(function (data, status, headers, config) {
 				if (status === 200) {
-					debugger;
 					$scope.internetStatus = getDefaultGatewayStatus(data.Objects) === "Up" ? true : false;
 				}
 			}).

@@ -346,8 +346,10 @@
       </div>
     </div>
 
+    
     <!--Static Fields-->
-    <div class="static" ng-if="ptmData.connectionType == 'Static'">
+    <div class="static mt-4" ng-if="ptmData.connectionType == 'Static'">
+      <hr/>
       <div class="row">
         <div class="mb-3 col-sm-4">
           <label for="ipaddress">IP Address</label>
@@ -427,11 +429,58 @@
       </div>
 
       <div class="row">
-        <table class="table table-bordered tableCount theme_intel">
-          <tr>
-            <td>DNS Server</td>
-            <td>Action</td>
-          </tr>
+        <table
+          class="table static_dns_table table-bordered tableCount theme_intel"
+        >
+          <thead>
+            <tr>
+              <th>DNS Server</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="dns in staticDNSData">
+              <td>
+                <input
+                  type="text"
+                  class="form-control"
+                  ng-model="dns.ip"
+                  placeholder="Enter DNS IP"
+                  ng-pattern="patterns.ipv4"
+                  ng-disabled="!dns.editable"
+                  required
+                />
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-success btn-sm"
+                  ng-if="dns.editable"
+                  ng-click="confirmStaticDNSRow($index)"
+                >
+                  ✓
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  ng-click="removeStaticDNSRow($index)"
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  ng-click="addStaticDNSRow()"
+                >
+                  Add DNS Server
+                </button>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
