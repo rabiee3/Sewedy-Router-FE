@@ -229,10 +229,7 @@ myapp.controller("atm_form_controller", function($scope, $http, $timeout) {
         const currentInterface = $scope.editIPInterface.replace(/\.$/, ""); // Remove trailing dot if present
 
         if (!currentInterface) {
-          localStorage.setItem(
-            "staticDNSData",
-            ""
-          );
+          localStorage.setItem("staticDNSData", "");
           return;
         }
 
@@ -497,115 +494,199 @@ myapp.controller("atm_form_controller", function($scope, $http, $timeout) {
     }
   }
 
-  $scope.addNewConnection = async function() {
+  // Helper: safely get string values
+  function safe(v) {
+    return v === undefined || v === null ? "" : v;
+  }
+
+  async function getDefaultGatewayInterface() {
     try {
-      // If edit mode, delete old connection first
+      const res = await $http.get(URL + "cgi_get?Object=Device.IP.Interface");
+      const interfaces = res.data.Objects || [];
+
+      // Find the interface where DefaultGateway flag is true
+      const gwInterface = interfaces.find((iface) => {
+        const gwParam = iface.Param.find(
+          (p) => p.ParamName === "X_LANTIQ_COM_DefaultGateway"
+        );
+        return gwParam && gwParam.ParamValue === "true";
+      });
+
+      if (!gwInterface) return null;
+
+      const nameParam = gwInterface.ObjName;
+      const lowerLayerParam = gwInterface.Param.find(
+        (p) => p.ParamName === "LowerLayers"
+      )?.ParamValue;
+
+      return {
+        objName: nameParam,
+        lowerLayer: lowerLayerParam,
+        params: gwInterface.Param,
+      };
+    } catch (err) {
+      console.error("Error fetching default gateway interface:", err);
+      return null;
+    }
+  }
+
+  $scope.addNewConnection = async function() {
+    $("#ajaxLoaderSection").show();
+    try {
+      // --- Handle edit mode ---
       if ($scope.$parent.isEditMode) {
         await $scope.deleteConnection();
       }
 
+      // --- Generate unique suffix ---
       let randomNumber = parseInt(localStorage.getItem("randomvalue"));
       if (isNaN(randomNumber)) {
-        randomNumber = Math.floor(Math.random() * 1000); // fallback
+        randomNumber = Math.floor(Math.random() * 1000);
+        localStorage.setItem("randomvalue", randomNumber);
       }
 
-      const dslLowerLayer = "Device.DSL.Line.1."; // Assuming fixed DSL line
-
-      // ATM Layer
+      // --- Common Aliases ---
       const atmAlias = `cpe-WEB-ATMLink-${randomNumber}`;
-      const qosPath = `Device.ATM.Link.${atmAlias}.QoS`;
-
-      // Ethernet Link
       const ethAlias = `cpe-WEB-EthernetLink-${randomNumber}`;
-
-      // PPP Interface
       const pppAlias = `cpe-WEB-PPPInterface-${randomNumber}`;
-      const pppUsername = encodeURIComponent(
-        `${$scope.atmData.username}@tedata.net.eg`
-      );
-      const pppPassword = encodeURIComponent($scope.atmData.password);
-
-      // IP Interface
       const ipAlias = `cpe-WEB-IPInterface-${randomNumber}`;
+      const dnsAlias = `StaticDNS-${randomNumber}-0`;
 
-      // 1. Start request string
+      const dslLowerLayer = "Device.DSL.Line.1.";
+
       let connectionRequest = "";
 
-      // 2. ATM Link Layer
+      // --- 1. ATM Link ---
       connectionRequest += `&Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${atmAlias}`;
       connectionRequest += `&LowerLayers=${dslLowerLayer}`;
-      connectionRequest += `&DestinationAddress=${$scope.atmData.vpiVci}`;
-      connectionRequest += `&Encapsulation=${$scope.atmData.encapsulation}`;
-      connectionRequest += `&LinkType=${$scope.atmData.linkType}`;
+      connectionRequest += `&DestinationAddress=${$scope.atmData.vpiVci ||
+        "0/35"}`;
+      connectionRequest += `&LinkType=${$scope.atmData.linkType || "EoA"}`;
+      connectionRequest += `&Encapsulation=${$scope.atmData.encapsulation ||
+        "LLC"}`;
 
-      // 3. QoS Settings
+      // --- 2. QoS ---
       connectionRequest += `&Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
-      connectionRequest += `&QoSClass=${$scope.atmData.atmQosClass}`;
-      if ($scope.atmData.peakCellRate) {
+      connectionRequest += `&QoSClass=${$scope.atmData.atmQosClass || "UBR"}`;
+      if ($scope.atmData.peakCellRate)
         connectionRequest += `&PeakCellRate=${$scope.atmData.peakCellRate}`;
-      }
-      if ($scope.atmData.maximumBSize) {
+      if ($scope.atmData.maximumBSize)
         connectionRequest += `&MaximumBurstSize=${$scope.atmData.maximumBSize}`;
-      }
-      if ($scope.atmData.sustainableCellRate) {
+      if ($scope.atmData.sustainableCellRate)
         connectionRequest += `&SustainableCellRate=${$scope.atmData.sustainableCellRate}`;
+
+      // --- 3. Ethernet Link ---
+      connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true`;
+      connectionRequest += `&Alias=${ethAlias}`;
+      connectionRequest += `&LowerLayers=Device.ATM.Link.${atmAlias}`;
+
+      // --- 4. PPP Interface (if applicable) ---
+      if ($scope.atmData.connectionType === "PPPoE") {
+        const username = encodeURIComponent(
+          `${$scope.atmData.username}@tedata.net.eg`
+        );
+        const password = encodeURIComponent($scope.atmData.password || "");
+
+        connectionRequest += `&Object=Device.PPP.Interface&Operation=Add&Enable=true`;
+        connectionRequest += `&Alias=${pppAlias}`;
+        connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
+        connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size || 1492}`;
+        connectionRequest += `&Username=${username}&Password=${password}`;
       }
 
-      // 4. IP Interface
-      connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
-      connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
+      // --- 5. IP Interface ---
+      connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true`;
+      connectionRequest += `&Alias=${ipAlias}`;
+      const lowerLayer =
+        $scope.atmData.connectionType === "PPPoE"
+          ? `Device.PPP.Interface.${pppAlias}`
+          : `Device.Ethernet.Link.${ethAlias}`;
+      connectionRequest += `&LowerLayers=${lowerLayer}`;
       connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
         $scope.atmData.defaultGateway === "1" ? "true" : "false"
       }`;
-      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
+      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable || 0}`;
 
-      // 5. Ethernet Link
-      connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
-      connectionRequest += `&LowerLayers=Device.ATM.Link.${atmAlias}`;
-
-      // 6. PPP Interface
-      connectionRequest += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${pppAlias}`;
-      connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
-      connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size}`;
-      connectionRequest += `&Username=${pppUsername}&Password=${pppPassword}`;
-
-      // 7. Static DNS (if applicable)
+      // --- 6. IPv4 Address / Routing / DNS Handling ---
       if ($scope.atmData.connectionType === "Static") {
-        const dnsEntries = $scope.staticDNSData
-          .map((dns, index) => {
-            return `&Object=Device.DNS.Client.Server&Operation=Add&Enable=true&Alias=StaticDNS-${randomNumber}-${index}&DNSServer=${dns.ip}`;
-          })
-          .join("");
-        connectionRequest += dnsEntries;
-      }
-
-      // 8. Send request
-      const result = await $http.post(URL + "cgi_set", connectionRequest);
-
-      if (result.status === 200) {
-        // Post user-defined DNS data (if applicable)
-        if ($scope.atmData.isUserDefinedDNS) {
-          const dnsRequest = `UsrDefDNS1=${$scope.atmData.primaryDNS}&UsrDefDNS2=${$scope.atmData.secondaryDNS}`;
-          const dnsResult = await $http.post(
-            URL + "cgi_setUserDefinedDNS",
-            dnsRequest
-          );
-
-          if (dnsResult.status !== 200) {
-            alert("Failed to set user-defined DNS.");
-          }
+        // IPv4 Address
+        if ($scope.atmData.static_ip && $scope.atmData.static_mask) {
+          connectionRequest += `&Object=Device.IP.Interface.${ipAlias}.IPv4Address&Operation=Add`;
+          connectionRequest += `&IPAddress=${$scope.atmData.static_ip}`;
+          connectionRequest += `&SubnetMask=${$scope.atmData.static_mask}`;
+        } else {
+          // fallback to DHCP if not provided
+          connectionRequest += `&Object=Device.IP.Interface.${ipAlias}.IPv4Address&Operation=Add`;
         }
 
-        $scope.$emit("connectionAdded", true);
-      } else {
-        alert(
-          result.data?.Objects?.[0]?.Param?.[0]?.ParamValue ||
-            "Something went wrong."
-        );
+        // Routing (IPv4)
+        connectionRequest += `&Object=Device.Routing.Router.1.IPv4Forwarding&Operation=Add`;
+        connectionRequest += `&Interface=Device.IP.Interface.${ipAlias}`;
+        connectionRequest += `&Enable=true`;
+        if ($scope.atmData.static_gw)
+          connectionRequest += `&GatewayIPAddress=${$scope.atmData.static_gw}`;
+
+        // Routing (IPv6)
+        connectionRequest += `&Object=Device.Routing.Router.1.IPv6Forwarding&Operation=Add`;
+        connectionRequest += `&Interface=Device.IP.Interface.${ipAlias}`;
+
+        // Static DNS
+        if (
+          Array.isArray($scope.staticDNSData) &&
+          $scope.staticDNSData.length > 0
+        ) {
+          $scope.staticDNSData.forEach((dns, index) => {
+            if (dns.ip) {
+              connectionRequest += `&Object=Device.DNS.Client.Server&Operation=Add`;
+              connectionRequest += `&Enable=1`;
+              connectionRequest += `&Alias=StaticDNS-${randomNumber}-${index}`;
+              connectionRequest += `&DNSServer=${dns.ip}`;
+              connectionRequest += `&Interface=Device.IP.Interface.${ipAlias}`;
+            }
+          });
+        } else if ($scope.atmData.static_dns) {
+          connectionRequest += `&Object=Device.DNS.Client.Server&Operation=Add&Enable=1`;
+          connectionRequest += `&Alias=${dnsAlias}`;
+          connectionRequest += `&DNSServer=${$scope.atmData.static_dns}`;
+          connectionRequest += `&Interface=Device.IP.Interface.${ipAlias}`;
+        }
       }
+
+      console.log("📡 CGI Request:", connectionRequest);
+
+      // --- 7. Send request ---
+      const response = await $http.post(URL + "cgi_set", connectionRequest, {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+
+      // --- 8. Router Response Validation ---
+      if (
+        response.data &&
+        (response.data.status === 422 ||
+          response.data.Status === "Error" ||
+          (typeof response.data === "string" &&
+            response.data.toLowerCase().includes("unprocessable")))
+      ) {
+        throw new Error("Router rejected CGI request: Unprocessable entry");
+      }
+
+      // --- 9. Optional user-defined DNS ---
+      if ($scope.atmData.isUserDefinedDNS) {
+        const dnsRequest = `UsrDefDNS1=${$scope.atmData.primaryDNS}&UsrDefDNS2=${$scope.atmData.secondaryDNS}`;
+        const dnsResult = await $http.post(
+          URL + "cgi_setUserDefinedDNS",
+          dnsRequest
+        );
+        if (dnsResult.status !== 200) {
+          alert("Failed to set user-defined DNS.");
+        }
+      }
+
+      alert("✅ Connection created successfully!");
+      $scope.$emit("connectionAdded", true);
     } catch (err) {
-      console.error("Error adding ATM connection:", err);
-      alert("Failed to add ATM connection.");
+      console.error("❌ Error adding connection:", err);
+      alert(err.message || "Failed to add connection.");
     } finally {
       $("#ajaxLoaderSection").hide();
     }

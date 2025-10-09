@@ -317,11 +317,11 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       } else if ($scope.ptmData.connectionType === "Static") {
         const dnsEntries = $scope.staticDNSData
           .map((dns, index) => {
-            return `Object=Device.DNS.Client.Server&Operation=Add&Enable=true&Alias=StaticDNS-${randomNumber}-${index}&DNSServer=${dns.ip}`;
+            return `Object=Device.DNS.Client.Server&Operation=Add&Enable=true&Alias=StaticDNS-${randomNumber}-${index}&DNSServer=${dns.ip}&Interface=Device.IP.Interface.cpe-WEB-IPInterface-${randomNumber}`;
           })
           .join("&");
 
-        connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=${WanGroupMappingLayer}&IPv6Enable=${$scope.ptmData.ipv6enable}&MaxMTUSize=${$scope.ptmData.mtu_size}&X_LANTIQ_COM_DefaultGateway=${$scope.ptmData.defaultGateway}&${dnsEntries}`;
+        connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=${WanGroupMappingLayer}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${WanGroupMappingLayer}&Object=Device.IP.Interface.cpe-WEB-IPInterface-${randomNumber}.IPv4Address&Operation=Add&IPAddress=${$scope.ptmData.ipaddress}&SubnetMask=${$scope.ptmData.subnetmask}&Object=Device.Routing.Router.1.IPv4Forwarding&Operation=Add&Interface=Device.IP.Interface.cpe-WEB-IPInterface-${randomNumber}&Enable=true&GatewayIPAddress=${$scope.ptmData.gatewayaddress}&${dnsEntries}`;
       } else if ($scope.ptmData.connectionType === "DHCP") {
       }
 
