@@ -499,37 +499,6 @@ myapp.controller("atm_form_controller", function($scope, $http, $timeout) {
     return v === undefined || v === null ? "" : v;
   }
 
-  async function getDefaultGatewayInterface() {
-    try {
-      const res = await $http.get(URL + "cgi_get?Object=Device.IP.Interface");
-      const interfaces = res.data.Objects || [];
-
-      // Find the interface where DefaultGateway flag is true
-      const gwInterface = interfaces.find((iface) => {
-        const gwParam = iface.Param.find(
-          (p) => p.ParamName === "X_LANTIQ_COM_DefaultGateway"
-        );
-        return gwParam && gwParam.ParamValue === "true";
-      });
-
-      if (!gwInterface) return null;
-
-      const nameParam = gwInterface.ObjName;
-      const lowerLayerParam = gwInterface.Param.find(
-        (p) => p.ParamName === "LowerLayers"
-      )?.ParamValue;
-
-      return {
-        objName: nameParam,
-        lowerLayer: lowerLayerParam,
-        params: gwInterface.Param,
-      };
-    } catch (err) {
-      console.error("Error fetching default gateway interface:", err);
-      return null;
-    }
-  }
-
   $scope.addNewConnection = async function() {
     $("#ajaxLoaderSection").show();
     try {
