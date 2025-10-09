@@ -2707,9 +2707,9 @@ myapp.controller("hybridController", function(
     }
     localStorage.setItem("randomvalue", $scope.randomNumber(10, 99));
     localStorage.setItem("formMode", "add");
-    if (param === "wan_wanconnectionsform") {
-      $location.path("/wan_connections_views");
-    } else 
+    // if (param === "wan_wanconnectionsform") {
+    //   $location.path("/wan_connections_views");
+    // } else 
       if (param !== null && param !== undefined) {
       $location.path("/tableform/" + param);
     }
@@ -8292,11 +8292,11 @@ myapp.controller("hybridController", function(
       "internetObject",
       event.currentTarget.attributes["id"].value
     );
-    if (formToopen === "wan_wanconnectionsform") {
-      $location.path(
-        "/wan_connections_views/" + event.currentTarget.attributes["id"].value
-      );
-    } else 
+    // if (formToopen === "wan_wanconnectionsform") {
+    //   $location.path(
+    //     "/wan_connections_views/" + event.currentTarget.attributes["id"].value
+    //   );
+    // } else 
       if (formToopen !== null && formToopen !== undefined) {
       $location.path("/tableform/" + formToopen);
     }

@@ -1,4 +1,4 @@
-myapp.controller("atm_form_controller", function($scope, $http) {
+myapp.controller("atm_form_controller", function($scope, $http, $timeout) {
   $scope.atmData = {
     connectionType: "",
     username: "",
@@ -44,6 +44,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   $scope.editPPPInterface = "";
   $scope.editIPInterface = "";
   $scope.editAlias = "";
+  $scope.ipInterfaceData = "";
 
   // Load ATM links and QoS objects on init if ATM mode
   if ($scope.$parent.form.selectionMode === "ATM") {
@@ -64,10 +65,17 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   };
 
   // Watcher to update connectionTypes dynamically
-  $scope.$watch("atmData.linkType", function(newVal) {
-    $scope.connectionTypes = $scope.connectionTypeOptionsMap[newVal] || [];
-    $scope.atmData.connectionType = $scope.connectionTypes[0];
-    $scope.updateParent();
+  $scope.$watch("atmData.linkType", function(newVal, oldVal) {
+    if (newVal !== oldVal) {
+      $scope.connectionTypes = $scope.connectionTypeOptionsMap[newVal] || [];
+      if (
+        !$scope.atmData.connectionType ||
+        !$scope.connectionTypes.includes($scope.atmData.connectionType)
+      ) {
+        $scope.atmData.connectionType = $scope.connectionTypes[0]; // Set default only if empty or invalid
+      }
+      $scope.updateParent();
+    }
   });
 
   // Emit changes to the parent when atmData is updated
@@ -220,6 +228,14 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       if (response.data && response.data.Objects) {
         const currentInterface = $scope.editIPInterface.replace(/\.$/, ""); // Remove trailing dot if present
 
+        if (!currentInterface) {
+          localStorage.setItem(
+            "staticDNSData",
+            ""
+          );
+          return;
+        }
+
         $scope.staticDNSData = response.data.Objects.filter((dns) => {
           const interfaceParam = dns.Param.find(
             (x) => x.ParamName === "Interface"
@@ -282,10 +298,10 @@ myapp.controller("atm_form_controller", function($scope, $http) {
           URL + `/cgi_get?Object=${$scope.editIPInterface}`
         );
 
-        const ipInterfaceData = response.data["Objects"][1];
+        $scope.ipInterfaceData = response.data["Objects"][1];
 
-        if (ipInterfaceData) {
-          const addressingType = ipInterfaceData.Param.find(
+        if ($scope.ipInterfaceData) {
+          const addressingType = $scope.ipInterfaceData.Param.find(
             (x) => x.ParamName === "AddressingType"
           )?.ParamValue;
 
@@ -302,12 +318,13 @@ myapp.controller("atm_form_controller", function($scope, $http) {
               case "Static":
                 $scope.atmData.connectionType = "Static";
                 $scope.atmData.subnetmask =
-                  ipInterfaceData.Param.find(
+                  $scope.ipInterfaceData.Param.find(
                     (x) => x.ParamName === "SubnetMask"
                   )?.ParamValue || "";
                 $scope.atmData.ipaddress =
-                  ipInterfaceData.Param.find((x) => x.ParamName === "IPAddress")
-                    ?.ParamValue || "";
+                  $scope.ipInterfaceData.Param.find(
+                    (x) => x.ParamName === "IPAddress"
+                  )?.ParamValue || "";
                 loadStaticDNSData();
                 break;
               default:
@@ -537,7 +554,9 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       // 4. IP Interface
       connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
       connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${$scope.atmData.defaultGateway === "1" ? "true" : "false"}`;
+      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
+        $scope.atmData.defaultGateway === "1" ? "true" : "false"
+      }`;
       connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
 
       // 5. Ethernet Link
@@ -567,7 +586,10 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         // Post user-defined DNS data (if applicable)
         if ($scope.atmData.isUserDefinedDNS) {
           const dnsRequest = `UsrDefDNS1=${$scope.atmData.primaryDNS}&UsrDefDNS2=${$scope.atmData.secondaryDNS}`;
-          const dnsResult = await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
+          const dnsResult = await $http.post(
+            URL + "cgi_setUserDefinedDNS",
+            dnsRequest
+          );
 
           if (dnsResult.status !== 200) {
             alert("Failed to set user-defined DNS.");
@@ -593,22 +615,30 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     $scope.addNewConnection();
   });
 
-  loadUserPassData();
-
   // Watch for changes in connectionType and load data accordingly
-  $scope.$watch("atmData.connectionType", function(newValue,oldValue) {
-
-    debugger;
-    console.log($scope.atmData.connectionType);
+  $scope.$watch("atmData.connectionType", function(newValue, oldValue) {
     if (newValue === oldValue) return;
 
     if (newValue === "Static") {
+      if ($scope.ipInterfaceData) {
+        $scope.atmData.subnetmask =
+          $scope.ipInterfaceData.Param.find((x) => x.ParamName === "SubnetMask")
+            ?.ParamValue || "";
+        $scope.atmData.ipaddress =
+          $scope.ipInterfaceData.Param.find((x) => x.ParamName === "IPAddress")
+            ?.ParamValue || "";
+      }
+
       loadStaticDNSData();
     } else if (newValue === "Bridge") {
       loadBridgeConnections();
-    } else {
+    } else if (newValue === "PPPoE") {
       loadUserPassData();
     }
+
+    $timeout(function() {
+      $scope.connectionTypes = angular.copy($scope.connectionTypes); // Force re-render
+    });
   });
 
   $scope.validateDNSForm = function() {

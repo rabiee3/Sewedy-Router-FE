@@ -198,27 +198,31 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
 
       if (response.data && response.data.Objects) {
         const currentInterface = $scope.editIPInterface.replace(/\.$/, ""); // Remove trailing dot if present
-
-        $scope.staticDNSData = response.data.Objects
-          .filter((dns) => {
-            const interfaceParam = dns.Param.find(
-              (x) => x.ParamName === "Interface"
-            );
-            return (
-              interfaceParam &&
-              interfaceParam.ParamValue.replace(/\.$/, "") === currentInterface // Remove trailing dot for comparison
-            );
-          })
-          .map((dns) => {
-            const serverParam = dns.Param.find(
-              (x) => x.ParamName === "DNSServer"
-            );
-            return {
-              id: dns.ObjName,
-              ip: serverParam ? serverParam.ParamValue : "",
-              editable: false, // Mark as non-editable for existing entries
-            };
-          });
+        if (!currentInterface) {
+          localStorage.setItem(
+            "staticDNSData",
+            ""
+          );
+          return;
+        }
+        $scope.staticDNSData = response.data.Objects.filter((dns) => {
+          const interfaceParam = dns.Param.find(
+            (x) => x.ParamName === "Interface"
+          );
+          return (
+            interfaceParam &&
+            interfaceParam.ParamValue.replace(/\.$/, "") === currentInterface // Remove trailing dot for comparison
+          );
+        }).map((dns) => {
+          const serverParam = dns.Param.find(
+            (x) => x.ParamName === "DNSServer"
+          );
+          return {
+            id: dns.ObjName,
+            ip: serverParam ? serverParam.ParamValue : "",
+            editable: false, // Mark as non-editable for existing entries
+          };
+        });
 
         // Save to localStorage
         localStorage.setItem(
@@ -335,7 +339,10 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       if (addResult.status === 200) {
         // Post user-defined DNS data
         const dnsRequest = `UsrDefDNS1=${$scope.ptmData.primaryDNS}&UsrDefDNS2=${$scope.ptmData.secondaryDNS}`;
-        const dnsResult = await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
+        const dnsResult = await $http.post(
+          URL + "cgi_setUserDefinedDNS",
+          dnsRequest
+        );
         if (dnsResult.status !== 200) {
           alert("Failed to set user-defined DNS.");
         }
