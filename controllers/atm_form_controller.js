@@ -536,8 +536,10 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
       // 4. IP Interface
       connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
-      connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${$scope.atmData.defaultGateway === "1" ? "true" : "false"}`;
+      connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;//here
+      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
+        $scope.atmData.defaultGateway === "1" ? "true" : "false"
+      }`;
       connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
 
       // 5. Ethernet Link
@@ -552,12 +554,14 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
       // 7. Static DNS (if applicable)
       if ($scope.atmData.connectionType === "Static") {
-        const dnsEntries = $scope.staticDNSData
-          .map((dns, index) => {
-            return `&Object=Device.DNS.Client.Server&Operation=Add&Enable=true&Alias=StaticDNS-${randomNumber}-${index}&DNSServer=${dns.ip}`;
-          })
-          .join("");
-        connectionRequest += dnsEntries;
+        connectionRequest += `&Object=Device.IP.Interface.${ipAlias}.IPv4Address&Operation=Add&IPAddress=${$scope.atmData.ipaddress}&SubnetMask=${$scope.atmData.subnetmask}`;
+        connectionRequest += `&Object=Device.Routing.Router.1.IPv4Forwarding&Operation=Add&Interface=Device.IP.Interface.${ipAlias}&Enable=true&GatewayIPAddress=${$scope.atmData.gatewayaddress}`;
+        connectionRequest += `&Object=Device.Routing.Router.1.IPv6Forwarding&Operation=Add&Interface=Device.IP.Interface.${ipAlias}`;
+        if ($scope.staticDNSData.length > 0) {
+          $scope.staticDNSData.forEach((dns) => {
+            connectionRequest += `&?Object=Device.DNS.Client.Server&Operation=Add&DNSServer=${dns.ip}&Enable=1&Interface=Device.IP.${ipAlias}`;
+          });
+        }
       }
 
       // 8. Send request
@@ -567,7 +571,10 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         // Post user-defined DNS data (if applicable)
         if ($scope.atmData.isUserDefinedDNS) {
           const dnsRequest = `UsrDefDNS1=${$scope.atmData.primaryDNS}&UsrDefDNS2=${$scope.atmData.secondaryDNS}`;
-          const dnsResult = await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
+          const dnsResult = await $http.post(
+            URL + "cgi_setUserDefinedDNS",
+            dnsRequest
+          );
 
           if (dnsResult.status !== 200) {
             alert("Failed to set user-defined DNS.");
@@ -596,8 +603,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   loadUserPassData();
 
   // Watch for changes in connectionType and load data accordingly
-  $scope.$watch("atmData.connectionType", function(newValue,oldValue) {
-
+  $scope.$watch("atmData.connectionType", function(newValue, oldValue) {
     debugger;
     console.log($scope.atmData.connectionType);
     if (newValue === oldValue) return;
