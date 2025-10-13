@@ -18,69 +18,76 @@ myapp.controller("menuController", function(
   function menuload() {
     var staticMenuPath = "static_sidemenu.json";
 
-    console.log("Loading menu from:", staticMenuPath);
-
+    //test url to check for 209
     $http
-      .get(staticMenuPath)
-      .then(function(response) {
-        var data = response.data;
+      .get(URL + "cgi_get_nosubobj?Object=Device.WiFi.Radio.1")
+      .success(function(data, status) {
+        if (status === 200) {
+          $http
+            .get(staticMenuPath)
+            .then(function(response) {
+              var data = response.data;
 
-        if (!data || !Array.isArray(data.menu)) {
-          console.warn("Invalid menu structure");
-          $scope.posts = { menu: [] };
-          return;
+              if (!data || !Array.isArray(data.menu)) {
+                $scope.posts = { menu: [] };
+                return;
+              }
+
+              function processMenuItems(items) {
+                if (!Array.isArray(items)) return [];
+
+                var filtered = items.filter(function(item) {
+                  if (
+                    item.checkurl &&
+                    item.checkvalue &&
+                    item.checkvalue === "NotPresent"
+                  ) {
+                    return false;
+                  }
+                  return true;
+                });
+
+                filtered.sort(function(a, b) {
+                  return parseFloat(a.order || 0) - parseFloat(b.order || 0);
+                });
+
+                filtered.forEach(function(item) {
+                  if (item.childrens && item.childrens.length > 0) {
+                    item.childrens = processMenuItems(item.childrens);
+                  }
+                });
+
+                filtered = filtered.filter(function(item) {
+                  if (
+                    item.childrens &&
+                    item.childrens.length === 0 &&
+                    !item.view
+                  ) {
+                    return false;
+                  }
+                  return true;
+                });
+
+                return filtered;
+              }
+
+              var cleanedMenu = processMenuItems(data.menu);
+
+              $scope.posts = { menu: cleanedMenu };
+              console.log("Filtered & sorted menu:", $scope.posts);
+            })
+            .catch(function(error) {
+              console.error("Error loading static menu:", error);
+            });
         }
-
-        function processMenuItems(items) {
-          if (!Array.isArray(items)) return [];
-
-          var filtered = items.filter(function(item) {
-            if (
-              item.checkurl &&
-              item.checkvalue &&
-              item.checkvalue === "NotPresent"
-            ) {
-              return false;
-            }
-            return true;
-          });
-
-          filtered.sort(function(a, b) {
-            return parseFloat(a.order || 0) - parseFloat(b.order || 0);
-          });
-
-          filtered.forEach(function(item) {
-            if (item.childrens && item.childrens.length > 0) {
-              item.childrens = processMenuItems(item.childrens);
-            }
-          });
-
-          filtered = filtered.filter(function(item) {
-            if (item.childrens && item.childrens.length === 0 && !item.view) {
-              return false;
-            }
-            return true;
-          });
-
-          return filtered;
-        }
-
-        var cleanedMenu = processMenuItems(data.menu);
-
-        $scope.posts = { menu: cleanedMenu };
-        console.log("Filtered & sorted menu:", $scope.posts);
       })
-      .catch(function(error) {
-        console.error("Error loading static menu:", error);
-      });
+      .error(function() {});
   }
 
   function getSystemLogs() {
-    $http
-      .get(URL + "cgi_get_log")
-      .success(function(data) {
-        $scope.logs = data;
-      });
+    $http.get(URL + "cgi_get_log").success(function(data) {
+      $scope.logs = data;
+    });
   }
 
   // Watch for language change (optional)

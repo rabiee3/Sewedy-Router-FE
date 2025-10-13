@@ -22,6 +22,8 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     ipaddress: "",
     subnetmask: "",
     gatewayaddress: "",
+    enableNAT:"1",
+    natType:"Port Restricted Cone NAT"
   };
 
   // Store all ATM Link and QoS objects

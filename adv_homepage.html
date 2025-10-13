@@ -343,15 +343,15 @@ and open the template in the editor.
               <g class="point_data">
                 <circle
                   id="InternetPoint"
-                  fill="#FFFFFF"
+                  ng-attr-fill="{{ internetStatus ? '#35f42f' : '#ffffff' }}"
                   cx="86.5"
                   cy="40.364"
                   r="2.802"
                 />
                 <text
                   transform="matrix(1 0 0 1 80.9995 34.835)"
-                  ng-attr-fill="{{ internetStatus ? '#35f42f' : '#ffffff' }}"
                   font-family="'Arial-BoldMT'"
+                  fill="#FFFFFF"
                   font-size="3"
                 >
                   Internet

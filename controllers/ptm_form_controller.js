@@ -16,6 +16,8 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     ipaddress: "",
     subnetmask: "",
     gatewayaddress: "",
+    enableNAT:"1",
+    natType:"Port Restricted Cone NAT"
   };
 
   $scope.connectionTypes = ["PPPoE", "Bridge", "DHCP", "Static"];
