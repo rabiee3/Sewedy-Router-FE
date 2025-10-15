@@ -22,8 +22,8 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     ipaddress: "",
     subnetmask: "",
     gatewayaddress: "",
-    enableNAT:"1",
-    natType:"Port Restricted Cone NAT"
+    enableNAT: "1",
+    natType: "Port Restricted Cone NAT",
   };
 
   // Store all ATM Link and QoS objects
@@ -536,23 +536,23 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         connectionRequest += `&SustainableCellRate=${$scope.atmData.sustainableCellRate}`;
       }
 
-      // 4. IP Interface
-      connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
-      connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;//here
-      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
-        $scope.atmData.defaultGateway === "1" ? "true" : "false"
-      }`;
-      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
-
-      // 5. Ethernet Link
+      // 4. Ethernet Link
       connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
       connectionRequest += `&LowerLayers=Device.ATM.Link.${atmAlias}`;
 
-      // 6. PPP Interface
+      // 5. PPP Interface
       connectionRequest += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${pppAlias}`;
       connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
       connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size}`;
       connectionRequest += `&Username=${pppUsername}&Password=${pppPassword}`;
+
+      // 6. IP Interface
+      connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
+      connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`; //here
+      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
+        $scope.atmData.defaultGateway === "1" ? "true" : "false"
+      }`;
+      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
 
       // 7. Static DNS (if applicable)
       if ($scope.atmData.connectionType === "Static") {

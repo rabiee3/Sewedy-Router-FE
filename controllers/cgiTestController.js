@@ -28,32 +28,33 @@ myapp.controller("cgi_test", function($scope, $http, $location, $rootScope) {
 
     for (let i = 0; i < $scope.commands.length; i++) {
       let command = $scope.commands[i];
+      let cmd = command.cmd.trim();
 
-      // --- 🧹 Sanitize multi-line and spaced input ---
-      command.cmd = command.cmd
+      cmd = cmd
+        .replace(/^cgi\//i, "") // remove leading "cgi/" if user includes it
         .replace(/\r?\n/g, " ") // replace newlines with spaces
-        .replace(/\s*&\s*/g, "&") // remove spaces around '&'
-        .replace(/\s*=\s*/g, "=") // remove spaces around '='
+        .replace(/\s*&\s*/g, "&") // remove spaces around &
+        .replace(/\s*=\s*/g, "=") // remove spaces around =
         .replace(/\s{2,}/g, " ") // collapse multiple spaces
-        .trim() // trim ends
-        .replace(/^&+|&+$/g, ""); // remove stray & at start/end
+        .trim()
+        .replace(/^&+|&+$/g, ""); // remove leading/trailing &
 
-      const fullUrl =
-        BASE_URL +
-        (command.method === "GET" ? "cgi_get?" + command.cmd : "cgi_set");
+      const fullUrl = BASE_URL + "cgi/" + cmd;
 
       try {
         let response;
+
         if (command.method === "GET") {
           response = await $http.get(fullUrl);
         } else {
-          response = await $http.post(fullUrl, command.cmd);
+          response = await $http.post(fullUrl, cmd);
         }
 
         console.log(`Command ${i + 1} success:`, response.data);
+
         $scope.results.push({
           index: i + 1,
-          command: command.cmd,
+          command: cmd,
           method: command.method,
           status: response.status,
           data: response.data,
@@ -62,7 +63,7 @@ myapp.controller("cgi_test", function($scope, $http, $location, $rootScope) {
         console.error(`Command ${i + 1} failed:`, error);
         $scope.results.push({
           index: i + 1,
-          command: command.cmd,
+          command: cmd,
           method: command.method,
           status: error.status || "error",
           error: error.data || error.message,
