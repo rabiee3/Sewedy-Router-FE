@@ -1,9 +1,4 @@
-myapp.controller("cgi_test", function(
-  $scope,
-  $http,
-  $location,
-  $rootScope
-) {
+myapp.controller("cgi_test", function($scope, $http, $location, $rootScope) {
   // Loader visibility
   $("#ajaxLoaderSection").hide();
 
@@ -32,8 +27,20 @@ myapp.controller("cgi_test", function(
     $scope.results = [];
 
     for (let i = 0; i < $scope.commands.length; i++) {
-      const command = $scope.commands[i];
-      const fullUrl = BASE_URL + (command.method === "GET" ? "cgi_get?" + command.cmd : "cgi_set");
+      let command = $scope.commands[i];
+
+      // --- 🧹 Sanitize multi-line and spaced input ---
+      command.cmd = command.cmd
+        .replace(/\r?\n/g, " ") // replace newlines with spaces
+        .replace(/\s*&\s*/g, "&") // remove spaces around '&'
+        .replace(/\s*=\s*/g, "=") // remove spaces around '='
+        .replace(/\s{2,}/g, " ") // collapse multiple spaces
+        .trim() // trim ends
+        .replace(/^&+|&+$/g, ""); // remove stray & at start/end
+
+      const fullUrl =
+        BASE_URL +
+        (command.method === "GET" ? "cgi_get?" + command.cmd : "cgi_set");
 
       try {
         let response;
@@ -49,9 +56,8 @@ myapp.controller("cgi_test", function(
           command: command.cmd,
           method: command.method,
           status: response.status,
-          data: response.data
+          data: response.data,
         });
-
       } catch (error) {
         console.error(`Command ${i + 1} failed:`, error);
         $scope.results.push({
@@ -59,7 +65,7 @@ myapp.controller("cgi_test", function(
           command: command.cmd,
           method: command.method,
           status: error.status || "error",
-          error: error.data || error.message
+          error: error.data || error.message,
         });
       }
     }
