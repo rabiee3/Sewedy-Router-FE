@@ -130,7 +130,11 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                 .when('/html/ipmapping', {
                     templateUrl: "ipmapping.html",
                     controller: 'ipmapping'
-                });
+                })
+                .when('/html/cgi_test', {
+                    templateUrl: "cgi_test.html",
+                    controller: 'cgi_test'
+                });;
     }]);
 	
 function httpInterceptor($rootScope,  $location, $timeout) {
