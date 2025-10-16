@@ -25,6 +25,8 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     enableNAT: "1",
     natType: "Port Restricted Cone NAT",
     vlanId: "",
+    selectedBridge: null,
+    selectedATMLink: null,
   };
 
   // Store all ATM Link and QoS objects
@@ -105,6 +107,8 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       );
       return addrParam && addrParam.ParamValue === vpiVci;
     });
+    $scope.selectedATMLink = linkObj;
+
     // Find the corresponding QoS object
     let qosObj = null;
     if (linkObj) {
@@ -123,13 +127,11 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         parseInt(getParamValue(qosObj, "MaximumBurstSize")) || "";
       $scope.atmData.sustainableCellRate =
         parseInt(getParamValue(qosObj, "SustainableCellRate")) || "";
-      $scope.vpiVciSelected = true;
     } else {
       $scope.atmData.atmQosClass = "";
       $scope.atmData.peakCellRate = "";
       $scope.atmData.maximumBSize = "";
       $scope.atmData.sustainableCellRate = "";
-      $scope.vpiVciSelected = false;
     }
     $scope.updateParent();
   };
@@ -443,101 +445,36 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     }
   }
 
-  /**
-   * Find the alias of the ATM link (e.g. "atm0", "atm-wan1")
-   * for any IP.Interface whose description or path mentions ATM.
-   *
-   * @param {Array} data - The TR-181 object array (like the one you provided)
-   * @returns {string|null} - The ATM alias, or null if not found
-   */
-  function findAtmAlias(data) {
-    if (!Array.isArray(data)) return null;
+  function getAtmAliasNumber(selectedATMLink) {
+    if (!selectedATMLink || !Array.isArray(selectedATMLink.Param)) return null;
 
-    // Helper to extract parameter value
-    const getParam = (obj, name) => {
-      const p = obj.Param.find((p) => p.ParamName === name);
-      return p ? p.ParamValue : null;
-    };
+    const aliasParam = selectedATMLink.Param.find(
+      (p) => p.ParamName === "Alias"
+    );
+    if (!aliasParam || !aliasParam.ParamValue) return null;
 
-    for (const obj of data) {
-      if (!obj.ObjName.startsWith("Device.IP.Interface")) continue;
+    const alias = aliasParam.ParamValue;
 
-      const desc = getParam(obj, "X_LANTIQ_COM_Description");
-      const addrType = getParam(obj, "AddressingType");
-
-      // Detect ATM based on descriptive fields
-      if (
-        (desc && desc.toUpperCase().includes("ATM")) ||
-        (addrType && addrType.toUpperCase().includes("ATM"))
-      ) {
-        const parentIf = obj.ObjName.split(".")
-          .slice(0, 4)
-          .join(".");
-        const parentObj = data.find((o) => o.ObjName === parentIf);
-        if (!parentObj) continue;
-
-        const lowerLayers = getParam(parentObj, "LowerLayers");
-        if (!lowerLayers) continue;
-
-        // If direct ATM link
-        if (lowerLayers.startsWith("Device.ATM.Link.")) {
-          const atmObj = data.find(
-            (o) => o.ObjName === lowerLayers.replace(/\.$/, "")
-          );
-          if (atmObj) {
-            const alias = getParam(atmObj, "Alias");
-            if (alias) return alias;
-          }
-        }
-
-        // If ATM is under PPP → ATM
-        const pppObj = data.find(
-          (o) => o.ObjName === lowerLayers.replace(/\.$/, "")
-        );
-        if (pppObj) {
-          const pppLower = getParam(pppObj, "LowerLayers");
-          if (pppLower && pppLower.startsWith("Device.ATM.Link.")) {
-            const atmObj = data.find(
-              (o) => o.ObjName === pppLower.replace(/\.$/, "")
-            );
-            if (atmObj) {
-              const alias = getParam(atmObj, "Alias");
-              if (alias) return alias;
-            }
-          }
-        }
-      }
-    }
-
-    // No ATM alias found
-    return null;
+    // Extract number after the last dash
+    const match = alias.match(/-(\d+)$/);
+    return match ? match[1] : null;
   }
 
   /**
-   * Find ATM link(s) from WANGroup objects.
-   * @param {Array} objects - Array of WANGroup objects (data.Objects)
-   * @returns {string|null} - The ATM link name (e.g. "Device.ATM.Link.1") or null if not found
+   * Extract full ATM Link objects from the response data.
+   * cgi_get?Object=Device.ATM.Link
+   * @param {Object} response - The full API response (with Objects array)
+   * @returns {Array<Object>|null} Array of ATM Link objects, or null if none found
    */
-  function findAtmLink(objects) {
-    if (!Array.isArray(objects)) return null;
+  function getAtmLinkObjects(response) {
+    if (!response || !Array.isArray(response.Objects)) return null;
 
-    for (const obj of objects) {
-      if (!obj.Param) continue;
+    // Filter only main ATM link objects (ignore .QoS or .Stats)
+    const atmLinks = response.Objects.filter((obj) =>
+      /^Device\.ATM\.Link\.\d+$/.test(obj.ObjName)
+    );
 
-      const mapping = obj.Param.find(
-        (p) => p.ParamName === "MappingLowerLayer"
-      );
-      if (
-        mapping &&
-        mapping.ParamValue &&
-        mapping.ParamValue.startsWith("Device.ATM.Link.")
-      ) {
-        // remove trailing dot if exists
-        return mapping.ParamValue.replace(/\.$/, "");
-      }
-    }
-
-    return null; // no ATM link found
+    return atmLinks.length > 0 ? atmLinks : null;
   }
 
   // Listen for reset event from parent
@@ -598,11 +535,15 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         randomNumber = Math.floor(Math.random() * 1000); // fallback
       }
 
+      const atmAliasNumber = getAtmAliasNumber($scope.selectedATMLink);
+      if (atmAliasNumber) {
+        randomNumber = atmAliasNumber;
+      }
+
       const dslLowerLayer = "Device.DSL.Line.1."; // Assuming fixed DSL line
 
       // ATM Layer
       let atmAlias = `cpe-WEB-ATMLink-${randomNumber}`;
-      const qosPath = `Device.ATM.Link.${atmAlias}.QoS`;
 
       // Ethernet Link
       const ethAlias = `cpe-WEB-EthernetLink-${randomNumber}`;
@@ -617,23 +558,12 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       // IP Interface
       const ipAlias = `cpe-WEB-IPInterface-${randomNumber}`;
 
-      //find existing ATM Alias
-      const requestIPInterfaces = await $http.get(
-        URL +
-          "cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true"
-      );
-
-      const atmAliasfound = findAtmAlias(requestIPInterfaces.data["Objects"]);
-      if (atmAliasfound) {
-        atmAlias = atmAliasfound;
-      }
-
       // 1. Start request string
       let connectionRequest = "";
 
       // 2. ATM Link Layer
       // check for existing atm links
-      if (!atmAliasfound) {
+      if (!$scope.selectedATMLink) {
         connectionRequest += `&Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${atmAlias}`;
         connectionRequest += `&LowerLayers=${dslLowerLayer}`;
         connectionRequest += `&DestinationAddress=${$scope.atmData.vpiVci}`;
@@ -642,8 +572,14 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       }
 
       // 3. QoS Settings
-      connectionRequest += `&Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
+      if (!$scope.selectedATMLink) {
+        connectionRequest += `&Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
+      } else {
+        connectionRequest += `&Object=${$scope.selectedATMLink.ObjName}.QoS&Operation=Modify`;
+      }
+
       connectionRequest += `&QoSClass=${$scope.atmData.atmQosClass}`;
+
       if ($scope.atmData.peakCellRate) {
         connectionRequest += `&PeakCellRate=${$scope.atmData.peakCellRate}`;
       }
@@ -666,28 +602,23 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
       //Specific bridge Port
       if ($scope.atmData.connectionType === "Bridge") {
-        const wangroups = await $http.get(
-          URL +
-            `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup&MappingLowerLayer=`
-        );
-        debugger;
-        const atmLinkFound = findAtmLink(wangroups.data);
-        if (atmLinkFound) {
-          connectionRequest += `&Object=${$scope.atmData.selectedBridge.objName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge${$scope.atmData.selectedBridge.id}Port-${randomNumber}&LowerLayers=${atmLinkFound}`;
+        if ($scope.selectedATMLink) {
+          connectionRequest += `&Object=${$scope.atmData.selectedBridge.objName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge${$scope.atmData.selectedBridge.id}Port-${randomNumber}&LowerLayers=${$scope.selectedATMLink.ObjName}`;
         } else {
           alert(
             "No ATM links found, please create one first before creating a bridge"
           );
+          return;
         }
       }
 
       //If Vlan
-      if (atmData.enableVlan == "1") {
+      if ($scope.atmData.enableVlan == "1") {
         connectionRequest += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Alias=cpe-WEB-EthernetVLANTermination-${randomNumber}&Enable=1&VLANID=${$scope.atmData.vlanId}`;
       }
 
       // 6. PPP Interface
-      if (($scope.atmData.connectionType = "PPPoE")) {
+      if ($scope.atmData.connectionType === "PPPoE") {
         connectionRequest += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${pppAlias}`;
         connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
         connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size}`;
@@ -696,7 +627,12 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
       // 7. IP Interface
       connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
-      connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`; //here
+      if ($scope.atmData.enableVlan == "1") {
+        connectionRequest += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
+      } else {
+        connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
+      }
+
       connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
         $scope.atmData.defaultGateway === "1" ? "true" : "false"
       }`;
@@ -762,6 +698,20 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       loadBridgeConnections();
     } else {
       loadUserPassData();
+    }
+  });
+
+  $scope.$watch("atmData.vpiVci", function() {
+    const found = $scope.atmLinks.find((obj) => {
+      const addrParam = obj.Param.find(
+        (p) => p.ParamName === "DestinationAddress"
+      );
+      return (
+        addrParam && addrParam.ParamValue === $scope.atmData.vpiVci
+      );
+    });
+    if (!found) {
+      $scope.selectedATMLink = null;
     }
   });
 
