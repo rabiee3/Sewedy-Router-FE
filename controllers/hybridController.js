@@ -9429,7 +9429,15 @@ myapp.controller("hybridController", function(
       var url = URL + httpService.set_url;
       var post = "";
       $timeout(function() {
-        angular.forEach(lowerlayersArrray, function(deleteobject) {
+        // Filter out ATM.Link objects that might be shared
+        const filteredObjects = lowerlayersArrray.filter(obj => {
+          if (obj.indexOf("Device.ATM.Link.") > -1) {
+            return false;
+          }
+          return true;
+        });
+
+        angular.forEach(filteredObjects, function(deleteobject) {
           post += "Object=" + deleteobject + "&Operation=Del&";
         });
         modifyService.genericRequest(url, post, function(response) {

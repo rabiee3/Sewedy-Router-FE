@@ -513,6 +513,33 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     return null;
   }
 
+  /**
+   * Find ATM link(s) from WANGroup objects.
+   * @param {Array} objects - Array of WANGroup objects (data.Objects)
+   * @returns {string|null} - The ATM link name (e.g. "Device.ATM.Link.1") or null if not found
+   */
+  function findAtmLink(objects) {
+    if (!Array.isArray(objects)) return null;
+
+    for (const obj of objects) {
+      if (!obj.Param) continue;
+
+      const mapping = obj.Param.find(
+        (p) => p.ParamName === "MappingLowerLayer"
+      );
+      if (
+        mapping &&
+        mapping.ParamValue &&
+        mapping.ParamValue.startsWith("Device.ATM.Link.")
+      ) {
+        // remove trailing dot if exists
+        return mapping.ParamValue.replace(/\.$/, "");
+      }
+    }
+
+    return null; // no ATM link found
+  }
+
   // Listen for reset event from parent
   $scope.$on("resetAtmForm", function() {
     $scope.resetForm();
@@ -639,7 +666,19 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
       //Specific bridge Port
       if ($scope.atmData.connectionType === "Bridge") {
-        connectionRequest += `&Object=${$scope.atmData.selectedBridge.objName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge${$scope.atmData.selectedBridge.id}Port-${randomNumber}&LowerLayers=${WanGroupMappingLayer}`;
+        const wangroups = await $http.get(
+          URL +
+            `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup&MappingLowerLayer=`
+        );
+        debugger;
+        const atmLinkFound = findAtmLink(wangroups.data);
+        if (atmLinkFound) {
+          connectionRequest += `&Object=${$scope.atmData.selectedBridge.objName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge${$scope.atmData.selectedBridge.id}Port-${randomNumber}&LowerLayers=${atmLinkFound}`;
+        } else {
+          alert(
+            "No ATM links found, please create one first before creating a bridge"
+          );
+        }
       }
 
       //If Vlan
@@ -715,8 +754,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   // Watch for changes in connectionType and load data accordingly
   $scope.$watch("atmData.connectionType", function(newValue, oldValue) {
-    debugger;
-    console.log($scope.atmData.connectionType);
     if (newValue === oldValue) return;
 
     if (newValue === "Static") {
