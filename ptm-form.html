@@ -483,7 +483,6 @@
 
     <!-- Bridge Fields -->
     <div class="bridge" ng-if="ptmData.connectionType == 'Bridge'">
-      <!-- Bridge Connection Selection -->
       <div class="row">
         <div class="col-sm-6 mb-3 required">
           <label for="bridgeConnection">Bridge Connection</label>
@@ -492,7 +491,7 @@
             name="bridgeConnection"
             class="dropdown-toggle"
             ng-model="ptmData.selectedBridge"
-            ng-options="bridge for bridge in bridgeConnections"
+            ng-options="bridge as bridge.name for bridge in bridgeConnections track by bridge.objName"
             required
             ng-change="updateParent()"
           >

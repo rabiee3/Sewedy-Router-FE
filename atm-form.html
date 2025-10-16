@@ -310,10 +310,11 @@
     </div>
 
     <!-- User Defined DNS Checkbox (PPPoE only) -->
-    <div class="row d-flex align-items-center" ng-if="atmData.connectionType === 'PPPoE'">
-      <div
-        class="col-sm-6 checkbox1 input-field1 my-3"
-      >
+    <div
+      class="row d-flex align-items-center"
+      ng-if="atmData.connectionType === 'PPPoE'"
+    >
+      <div class="col-sm-6 checkbox1 input-field1 my-3">
         <input
           type="checkbox"
           id="isUserDefinedDNS"
@@ -659,7 +660,6 @@
     </div>
 
     <div class="bridge" ng-if="atmData.connectionType == 'Bridge'">
-      <!-- Bridge Connection Selection -->
       <div class="row">
         <div class="col-sm-6 mb-3 required">
           <label for="bridgeConnection">Bridge Connection</label>
@@ -668,7 +668,7 @@
             name="bridgeConnection"
             class="dropdown-toggle"
             ng-model="atmData.selectedBridge"
-            ng-options="bridge for bridge in bridgeConnections"
+            ng-options="bridge as bridge.name for bridge in bridgeConnections track by bridge.objName"
             required
             ng-change="updateParent()"
           >

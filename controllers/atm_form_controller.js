@@ -463,19 +463,21 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         response.data.Objects &&
         response.data.Objects.length > 0
       ) {
-        // Store the bridge object name (e.g. "Device.Bridging.Bridge.1")
-        $scope.bridgeObjectName = response.data.Objects[0].ObjName;
-
-        // Extract bridge connections as before
+        // Map bridgeConnections with both display name and object reference
         $scope.bridgeConnections = response.data.Objects.map((bridge) => {
-          const param = bridge.Param.find(
+          const nameParam = bridge.Param.find(
             (x) => x.ParamName === "X_LANTIQ_COM_Name"
           );
-          return param ? param.ParamValue : null;
-        }).filter((value) => value !== null);
+          return {
+            objName: bridge.ObjName,
+            name: nameParam ? nameParam.ParamValue : bridge.ObjName,
+          };
+        });
+
+        // Default to first one
+        $scope.atmData.selectedBridge = $scope.bridgeConnections[0];
       } else {
         $scope.bridgeConnections = [];
-        $scope.bridgeObjectName = "";
       }
     } catch (error) {
       console.error("Error loading bridge connections:", error);
