@@ -144,9 +144,6 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     $scope.resetForm();
   });
 
-  // Add this property to store the bridge object name
-  $scope.bridgeObjectName = "";
-
   // Update the loadBridgeConnections function to store the bridge object name
   async function loadBridgeConnections() {
     if ($scope.ptmData.connectionType !== "Bridge") {
@@ -310,11 +307,11 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       if ($scope.ptmData.connectionType === "PPPoE") {
         connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber}&IPv6Enable=${$scope.ptmData.ipv6enable}&MaxMTUSize=${$scope.ptmData.mtu_size}&X_LANTIQ_COM_DefaultGateway=${$scope.ptmData.defaultGateway}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${WanGroupMappingLayer}&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber}&Username=${$scope.ptmData.username}%40tedata.net.eg&Password=${$scope.ptmData.password}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}`;
       } else if ($scope.ptmData.connectionType === "Bridge") {
-        if (!$scope.bridgeObjectName) {
+        if (!$scope.ptmData.selectedBridge.objName) {
           throw new Error("Bridge object name not found");
         }
 
-        connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${$scope.bridgeObjectName}.Port.cpe-WEB-BridgingBridge1Port-${randomNumber}&Object=${$scope.bridgeObjectName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge1Port-${randomNumber}&LowerLayers=${WanGroupMappingLayer}`;
+        connectionRequest = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=${$scope.ptmData.selectedBridge.objName}.Port.cpe-WEB-BridgingBridge1Port-${randomNumber}&Object=${$scope.ptmData.selectedBridge.objName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge1Port-${randomNumber}&LowerLayers=${WanGroupMappingLayer}`;
       } else if ($scope.ptmData.connectionType === "Static") {
         const dnsEntries = $scope.staticDNSData
           .map((dns, index) => {
