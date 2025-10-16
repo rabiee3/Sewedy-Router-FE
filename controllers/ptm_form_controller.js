@@ -155,7 +155,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     try {
       const response = await $http.get(
         URL +
-          "cgi_get_fillparams?Object=Device.Bridging.Bridge&X_LANTIQ_COM_Name="
+          "cgi_get_fillparams?Object=Device.Bridging.Bridge"
       );
 
       if (

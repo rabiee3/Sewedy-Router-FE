@@ -39,7 +39,7 @@ myapp.controller("cgi_test", function($scope, $http, $location, $rootScope) {
         .trim()
         .replace(/^&+|&+$/g, ""); // remove leading/trailing &
 
-      const fullUrl = BASE_URL + "cgi/" + cmd;
+      const fullUrl = BASE_URL + cmd;
 
       try {
         let response;

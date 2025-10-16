@@ -90,7 +90,7 @@
           "name": "IPTV",
           "icon": "system",
           "order": "6",
-          "viewtype": "tableform",
+          "viewtype": "html",
           "view": "iptv"
         },
         {

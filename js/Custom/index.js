@@ -131,6 +131,10 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                     templateUrl: "ipmapping.html",
                     controller: 'ipmapping'
                 })
+                .when('/html/iptv', {
+                    templateUrl: "iptv.html",
+                    controller: 'iptv'
+                })
                 .when('/html/cgi_test', {
                     templateUrl: "cgi_test.html",
                     controller: 'cgi_test'
