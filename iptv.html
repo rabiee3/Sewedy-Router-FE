@@ -1,4 +1,3 @@
-
 <div>
   <div class="row ltq_breadcrumbs">
     <div class="row"></div>
@@ -21,127 +20,53 @@
     </p>
   </div>
 
-
-
   <!-- Main Form -->
   <div class="panel">
-  <div class="panel-heading blu_bg">
-    <span class="ng-binding">IPTV</span>
-  </div>
-  <div class="panel-body">
-    <form
-      name="new_map_rule"
-      ng-submit="addRule()"
-      novalidate
-      autocomplete="off"
-    >
-      <div class="row">
-        <div class="col-sm-4">
-          <div class="form-group">
-            <label for="priority">Priority</label>
+    <div class="panel-heading blu_bg">
+      <span class="ng-binding">IPTV</span>
+    </div>
+    <div class="panel-body">
+      <form
+        name="new_map_rule"
+        ng-submit="addnewIptvConnection()"
+        novalidate
+        autocomplete="off"
+      >
+        <div class="row">
+          <!-- Enable IPTV -->
+          <div class="col-sm-4 checkbox1 input-field1 my-3">
             <input
-              id="priority"
-              type="number"
-              min="1"
-              max="16"
-              class="form-control"
-              ng-model="form.priority"
-              required
+              id="enableIPTV"
+              name="Enable"
+              type="checkbox"
+              ng-true-value="'1'"
+              ng-false-value="'0'"
+              ng-model="iptvdata.enableVlan"
+              ng-change="updateParent()"
             />
-          </div>
-        </div>
-        <div class="col-sm-4">
-          <div class="form-group">
-            <label for="mode">Mode</label>
-            <select
-              id="mode"
-              class="form-control"
-              ng-model="form.mode"
-              ng-change="onModeChange()"
-              required
+            <label class="checkbox_left_align" for="enableIPTV"
+              >Enable IPTV</label
             >
-              <option value="One-to-One">One-to-One</option>
-              <option value="Many-to-One">Many-to-One</option>
-              <option value="Many-to-Many">Many-to-Many</option>
-              <option value="No-NAT">No-NAT</option>
+          </div>
+          <!-- NAT Type Dropdown -->
+          <div class="col-sm-6 mb-3 required">
+            <label for="connectionType">LANs</label>
+            <select
+              id="lans"
+              materal_select=""
+              ng-required="true"
+              name="lans"
+              class="dropdown-toggle"
+              ng-options="lan as lan.name for lan in iptvdata.lans track by lan.id"
+              ng-model="iptvdata.selectedLan"
+            >
+              <option value="" disabled selected>Select LAN</option>
             </select>
           </div>
         </div>
-        <div class="col-sm-4">
-          <div class="form-group">
-            <label for="wanName">WAN Name</label>
-            <select
-              id="wanName"
-              class="form-control"
-              ng-model="form.wanName"
-              required
-            >
-              <option value="7_TR069_INTERNET_R_VDSL_VID_"
-                >7_TR069_INTERNET_R_VDSL_VID_</option
-              >
-              <option value="8_INTERNET_R_VDSL_VID_"
-                >8_INTERNET_R_VDSL_VID_</option
-              >
-              <option value="9_OTHER_WAN">9_OTHER_WAN</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
-      <div class="row">
-        <div class="col-sm-6">
-          <div class="form-group">
-            <label for="startPrivateIpAddress">Start Private IP Address</label>
-            <input
-              id="startPrivateIpAddress"
-              type="text"
-              class="form-control"
-              ng-model="form.startPrivateIpAddress"
-              required
-            />
-          </div>
-        </div>
-        <div class="col-sm-6">
-          <div class="form-group">
-            <label for="endPrivateIpAddress">End Private IP Address</label>
-            <input
-              id="endPrivateIpAddress"
-              type="text"
-              class="form-control"
-              ng-model="form.endPrivateIpAddress"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-sm-6">
-          <div class="form-group">
-            <label for="startPublicIpAddress">Start Public IP Address</label>
-            <input
-              id="startPublicIpAddress"
-              type="text"
-              class="form-control"
-              ng-model="form.startPublicIpAddress"
-              required
-            />
-          </div>
-        </div>
-        <div class="col-sm-6">
-          <div class="form-group">
-            <label for="endPublicIpAddress">End Public IP Address</label>
-            <input
-              id="endPublicIpAddress"
-              type="text"
-              class="form-control"
-              ng-model="form.endPublicIpAddress"
-            />
-          </div>
-        </div>
-      </div>
-
-      <button type="submit" class="btn btn-info">Add Rule</button>
-    </form>
-  </div>
+        <button type="submit" class="btn btn-info">Update IPTV</button>
+      </form>
+    </div>
   </div>
 </div>
