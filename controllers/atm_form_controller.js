@@ -540,38 +540,31 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         randomNumber = atmAliasNumber;
       }
 
-      const dslLowerLayer = "Device.DSL.Line.1."; // Assuming fixed DSL line
-
-      // ATM Layer
-      let atmAlias = `cpe-WEB-ATMLink-${randomNumber}`;
-
-      // Ethernet Link
+      //Aliases
+      const dslLowerLayer = "Device.DSL.Line.1.";
+      const atmAlias = `cpe-WEB-ATMLink-${randomNumber}`;
       const ethAlias = `cpe-WEB-EthernetLink-${randomNumber}`;
-
-      // PPP Interface
       const pppAlias = `cpe-WEB-PPPInterface-${randomNumber}`;
       const pppUsername = encodeURIComponent(
         `${$scope.atmData.username}@tedata.net.eg`
       );
       const pppPassword = encodeURIComponent($scope.atmData.password);
 
-      // IP Interface
-      const ipAlias = `cpe-WEB-IPInterface-${randomNumber}`;
-
-      // 1. Start request string
       let connectionRequest = "";
 
-      // 2. ATM Link Layer
-      // check for existing atm links
+      // 1. ATM Link Layer
+      // check for selectedATMLink
       if (!$scope.selectedATMLink) {
         connectionRequest += `&Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${atmAlias}`;
         connectionRequest += `&LowerLayers=${dslLowerLayer}`;
-        connectionRequest += `&DestinationAddress=${$scope.atmData.vpiVci}`;
+        connectionRequest += `&DestinationAddress=${encodeURIComponent(
+          $scope.atmData.vpiVci
+        )}`;
         connectionRequest += `&Encapsulation=${$scope.atmData.encapsulation}`;
         connectionRequest += `&LinkType=${$scope.atmData.linkType}`;
       }
 
-      // 3. QoS Settings
+      debugger;
       if (!$scope.selectedATMLink) {
         connectionRequest += `&Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
       } else {
@@ -590,17 +583,47 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         connectionRequest += `&SustainableCellRate=${$scope.atmData.sustainableCellRate}`;
       }
 
-      // 4. Ethernet Link
-      connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
+      // 2. IP Interface
+      const ipAlias = `cpe-WEB-IPInterface-${randomNumber}`;
 
-      // 5. Bridge effect in lowerlayer of Ethernet Link
+      connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
+      if ($scope.atmData.enableVlan == "1" && $scope.atmData.connectionType === "Bridge") {
+        connectionRequest += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
+      } else {
+        connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
+      }
+      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
+        $scope.atmData.defaultGateway === "1" ? "true" : "false"
+      }`;
+      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
+
+      // 3. Ethernet Link
+      connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
       if ($scope.atmData.connectionType === "Bridge") {
         connectionRequest += `&LowerLayers=${$scope.atmData.selectedBridge.objName}.Port.cpe-WEB-BridgingBridge${$scope.atmData.selectedBridge.id}Port-${randomNumber}`;
       } else {
         connectionRequest += `&LowerLayers=Device.ATM.Link.${atmAlias}`;
       }
 
-      //Specific bridge Port
+      // 4. VLAN Termination (If Vlan add Vlan termination layer so that it can be used as lower layer for both PPP and IP interfaces)
+      if ($scope.atmData.enableVlan == "1") {
+        connectionRequest += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Alias=cpe-WEB-EthernetVLANTermination-${randomNumber}&Enable=1&VLANID=${$scope.atmData.vlanId}`;
+      }
+
+      // 5. PPP Interface
+      if ($scope.atmData.connectionType === "PPPoE") {
+        connectionRequest += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${pppAlias}`;
+        connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size}`;
+        connectionRequest += `&Username=${pppUsername}&Password=${pppPassword}`;
+      }
+
+      if ($scope.atmData.enableVlan == "1") {
+        connectionRequest += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
+      } else {
+        connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
+      }
+
+      // 6. Bridge Port (If exist)
       if ($scope.atmData.connectionType === "Bridge") {
         if ($scope.selectedATMLink) {
           connectionRequest += `&Object=${$scope.atmData.selectedBridge.objName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge${$scope.atmData.selectedBridge.id}Port-${randomNumber}&LowerLayers=${$scope.selectedATMLink.ObjName}`;
@@ -612,33 +635,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         }
       }
 
-      //If Vlan
-      if ($scope.atmData.enableVlan == "1") {
-        connectionRequest += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Alias=cpe-WEB-EthernetVLANTermination-${randomNumber}&Enable=1&VLANID=${$scope.atmData.vlanId}`;
-      }
-
-      // 6. PPP Interface
-      if ($scope.atmData.connectionType === "PPPoE") {
-        connectionRequest += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${pppAlias}`;
-        connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
-        connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size}`;
-        connectionRequest += `&Username=${pppUsername}&Password=${pppPassword}`;
-      }
-
-      // 7. IP Interface
-      connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
-      if ($scope.atmData.enableVlan == "1") {
-        connectionRequest += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
-      } else {
-        connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-      }
-
-      connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
-        $scope.atmData.defaultGateway === "1" ? "true" : "false"
-      }`;
-      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
-
-      // 8. Static DNS (if applicable)
+      // 7. Static DNS (if applicable)
       if ($scope.atmData.connectionType === "Static") {
         connectionRequest += `&Object=Device.IP.Interface.${ipAlias}.IPv4Address&Operation=Add&IPAddress=${$scope.atmData.ipaddress}&SubnetMask=${$scope.atmData.subnetmask}`;
         connectionRequest += `&Object=Device.Routing.Router.1.IPv4Forwarding&Operation=Add&Interface=Device.IP.Interface.${ipAlias}&Enable=true&GatewayIPAddress=${$scope.atmData.gatewayaddress}`;
@@ -650,7 +647,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         }
       }
 
-      // 9. Send request
+      // 8. Send request
       const result = await $http.post(URL + "cgi_set", connectionRequest);
 
       if (result.status === 200) {
@@ -706,9 +703,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       const addrParam = obj.Param.find(
         (p) => p.ParamName === "DestinationAddress"
       );
-      return (
-        addrParam && addrParam.ParamValue === $scope.atmData.vpiVci
-      );
+      return addrParam && addrParam.ParamValue === $scope.atmData.vpiVci;
     });
     if (!found) {
       $scope.selectedATMLink = null;
