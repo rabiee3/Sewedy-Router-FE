@@ -110,7 +110,9 @@ myapp.controller("iptv", function($scope, $http) {
       if (wanType === "UNKNOWN")
         throw new Error("Could not determine WAN type");
 
-      lowerlayer = lowerlayer.replace(/\.$/, ""); // remove trailing dot
+      if (!lowerlayer.endsWith(".")) {
+        lowerlayer += ".";
+      }
 
       const selectedLanId = $scope.iptvdata.selectedLan.id;
       const remainingLans = $scope.iptvdata.lans
@@ -136,7 +138,7 @@ myapp.controller("iptv", function($scope, $http) {
       if (addBridge.status !== 200)
         throw new Error("Step 5 failed: Create new bridge");
 
-      // Step 6 - Build IPTV chain based on WAN type
+      // Step 6 - Build IPTV chain
       let randomNumber = parseInt(localStorage.getItem("randomvalue"));
       if (isNaN(randomNumber)) {
         randomNumber = Math.floor(Math.random() * 100);
@@ -147,17 +149,18 @@ myapp.controller("iptv", function($scope, $http) {
 
       // Optional ATM QoS
       if (wanType === "ATM") {
-        const qosObj = lowerlayer + ".QoS";
+        const qosObj = lowerlayer + "QoS";
         connRequest += `Object=${qosObj}&Operation=Modify&QoSClass=UBR&PeakCellRate=0&MaximumBurstSize=0&SustainableCellRate=0`;
       }
 
-      // Common IPTV chain for all WAN types
-      connRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
-      connRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=Device.Bridging.Bridge.2.Port.cpe-WEB-BridgingBridge2Port-${randomNumber}`;
-      connRequest += `&Object=Device.Bridging.Bridge.2.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge2Port-${randomNumber}&LowerLayers=${lowerlayer}`;
-      connRequest += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Alias=cpe-WEB-EthernetVLANTermination-${randomNumber}&Enable=1&VLANID=301`;
-      
+      // ✅ Keep your working Ethernet chain format
+      connRequest +=
+        `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber}&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}` +
+        `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber}&LowerLayers=Device.Bridging.Bridge.2.Port.cpe-WEB-BridgingBridge2Port-${randomNumber}` +
+        `&Object=Device.Bridging.Bridge.2.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge2Port-${randomNumber}&LowerLayers=${lowerlayer}` +
+        `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber}&Alias=cpe-WEB-EthernetVLANTermination-${randomNumber}&Enable=1&VLANID=301`;
 
+      // Send final chain
       const finalReq = await $http.post(URL + "cgi_set", connRequest);
       if (finalReq.status !== 200)
         throw new Error("Step 6 failed: IPTV chain creation failed");
