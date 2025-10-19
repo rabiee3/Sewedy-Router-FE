@@ -9436,7 +9436,6 @@ myapp.controller("hybridController", function(
           }
           return true;
         });
-
         angular.forEach(filteredObjects, function(deleteobject) {
           post += "Object=" + deleteobject + "&Operation=Del&";
         });
@@ -9444,6 +9443,7 @@ myapp.controller("hybridController", function(
           var formname = event.currentTarget.attributes["popupinfo"].value;
           errorResponseDisplay(formname, response);
         });
+        $scope.$broadcast("deleteIPTV");
       }, 2000);
     }
   };

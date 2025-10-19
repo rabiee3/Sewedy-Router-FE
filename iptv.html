@@ -5,7 +5,7 @@
 
   <!-- Subheader -->
   <div class="subheader">
-    <div ng-click="addRule()">
+    <div>
       <img
         src="images/icons/internet.png"
         class="iconDetails"
@@ -27,8 +27,8 @@
     </div>
     <div class="panel-body">
       <form
+        ng-if="!iptvdata.isIPTVConnExist"
         name="new_map_rule"
-        ng-submit="addnewIptvConnection()"
         novalidate
         autocomplete="off"
       >
@@ -48,10 +48,11 @@
               >Enable IPTV</label
             >
           </div>
-          <!-- NAT Type Dropdown -->
+          <!-- LANs Dropdown -->
           <div class="col-sm-6 mb-3 required">
             <label for="connectionType">LANs</label>
             <select
+              ng-if="!iptvdata.isIPTVConnExist"
               id="lans"
               materal_select=""
               ng-required="true"
@@ -65,8 +66,28 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-info">Update IPTV</button>
+        <button
+          ng-if="!iptvdata.isIPTVConnExist"
+          type="submit"
+          ng-click="addnewIptvConnection()"
+          class="btn btn-info"
+        >
+          Update IPTV
+        </button>
       </form>
+
+      <h3 class="mb-5" ng-if="iptvdata.isIPTVConnExist">
+        IPTV currently attached to LAN {{iptvdata.existingbridgeInfo.ethMembers[0].slice(-1)}}
+      </h3>
+
+      <button
+        ng-if="iptvdata.isIPTVConnExist"
+        type="submit"
+        ng-click="removeExistingIPTVConnection()"
+        class="btn btn-info"
+      >
+        Remove Existing IPTV connection
+      </button>
     </div>
   </div>
 </div>
