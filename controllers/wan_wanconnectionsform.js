@@ -2,7 +2,8 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope,
   $http,
   $location,
-  $routeParams
+  $routeParams,
+  helperService
 ) {
   // Initialize form state
   $scope.form = {
@@ -157,6 +158,7 @@ myapp.controller("wan_wanconnectionsform", function(
       $scope.customWanForm[activeForm] &&
       $scope.customWanForm[activeForm].$valid
     ) {
+      await helperService.removeExistingIPTVConnection();
       $scope.$broadcast(eventToBroadcast);
     } else {
       const formName = activeForm === "atmForm" ? "ATM" : "PTM";

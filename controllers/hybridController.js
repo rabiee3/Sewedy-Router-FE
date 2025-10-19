@@ -17,7 +17,8 @@ myapp.controller("hybridController", function(
   clientModeService,
   httpService,
   $sanitize,
-  TOKEN_MISMATCH_CODE
+  TOKEN_MISMATCH_CODE,
+  helperService
 ) {
   errormessages = [];
   var tabletimeoutarray = [];
@@ -9364,7 +9365,7 @@ myapp.controller("hybridController", function(
       $scope[name].push(tempobj);
     });
   };
-  $scope.internetdelete = function(event) {
+  $scope.internetdelete = async function(event) {
     var answer = confirm("Are you sure you want to Delete?");
     if (!answer) {
       event.preventDefault();
@@ -9443,8 +9444,10 @@ myapp.controller("hybridController", function(
           var formname = event.currentTarget.attributes["popupinfo"].value;
           errorResponseDisplay(formname, response);
         });
-        $scope.$broadcast("deleteIPTV");
+
       }, 2000);
+
+      await helperService.removeExistingIPTVConnection();
     }
   };
   $scope.$on("$destroy", function() {
