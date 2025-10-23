@@ -152,18 +152,42 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     let activeForm = $scope.activeFormName; // "atmForm" or "ptmForm"
-    let eventToBroadcast =
+    let addEvent =
       activeForm === "atmForm" ? "addAtmConnection" : "addPtmConnection";
-    if (
-      $scope.customWanForm[activeForm] &&
-      $scope.customWanForm[activeForm].$valid
-    ) {
+    let editEvent =
+      activeForm === "atmForm" ? "editAtmConnection" : "editPtmConnection";
+
+    try {
+      // Validate the active subform
+      if (
+        !$scope.customWanForm[activeForm] ||
+        !$scope.customWanForm[activeForm].$valid
+      ) {
+        const formName = activeForm === "atmForm" ? "ATM" : "PTM";
+        alert(
+          `Please fix all errors in the ${formName} form before submitting.`
+        );
+        $("#ajaxLoaderSection").hide();
+        return;
+      }
+
+      // Always remove existing IPTV before applying new changes
       await helperService.removeExistingIPTVConnection();
-      $scope.$broadcast(eventToBroadcast);
-    } else {
-      const formName = activeForm === "atmForm" ? "ATM" : "PTM";
-      alert(`Please fix all errors in the ${formName} form before submitting.`);
-      $("#ajaxLoaderSection").hide();
+
+      if ($scope.isEditMode) {
+        $scope.$broadcast(editEvent, {
+          DeviceIpInterface: $scope.DeviceIpInterface,
+        });
+      } else {
+        $scope.$broadcast(addEvent);
+      }
+    } catch (error) {
+      console.error("Error during submit:", error);
+      alert("Failed to save connection: " + error.message);
+    } finally {
+      if (window.$ && $("#ajaxLoaderSection").length) {
+        $("#ajaxLoaderSection").hide();
+      }
     }
   };
 

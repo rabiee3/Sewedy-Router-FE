@@ -1,4 +1,4 @@
-myapp.controller("ptm_form_controller", function($scope, $http) {
+myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
   // --- model (unchanged) ---
   $scope.ptmData = {
     connectionType: "PPPoE",
@@ -618,8 +618,70 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     }
   };
 
+  //save edit
+  $scope.saveEditedConnection = async function() {
+    try {
+      const pathParts = ($routeParams.path || "").split(",");
+      const oldIPInterface = pathParts[0];
+      const oldIPv4Address = pathParts[1];
+      $scope.oldIPInterface = oldIPInterface;
+      $scope.oldIPv4Address = oldIPv4Address;
+
+      const oldType = $scope.oldConnectionType || $scope.ptmData.connectionType;
+      const newType = $scope.ptmData.connectionType;
+
+      // Add the new one first
+      await $scope.addNewConnection();
+
+      // If same type → remove old
+      if (oldType === newType && oldIPInterface) {
+        const ifaceNumMatch = oldIPInterface.match(/\d+$/);
+        const ifaceNum = ifaceNumMatch ? ifaceNumMatch[0] : "";
+        const deletePayload = [];
+
+        deletePayload.push(`Object=${oldIPInterface}&Operation=Del`);
+
+        if (oldType === "PPPoE") {
+          deletePayload.push(
+            `Object=Device.PPP.Interface.${ifaceNum}.&Operation=Del`,
+            `Object=Device.Ethernet.Link.${ifaceNum}.&Operation=Del`
+          );
+        } else if (oldType === "DHCP" || oldType === "Static") {
+          deletePayload.push(
+            `Object=Device.Ethernet.Link.${ifaceNum}.&Operation=Del`
+          );
+        }
+
+        const deleteCgi = deletePayload.join("&");
+        const res = await $http.post(URL + "cgi_set", deleteCgi);
+        if (res.status !== 200) {
+          throw new Error("Failed to delete old connection");
+        }
+
+        console.log("Old connection deleted successfully:", deleteCgi);
+      }
+
+      alert("Connection saved successfully.");
+    } catch (err) {
+      console.error("Error saving edited connection:", err);
+      alert(
+        "Failed to save edited connection. Please check console for details."
+      );
+    }
+  };
+
   $scope.$on("addPtmConnection", function() {
     $scope.addNewConnection();
+  });
+
+  $scope.$on("editPtmConnection", async function(event, args) {
+    try {
+      await $scope.saveEditedConnection(args.DeviceIpInterface);
+      $scope.$emit("connectionAdded", true);
+    } catch (err) {
+      console.error("Error editing connection:", err);
+      alert("Failed to edit PTM connection: " + err.message);
+    }
   });
 
   // initialization & edit helpers (unchanged)
@@ -630,8 +692,48 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
         const response = await $http.get(
           URL + `/cgi_get?Object=${$scope.editIPInterface}`
         );
-        const ipInterfaceData = response.data["Objects"][1];
+        const objects = response.data["Objects"] || [];
+        const ipInterfaceObj =
+          objects.find((o) => o.ObjName === $scope.editIPInterface + ".") ||
+          objects[0];
+        const ipInterfaceData =
+          objects.find((o) => o.ObjName.includes(".IPv4Address.")) || null;
 
+        // ---------- VLAN Detection ----------
+        const lowerLayersParam = ipInterfaceObj.Param.find(
+          (p) => p.ParamName === "LowerLayers"
+        );
+        if (
+          lowerLayersParam &&
+          lowerLayersParam.ParamValue.includes(
+            "Device.Ethernet.VLANTermination"
+          )
+        ) {
+          const vlanObj = lowerLayersParam.ParamValue.replace(/\.$/, ""); // clean trailing dot
+          try {
+            const vlanResponse = await $http.get(
+              URL + `/cgi_get?Object=${vlanObj}`
+            );
+            const vlanData = vlanResponse.data["Objects"]?.[0]?.Param || [];
+            const vlanEnable = vlanData.find((p) => p.ParamName === "Enable")
+              ?.ParamValue;
+            const vlanId = vlanData.find((p) => p.ParamName === "VLANID")
+              ?.ParamValue;
+
+            $scope.ptmData.enableVlan =
+              vlanEnable === "true" || vlanEnable === "1" ? "1" : "0";
+            $scope.ptmData.vlanId = vlanId ? parseInt(vlanId, 10) : "";
+          } catch (vlanErr) {
+            console.warn("No VLAN data found:", vlanErr);
+            $scope.ptmData.enableVlan = "0";
+            $scope.ptmData.vlanId = "";
+          }
+        } else {
+          $scope.ptmData.enableVlan = "0";
+          $scope.ptmData.vlanId = "";
+        }
+
+        // ---------- Connection Type Detection ----------
         if (ipInterfaceData) {
           const addressingType = ipInterfaceData.Param.find(
             (x) => x.ParamName === "AddressingType"
@@ -640,11 +742,11 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
             switch (addressingType) {
               case "X_LANTIQ_COM_PPPoE":
                 $scope.ptmData.connectionType = "PPPoE";
-                loadUserPassData();
+                await loadUserPassData();
                 break;
               case "Bridge":
                 $scope.ptmData.connectionType = "Bridge";
-                loadBridgeConnections();
+                await loadBridgeConnections();
                 break;
               case "Static":
                 $scope.ptmData.connectionType = "Static";
@@ -655,16 +757,16 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
                 $scope.ptmData.ipaddress =
                   ipInterfaceData.Param.find((x) => x.ParamName === "IPAddress")
                     ?.ParamValue || "";
-                loadStaticDNSData();
+                await loadStaticDNSData();
                 break;
               default:
                 $scope.ptmData.connectionType = "DHCP";
             }
           }
         }
-      }
 
-      await loadUserDefinedDNS();
+        await loadUserDefinedDNS();
+      }
     } catch (error) {
       console.error("Error initializing connection type:", error);
     }
