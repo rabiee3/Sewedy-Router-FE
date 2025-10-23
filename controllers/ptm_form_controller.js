@@ -1,5 +1,5 @@
 myapp.controller("ptm_form_controller", function($scope, $http) {
-  // --- preserved model (keeps your original fields) ---
+  // --- model (unchanged) ---
   $scope.ptmData = {
     connectionType: "PPPoE",
     username: "",
@@ -39,16 +39,10 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
   };
 
-  const baseLayer =
-    $scope.$parent.form.selectionMode === "ETH"
-      ? "Device.Ethernet.Interface.5."
-      : "Device.PTM.Link.1.";
-
   // --- helpers ---
   function ensureRandomValue() {
     let v = localStorage.getItem("randomvalue");
     if (!v) {
-      // use a stable-ish random integer between 10 and 9999
       v = Math.floor(Math.random() * 9990 + 10).toString();
       localStorage.setItem("randomvalue", v);
     }
@@ -66,13 +60,11 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
   }
 
   function enc(v) {
-    // encode values for placing into the CGI long-string
     return encodeURIComponent(
       v === undefined || v === null ? "" : v.toString()
     );
   }
 
-  // Builds DNS entries for static mode
   function buildStaticDnsEntries(staticDNSData, randomValue) {
     if (!staticDNSData || !staticDNSData.length) return "";
     return staticDNSData
@@ -84,98 +76,23 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       .join("&");
   }
 
-  // --- CGI builders for each mode ---
-  // 1) PPPoE (with/without VLAN)
+  // --- builders (use wanLayer passed from caller) ---
+
+  // PPPoE builder
   function buildPppoeRequest(model, wanLayer, randomValue) {
     const ipAlias = makeAlias("cpe-WEB-IPInterface", randomValue);
     const ethLinkAlias = makeAlias("cpe-WEB-EthernetLink", randomValue);
     const pppAlias = makeAlias("cpe-WEB-PPPInterface", randomValue);
-    let vlanTermAlias = "";
-    let req = "";
 
-    // IP.Interface (points to PPP interface)
-    req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
-      ipAlias
-    )}&LowerLayers=Device.PPP.Interface.${enc(pppAlias)}`;
-
-    // optional flags on IP.Interface
-    if (model.ipv6enable !== undefined) {
-      req += `&IPv6Enable=${enc(model.ipv6enable)}`;
-    }
-    if (model.mtu_size) {
-      req += `&MaxMTUSize=${enc(model.mtu_size)}`;
-    }
-    if (model.defaultGateway !== undefined) {
-      req += `&X_LANTIQ_COM_DefaultGateway=${enc(model.defaultGateway)}`;
-    }
-
-    // Ethernet Link (always created)
-    req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
-      ethLinkAlias
-    )}&LowerLayers=${enc(baseLayer)}`;
-
-    if (model.macCloneEnabled && model.mac_address) {
-      req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
-        model.mac_address
-      )}`;
-    }
-
-    // PPP.Interface
-    const username = appendTedata(model.username);
-    req += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${enc(
-      pppAlias
-    )}&LowerLayers=Device.Ethernet.Link.${enc(ethLinkAlias)}`;
-    if (model.mtu_size) {
-      req += `&MaxMRUSize=${enc(model.mtu_size)}`;
-    }
-    if (username) {
-      req += `&Username=${enc(username)}`;
-    }
-    if (model.password) {
-      req += `&Password=${enc(model.password)}`;
-    }
-
-    // VLAN handling: if VLAN enabled we need VLAN termination object and adjust LowerLayers relationships.
-    if (model.enableVlan === "1" && model.vlanId) {
-      vlanTermAlias = makeAlias("cpe-WEB-EthernetVLANTermination", randomValue);
-
-      // We must change the PPP lower layer to point to VLAN termination alias
-      // So: IP.Interface -> PPP.Interface -> Ethernet.VLANTermination -> Ethernet.Link -> PTM.Link.1
-      // To match reference order we add VLAN termination object and set PPP lower to Ethernet.VLANTermination
-      // Adjust previously added PPP lower and Ethernet.Link LowerLayers remain as PTM
-      // Replace PPP's LowerLayers reference to VLAN termination
-      // (To keep single long string: we add the VLAN termination AFTER PPP and include the appropriate LowerLayers references)
-      req += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.${enc(
-        ethLinkAlias
-      )}&Alias=${enc(vlanTermAlias)}&Enable=1&VLANID=${enc(model.vlanId)}`;
-
-      // Update PPP.Interface lower to point to VLAN termination (router-side expects PPP.Interface lower to be VLAN termination)
-      // We must also ensure IP.Interface LowerLayers remains PPP.Interface alias (done).
-      // To reflect PPP lower correctly in the single string, append a modify-like field by adding LowerLayers param in the PPP block above would have been ideal,
-      // but since we already added PPP with LowerLayers=Device.Ethernet.Link.<ethLinkAlias>, we will append a second PPP block that sets LowerLayers to VLAN termination.
-      // The router examples place LowerLayers on PPP creation to VLAN termination. To ensure exact ordering, build string such that VLAN termination appears and PPP creation includes correct LowerLayers.
-      // For simplicity and matching your reference style, create PPP lower pointing to VLAN termination instead of eth link.
-      // So we'll rebuild PPP.Interface creation replacing LowerLayers to VLAN termination.
-      // For clarity here we append a PPP Interface 'fix' by adding Operation=Modify isn't desired; better to reconstruct PPP as correct:
-      // Remove previously appended PPP segment and re-add it correctly: easiest is to craft PPP block correctly from the start when VLAN enabled.
-      // (Implemented below: return a new properly ordered string instead of above when VLAN enabled.)
-      // Implementation note: when VLAN is enabled we will return a different sequence built specifically for VLAN case.
-    }
-
-    // If VLAN enabled we will return specialized sequence to preserve correct ordering and LowerLayers references:
+    // VLAN case: build sequence where PPP lower is VLAN termination
     if (model.enableVlan === "1" && model.vlanId) {
       const vlanAlias = makeAlias(
         "cpe-WEB-EthernetVLANTermination",
         randomValue
       );
-      // IP.Interface -> PPP.Interface (lower will point to PPP which lower points to VLAN term)
-      // Ethernet.Link as before
-      // VLAN termination created and points to Ethernet.Link
-      // PPP.Interface created with LowerLayers=Device.Ethernet.VLANTermination.<vlanAlias>
-      // Keep IP.Interface LowerLayers pointing to PPP Interface as earlier.
 
-      // rebuild string:
       let r = "";
+      // IP.Interface -> lower = PPP.Interface.<pppAlias>
       r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
         ipAlias
       )}&LowerLayers=Device.PPP.Interface.${enc(pppAlias)}&IPv6Enable=${enc(
@@ -184,35 +101,68 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
         model.defaultGateway
       )}`;
 
+      // Ethernet.Link -> lower = wanLayer (PTM or ETH base)
       r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
         ethLinkAlias
-      )}&LowerLayers=${enc(baseLayer)}`;
+      )}&LowerLayers=${enc(wanLayer)}`;
       if (model.macCloneEnabled && model.mac_address) {
         r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
           model.mac_address
         )}`;
       }
 
+      // VLAN termination -> lower = Ethernet.Link.<ethLinkAlias>
       r += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.${enc(
         ethLinkAlias
       )}&Alias=${enc(vlanAlias)}&Enable=1&VLANID=${enc(model.vlanId)}`;
 
+      // PPP.Interface -> lower = Ethernet.VLANTermination.<vlanAlias>
+      const username = appendTedata(model.username);
       r += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${enc(
         pppAlias
       )}&LowerLayers=Device.Ethernet.VLANTermination.${enc(
         vlanAlias
-      )}&MaxMRUSize=${enc(model.mtu_size)}&Username=${enc(
-        appendTedata(model.username)
-      )}&Password=${enc(model.password)}`;
+      )}&MaxMRUSize=${enc(model.mtu_size)}`;
+      if (username) r += `&Username=${enc(username)}`;
+      if (model.password) r += `&Password=${enc(model.password)}`;
 
       return r;
     }
 
-    // Non-VLAN PPPoE path -> return req built earlier
+    // Non-VLAN PPPoE path
+    let req = "";
+    req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+      ipAlias
+    )}&LowerLayers=Device.PPP.Interface.${enc(pppAlias)}&IPv6Enable=${enc(
+      model.ipv6enable
+    )}&MaxMTUSize=${enc(model.mtu_size)}&X_LANTIQ_COM_DefaultGateway=${enc(
+      model.defaultGateway
+    )}`;
+
+    // Ethernet.Link -> lower = wanLayer
+    req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
+      ethLinkAlias
+    )}&LowerLayers=${enc(wanLayer)}`;
+    if (model.macCloneEnabled && model.mac_address) {
+      req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
+        model.mac_address
+      )}`;
+    }
+
+    // PPP.Interface -> lower = Ethernet.Link.<ethLinkAlias>
+    const username = appendTedata(model.username);
+    req += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${enc(
+      pppAlias
+    )}&LowerLayers=Device.Ethernet.Link.${enc(ethLinkAlias)}&MaxMRUSize=${enc(
+      model.mtu_size
+    )}`;
+    if (username) req += `&Username=${enc(username)}`;
+    if (model.password) req += `&Password=${enc(model.password)}`;
+
     return req;
   }
 
-  // 2) Bridge (with/without VLAN)
+  // Bridge builder
   function buildBridgeRequest(model, wanLayer, randomValue) {
     const ipAlias = makeAlias("cpe-WEB-IPInterface", randomValue);
     const ethLinkAlias = makeAlias("cpe-WEB-EthernetLink", randomValue);
@@ -220,43 +170,47 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       "cpe-WEB-BridgingBridge1Port",
       randomValue
     );
-    let req = "";
 
     if (!model.selectedBridge || !model.selectedBridge.objName) {
       throw new Error("Bridge object name not found");
     }
 
+    // VLAN Bridge sequence: IP.Interface -> Ethernet.VLANTermination -> Ethernet.Link -> Bridge.Port -> base physical
     if (model.enableVlan === "1" && model.vlanId) {
-      // IP.Interface -> Ethernet.VLANTermination -> Ethernet.Link -> Bridging.Port -> PTM.Link.1
       const vlanAlias = makeAlias(
         "cpe-WEB-EthernetVLANTermination",
         randomValue
       );
 
-      req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+      let r = "";
+      r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
         ipAlias
       )}&LowerLayers=Device.Ethernet.VLANTermination.${enc(vlanAlias)}`;
 
-      req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
+      // Ethernet.Link -> LowerLayers = <BridgeObj>.Port.<bridgePortAlias> (the link sits on bridging port)
+      r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
         ethLinkAlias
       )}&LowerLayers=${enc(
         model.selectedBridge.objName + ".Port." + bridgePortAlias
       )}`;
 
-      req += `&Object=${enc(
+      // Bridging.Port -> LowerLayers = wanLayer (physical base)
+      r += `&Object=${enc(
         model.selectedBridge.objName
       )}.Port&Operation=Add&Enable=true&Alias=${enc(
         bridgePortAlias
-      )}&LowerLayers=${enc(baseLayer)}`;
+      )}&LowerLayers=${enc(wanLayer)}`;
 
-      req += `&Object=Device.Ethernet.VLANTermination&Operation=Add&TPID=&LowerLayers=Device.Ethernet.Link.${enc(
+      // VLAN term -> lower = Ethernet.Link.<ethLinkAlias>
+      r += `&Object=Device.Ethernet.VLANTermination&Operation=Add&TPID=&LowerLayers=Device.Ethernet.Link.${enc(
         ethLinkAlias
       )}&Alias=${enc(vlanAlias)}&Enable=1&VLANID=${enc(model.vlanId)}`;
 
-      return req;
+      return r;
     }
 
-    // Non-VLAN Bridge:
+    // Non-VLAN Bridge sequence
+    let req = "";
     req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
       ipAlias
     )}&LowerLayers=Device.Ethernet.Link.${enc(ethLinkAlias)}`;
@@ -271,68 +225,62 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       model.selectedBridge.objName
     )}.Port&Operation=Add&Enable=true&Alias=${enc(
       bridgePortAlias
-    )}&LowerLayers=${enc(baseLayer)}`;
+    )}&LowerLayers=${enc(wanLayer)}`;
 
     return req;
   }
 
-  // 3) Static (with/without VLAN)
+  // Static builder
   function buildStaticRequest(model, wanLayer, randomValue) {
     const ipAlias = makeAlias("cpe-WEB-IPInterface", randomValue);
     const ethLinkAlias = makeAlias("cpe-WEB-EthernetLink", randomValue);
-    const bridgePortAlias = makeAlias(
-      "cpe-WEB-BridgingBridge1Port",
-      randomValue
-    );
     const dnsEntries = buildStaticDnsEntries($scope.staticDNSData, randomValue);
 
+    // VLAN static: IP.Interface -> Ethernet.VLANTermination -> Ethernet.Link -> base physical
     if (model.enableVlan === "1" && model.vlanId) {
       const vlanAlias = makeAlias(
         "cpe-WEB-EthernetVLANTermination",
         randomValue
       );
 
-      // IP.Interface -> Ethernet.VLANTermination -> Ethernet.Link -> Bridging.Port -> PTM.Link.1
-      let req = "";
-      req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+      let r = "";
+      r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
         ipAlias
       )}&LowerLayers=Device.Ethernet.VLANTermination.${enc(vlanAlias)}`;
 
-      req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
+      r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
         ethLinkAlias
-      )}&LowerLayers=${enc(baseLayer)}`;
+      )}&LowerLayers=${enc(wanLayer)}`;
       if (model.macCloneEnabled && model.mac_address) {
-        req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
+        r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
           model.mac_address
         )}`;
       }
 
-      req += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.${enc(
+      r += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.${enc(
         ethLinkAlias
       )}&Alias=${enc(vlanAlias)}&Enable=1&VLANID=${enc(model.vlanId)}`;
 
-      req += `&Object=Device.IP.Interface.${enc(
+      r += `&Object=Device.IP.Interface.${enc(
         ipAlias
       )}.IPv4Address&Operation=Add&IPAddress=${enc(
         model.ipaddress
       )}&SubnetMask=${enc(model.subnetmask)}`;
 
-      req += `&Object=Device.Routing.Router.1.IPv4Forwarding&Operation=Add&Interface=Device.IP.Interface.${enc(
+      r += `&Object=Device.Routing.Router.1.IPv4Forwarding&Operation=Add&Interface=Device.IP.Interface.${enc(
         ipAlias
       )}&Enable=true&GatewayIPAddress=${enc(model.gatewayaddress)}`;
 
-      if (dnsEntries) {
-        req += `&${dnsEntries}`;
-      }
+      if (dnsEntries) r += `&${dnsEntries}`;
 
-      return req;
+      return r;
     }
 
-    // Non-VLAN static
+    // Non-VLAN static (IP.Interface and Ethernet.Link point to wanLayer)
     let req = "";
     req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
       ipAlias
-    )}&LowerLayers=${enc(wanLayer)}`; // wanLayer likely Device.X_LANTIQ_COM_NwHardware.WANGroup.X.MappingLowerLayer or Device.Ethernet.Link
+    )}&LowerLayers=${enc(wanLayer)}`;
 
     req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
       ethLinkAlias
@@ -353,50 +301,48 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       ipAlias
     )}&Enable=true&GatewayIPAddress=${enc(model.gatewayaddress)}`;
 
-    if (dnsEntries) {
-      req += `&${dnsEntries}`;
-    }
+    if (dnsEntries) req += `&${dnsEntries}`;
 
     return req;
   }
 
-  // 4) DHCP (with/without VLAN)
+  // DHCP builder
   function buildDhcpRequest(model, wanLayer, randomValue) {
     const ipAlias = makeAlias("cpe-WEB-IPInterface", randomValue);
     const ethLinkAlias = makeAlias("cpe-WEB-EthernetLink", randomValue);
 
+    // VLAN DHCP: IP.Interface lower -> VLAN term
     if (model.enableVlan === "1" && model.vlanId) {
       const vlanAlias = makeAlias(
         "cpe-WEB-EthernetVLANTermination",
         randomValue
       );
 
-      let req = "";
-      req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+      let r = "";
+      r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
         ipAlias
       )}&LowerLayers=Device.Ethernet.VLANTermination.${enc(
         vlanAlias
       )}&X_LANTIQ_COM_DefaultGateway=${enc(model.defaultGateway)}`;
 
-      req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
+      r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
         ethLinkAlias
-      )}&LowerLayers=${enc(baseLayer)}`;
-
+      )}&LowerLayers=${enc(wanLayer)}`;
       if (model.macCloneEnabled && model.mac_address) {
-        req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
+        r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
           model.mac_address
         )}`;
       }
 
-      req += `&Object=Device.DHCPv4.Client&Operation=Add&Interface=Device.IP.Interface.${enc(
+      r += `&Object=Device.DHCPv4.Client&Operation=Add&Interface=Device.IP.Interface.${enc(
         ipAlias
       )}`;
 
-      req += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.${enc(
+      r += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.${enc(
         ethLinkAlias
       )}&Alias=${enc(vlanAlias)}&Enable=1&VLANID=${enc(model.vlanId)}`;
 
-      return req;
+      return r;
     }
 
     // Non-VLAN DHCP
@@ -418,7 +364,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     return req;
   }
 
-  // --- functions retained from original controller (load/edit helpers) ---
+  // --- preserved helpers/loaders (unchanged) ---
   async function loadUserPassData() {
     try {
       if ($scope.$parent.internetObject) {
@@ -597,57 +543,44 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     }
   }
 
-  // --- main add connection flow ---
+  // --- main add connection flow (decide wanLayer here, then call builders) ---
   $scope.addNewConnection = async function() {
     try {
       $("#ajaxLoaderSection").show();
 
       const randomValue = ensureRandomValue();
 
-      // keep request for PTM reference compatibility
-      let WanGroupMappingLayer = baseLayer;
-
-      if ($scope.$parent.form.selectionMode === "PTM") {
+      // decide wanLayer:
+      // - If ETH mode, always use the fixed physical ethernet interface
+      // - If PTM mode, query WANGroup mapping (preserve existing PTM behavior)
+      let wanLayer = "Device.PTM.Link.1.";
+      if ($scope.$parent.form && $scope.$parent.form.selectionMode === "ETH") {
+        wanLayer = "Device.Ethernet.Interface.5.";
+      } else {
+        // PTM: retain the existing mapping retrieval
         const lowerLayerRes = await $http.get(
           URL +
             `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup.1&MappingLowerLayer=`
         );
-        WanGroupMappingLayer =
-          lowerLayerRes.data["Objects"][0].Param[0].ParamValue;
+        wanLayer =
+          lowerLayerRes.data["Objects"][0].Param[0].ParamValue || wanLayer;
       }
 
       let connectionRequest = "";
       const model = $scope.ptmData;
 
       if (model.connectionType === "PPPoE") {
-        connectionRequest = buildPppoeRequest(
-          model,
-          WanGroupMappingLayer,
-          randomValue
-        );
+        connectionRequest = buildPppoeRequest(model, wanLayer, randomValue);
       } else if (model.connectionType === "Bridge") {
-        connectionRequest = buildBridgeRequest(
-          model,
-          WanGroupMappingLayer,
-          randomValue
-        );
+        connectionRequest = buildBridgeRequest(model, wanLayer, randomValue);
       } else if (model.connectionType === "Static") {
-        connectionRequest = buildStaticRequest(
-          model,
-          WanGroupMappingLayer,
-          randomValue
-        );
+        connectionRequest = buildStaticRequest(model, wanLayer, randomValue);
       } else if (model.connectionType === "DHCP") {
-        connectionRequest = buildDhcpRequest(
-          model,
-          WanGroupMappingLayer,
-          randomValue
-        );
+        connectionRequest = buildDhcpRequest(model, wanLayer, randomValue);
       } else {
         throw new Error("Unsupported connection type");
       }
 
-      // If editing, attempt deletion of old connection first (preserve existing edit logic)
       if ($scope.$parent.isEditMode) {
         const deleteRes = await deleteOldPtmConnection();
         if (!deleteRes || deleteRes.status !== 200) {
@@ -659,7 +592,6 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       const addResult = await $http.post(URL + "cgi_set", connectionRequest);
 
       if (addResult.status === 200) {
-        // persist user-defined DNS if provided
         const dnsRequest = `UsrDefDNS1=${enc(
           $scope.ptmData.primaryDNS
         )}&UsrDefDNS2=${enc($scope.ptmData.secondaryDNS)}`;
@@ -690,7 +622,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     $scope.addNewConnection();
   });
 
-  // initialization & edit helpers (preserved and cleaned)
+  // initialization & edit helpers (unchanged)
   async function initializeConnectionType() {
     try {
       if ($scope.$parent.internetObject) {
@@ -740,7 +672,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
 
   initializeConnectionType();
 
-  // watchers & small helpers (preserved)
+  // watchers & small helpers (unchanged)
   $scope.updateParent = function() {
     $scope.$emit("ptmDataChanged", $scope.ptmData);
   };
