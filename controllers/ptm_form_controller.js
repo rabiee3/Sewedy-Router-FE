@@ -39,6 +39,11 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
   };
 
+  const baseLayer =
+    $scope.$parent.form.selectionMode === "ETH"
+      ? "Device.Ethernet.Interface.5."
+      : "Device.PTM.Link.1.";
+
   // --- helpers ---
   function ensureRandomValue() {
     let v = localStorage.getItem("randomvalue");
@@ -107,7 +112,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
     // Ethernet Link (always created)
     req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
       ethLinkAlias
-    )}&LowerLayers=${enc("Device.PTM.Link.1.")}`;
+    )}&LowerLayers=${enc(baseLayer)}`;
 
     if (model.macCloneEnabled && model.mac_address) {
       req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
@@ -181,7 +186,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
 
       r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
         ethLinkAlias
-      )}&LowerLayers=${enc("Device.PTM.Link.1.")}`;
+      )}&LowerLayers=${enc(baseLayer)}`;
       if (model.macCloneEnabled && model.mac_address) {
         r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
           model.mac_address
@@ -242,7 +247,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
         model.selectedBridge.objName
       )}.Port&Operation=Add&Enable=true&Alias=${enc(
         bridgePortAlias
-      )}&LowerLayers=${enc("Device.PTM.Link.1.")}`;
+      )}&LowerLayers=${enc(baseLayer)}`;
 
       req += `&Object=Device.Ethernet.VLANTermination&Operation=Add&TPID=&LowerLayers=Device.Ethernet.Link.${enc(
         ethLinkAlias
@@ -266,7 +271,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       model.selectedBridge.objName
     )}.Port&Operation=Add&Enable=true&Alias=${enc(
       bridgePortAlias
-    )}&LowerLayers=${enc("Device.PTM.Link.1.")}`;
+    )}&LowerLayers=${enc(baseLayer)}`;
 
     return req;
   }
@@ -295,7 +300,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
 
       req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
         ethLinkAlias
-      )}&LowerLayers=${enc("Device.PTM.Link.1.")}`;
+      )}&LowerLayers=${enc(baseLayer)}`;
       if (model.macCloneEnabled && model.mac_address) {
         req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
           model.mac_address
@@ -375,7 +380,7 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
 
       req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
         ethLinkAlias
-      )}&LowerLayers=${enc("Device.PTM.Link.1.")}`;
+      )}&LowerLayers=${enc(baseLayer)}`;
 
       if (model.macCloneEnabled && model.mac_address) {
         req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
@@ -598,14 +603,18 @@ myapp.controller("ptm_form_controller", function($scope, $http) {
       $("#ajaxLoaderSection").show();
 
       const randomValue = ensureRandomValue();
-      const lowerLayerRes = await $http.get(
-        URL +
-          `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup.${
-            $scope.$parent.form.selectionMode === "PTM" ? 1 : 3
-          }&MappingLowerLayer=`
-      );
-      const WanGroupMappingLayer =
-        lowerLayerRes.data["Objects"][0].Param[0].ParamValue;
+
+      // keep request for PTM reference compatibility
+      let WanGroupMappingLayer = baseLayer;
+
+      if ($scope.$parent.form.selectionMode === "PTM") {
+        const lowerLayerRes = await $http.get(
+          URL +
+            `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup.1&MappingLowerLayer=`
+        );
+        WanGroupMappingLayer =
+          lowerLayerRes.data["Objects"][0].Param[0].ParamValue;
+      }
 
       let connectionRequest = "";
       const model = $scope.ptmData;
