@@ -287,28 +287,35 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     }
   }
 
-  // ---------- VLAN Detection (Enhanced) ----------
+  // ---------- VLAN Detection using getConnectionObjects ----------
   async function detectVlanFromLowerLayers(objName) {
     try {
-      // If this layer is VLAN termination → we’re done
-      if (objName.includes("Device.Ethernet.VLANTermination")) return objName;
+      // 1. Get full chain of connection layers
+      const chain = await getConnectionObjects(objName);
+      if (!Array.isArray(chain) || chain.length === 0) return null;
 
-      // Step 1: Get LowerLayers of the given object (could be IP.Interface or PPP.Interface)
-      const lowerResp = await $http.get(
-        URL + `/cgi_get_filterbyparamval?Object=${objName}&LowerLayers=`
+      // 2. Find VLAN Termination layer (if exists)
+      const vlanObjName = chain.find((o) =>
+        o.includes("Device.Ethernet.VLANTermination")
       );
-      if (lowerResp.status !== 200 || !lowerResp.data.Objects?.length)
-        return null;
+      if (!vlanObjName) return null;
 
-      const lowerLayer = lowerResp.data.Objects[0].Param[0]?.ParamValue;
-      if (!lowerLayer) return null;
+      // 3. Fetch VLAN parameters
+      const vlanResp = await $http.get(
+        `${URL}cgi_get_nosubobj?Object=${vlanObjName}`
+      );
+      const vlanObj = vlanResp.data.Objects?.[0];
+      if (!vlanObj) return null;
 
-      // If this layer is VLAN termination → we’re done
-      if (lowerLayer.includes("Device.Ethernet.VLANTermination"))
-        return lowerLayer;
+      const vlanEnable = vlanObj.Param.find((p) => p.ParamName === "Enable")
+        ?.ParamValue;
+      const vlanId = vlanObj.Param.find((p) => p.ParamName === "VLANID")
+        ?.ParamValue;
 
-      // Otherwise, recursively check next layer
-      return await detectVlanFromLowerLayers(lowerLayer.replace(/\.$/, ""));
+      return {
+        enableVlan: vlanEnable === "true" || vlanEnable === "1" ? "1" : "0",
+        vlanId: vlanId ? parseInt(vlanId, 10) : "",
+      };
     } catch (err) {
       console.warn("detectVlanFromLowerLayers failed for:", objName, err);
       return null;
@@ -384,21 +391,21 @@ myapp.controller("atm_form_controller", function($scope, $http) {
               const vlanId = vlanObj.Param.find((p) => p.ParamName === "VLANID")
                 ?.ParamValue;
 
-              $scope.ptmData.enableVlan =
+              $scope.atmData.enableVlan =
                 vlanEnable === "true" || vlanEnable === "1" ? "1" : "0";
-              $scope.ptmData.vlanId = vlanId ? parseInt(vlanId, 10) : "";
+              $scope.atmData.vlanId = vlanId ? parseInt(vlanId, 10) : "";
             } else {
-              $scope.ptmData.enableVlan = "0";
-              $scope.ptmData.vlanId = "";
+              $scope.atmData.enableVlan = "0";
+              $scope.atmData.vlanId = "";
             }
           } else {
-            $scope.ptmData.enableVlan = "0";
-            $scope.ptmData.vlanId = "";
+            $scope.atmData.enableVlan = "0";
+            $scope.atmData.vlanId = "";
           }
         } catch (vlanErr) {
           console.warn("No VLAN data found:", vlanErr);
-          $scope.ptmData.enableVlan = "0";
-          $scope.ptmData.vlanId = "";
+          $scope.atmData.enableVlan = "0";
+          $scope.atmData.vlanId = "";
         }
       }
 
@@ -445,79 +452,78 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   async function loadUserPassData() {
     try {
-      if ($scope.$parent.internetObject) {
-        const DeviceIpInterface = $scope.$parent.internetObject.split(",")[0];
-        // Get PPP interface data
-        const pppInterfaceData = await $http.get(
-          URL + "cgi_get_nosubobj?Object=" + DeviceIpInterface
-        );
-        const pppObj = pppInterfaceData.data["Objects"][0];
+      if (!$scope.$parent.internetObject) return;
 
-        $scope.lowerPTM_link = pppObj.Param.find(
-          (x) => x.ParamName === "LowerLayers"
-        )?.ParamValue;
+      const deviceIpInterface = $scope.$parent.internetObject.split(",")[0];
 
-        // Get ATM Link data (LinkType, Encapsulation, DestinationAddress)
-        if ($scope.lowerPTM_link) {
-          const atmLinkResponse = await $http.get(
-            URL + "cgi_get_nosubobj?Object=" + $scope.lowerPTM_link
-          );
-          const atmLinkObj = atmLinkResponse.data["Objects"][0];
+      // --- Step 1: Get the full connection chain ---
+      const connectionChain = await getConnectionObjects(
+        deviceIpInterface,
+        true
+      );
+      if (!Array.isArray(connectionChain) || connectionChain.length === 0)
+        return;
 
-          if (atmLinkObj && atmLinkObj.Param) {
-            $scope.ethInterfaceLink = atmLinkObj.Param.find(
-              (x) => x.ParamName === "LowerLayers"
-            )?.ParamValue;
+      // --- Step 2: Identify PPP interface ---
+      const pppInterface = connectionChain.find((x) =>
+        x.includes("PPP.Interface")
+      );
+      if (!pppInterface) return;
 
-            const ethLinkRes = await $http.get(
-              URL + "cgi_get_nosubobj?Object=" + $scope.ethInterfaceLink
-            );
+      // --- Step 3: Get PPP Interface object ---
+      const pppRes = await $http.get(
+        `${URL}cgi_get_nosubobj?Object=${pppInterface}`
+      );
+      const pppObj = pppRes.data.Objects?.[0];
+      if (!pppObj) return;
 
-            const atmLink = ethLinkRes.data["Objects"][0].Param.find(
-              (x) => x.ParamName === "LowerLayers"
-            )?.ParamValue;
-
-            await fetchVpiVciName(atmLink);
-          }
-        }
-
-        const userPassResponse = await $http.get(
-          URL + "cgi_get_nosubobj?Object=" + $scope.lowerPTM_link
-        );
-        const userPassData = userPassResponse.data["Objects"][0];
-
-        setTimeout(() => {
-          $scope.$apply(() => {
-            $scope.atmData.username =
-              userPassData.Param.find(
-                (x) => x.ParamName === "Username"
-              )?.ParamValue?.split("@")[0] || "";
-            $scope.atmData.password =
-              userPassData.Param.find((x) => x.ParamName === "Password")
-                ?.ParamValue || "";
-            $scope.atmData.mtu_size =
-              parseInt(
-                userPassData.Param.find((x) => x.ParamName === "MaxMRUSize")
-                  ?.ParamValue
-              ) || 1492;
-
-            $scope.atmData.ipv6enable = pppObj.Param.find(
-              (x) => x.ParamName === "IPv6Enable"
-            )?.ParamValue;
-
-            $scope.atmData.defaultGateway =
-              pppObj.Param.find(
-                (x) => x.ParamName === "X_LANTIQ_COM_DefaultGateway"
-              )?.ParamValue === "true"
-                ? "1"
-                : "0";
-          });
-        }, 200);
-
-        $scope.updateParent(); // Notify parent of updated data
+      // --- Step 4: Detect VLAN recursively through the helper ---
+      const vlanInfo = await detectVlanFromLowerLayers(pppInterface);
+      if (vlanInfo && vlanInfo.enableVlan === "1") {
+        $scope.atmData.enableVlan = "1";
+        $scope.atmData.vlanId = vlanInfo.vlanId;
+      } else {
+        $scope.atmData.enableVlan = "0";
+        $scope.atmData.vlanId = "";
       }
+
+      // --- Step 5: Find the physical link (ATM/PTM/DSL) ---
+      const physicalLayer = connectionChain.find(
+        (x) =>
+          x.includes("ATM.Link") ||
+          x.includes("PTM.Link") ||
+          x.includes("DSL.Channel")
+      );
+
+      if (physicalLayer) {
+        const vpiVciName = await fetchVpiVciName(physicalLayer);
+        $scope.atmData.vpiVciName = vpiVciName || "";
+      } else {
+        console.warn("No physical layer found for this connection chain.");
+        $scope.atmData.vpiVciName = "";
+      }
+
+      // --- Step 6: Load PPPoE credentials & MTU ---
+      const usernameParam = pppObj.Param.find(
+        (p) => p.ParamName === "Username"
+      );
+      const passwordParam = pppObj.Param.find(
+        (p) => p.ParamName === "Password"
+      );
+      const mtuParam = pppObj.Param.find((p) => p.ParamName === "MaxMRUSize");
+
+      setTimeout(() => {
+        $scope.$apply(() => {
+          $scope.atmData.username =
+            usernameParam?.ParamValue?.split("@")[0] || "";
+          $scope.atmData.password = passwordParam?.ParamValue || "";
+          $scope.atmData.mtu_size = parseInt(mtuParam?.ParamValue) || 1492;
+        });
+      }, 200);
+
+      $scope.updateParent();
     } catch (error) {
-      console.error("Error loading user_pass data:", error);
+      console.error("Error loading PPPoE user/pass data:", error);
     }
   }
 
@@ -809,49 +815,48 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     $scope.atmForm.$setValidity("dnsConflict", !same);
   };
 
-  // ---------- Recursive Layer Traversal (Skip ATM/PTM/DSL Layers) ----------
-  async function getConnectionObjects(ipInterface) {
-    const objectsToDelete = [];
-
-    async function traceLayers(layer) {
-      if (!layer) return;
-      const cleanLayer = layer.replace(/\.$/, "");
-
-      // Skip ATM/PTM/DSL layers
-      if (
-        !cleanLayer.includes("ATM") &&
-        !cleanLayer.includes("PTM") &&
-        !cleanLayer.includes("DSL")
-      ) {
-        if (!objectsToDelete.includes(cleanLayer)) {
-          objectsToDelete.push(cleanLayer);
-        }
-      }
-
-      try {
-        const res = await $http.get(
-          `${URL}cgi_get_nosubobj?Object=${cleanLayer}`
-        );
-        const obj = res.data.Objects?.[0];
-        if (!obj || !obj.Param) return;
-
-        const nextLayer = obj.Param.find((p) => p.ParamName === "LowerLayers")
-          ?.ParamValue;
-        if (nextLayer) {
-          await traceLayers(nextLayer);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch layer:", layer, err);
-      }
-    }
-
+  // ---------- Recursive Layer Traversal (Optional Skip ATM/PTM/DSL Layers for usage in delete) ----------
+  async function getConnectionObjects(
+    objPath,
+    includePhysical = false,
+    visited = []
+  ) {
     try {
-      await traceLayers(ipInterface);
-    } catch (err) {
-      console.error("Error traversing ATM connection chain:", err);
-    }
+      if (!objPath || visited.includes(objPath)) return [];
+      visited.push(objPath);
 
-    return objectsToDelete;
+      const res = await $http.get(`${URL}cgi_get_nosubobj?Object=${objPath}`);
+      const obj = res.data.Objects?.[0];
+      if (!obj) return [];
+
+      const lowerParam = obj.Param.find((p) => p.ParamName === "LowerLayers");
+      if (!lowerParam || !lowerParam.ParamValue) {
+        // If no lower layer, we reached physical layer
+        return [objPath];
+      }
+
+      const lower = lowerParam.ParamValue.replace(/\.$/, "");
+
+      // If we’re at physical layer and caller wants it, stop here
+      if (
+        lower.includes("ATM.Link") ||
+        lower.includes("PTM.Link") ||
+        lower.includes("DSL.Channel")
+      ) {
+        return includePhysical ? [objPath, lower] : [objPath];
+      }
+
+      // Recurse deeper
+      const deeper = await getConnectionObjects(
+        lower,
+        includePhysical,
+        visited
+      );
+      return [objPath, ...deeper];
+    } catch (err) {
+      console.error("Error traversing connection chain:", err);
+      return [objPath];
+    }
   }
 
   $scope.deleteConnection = async function() {
