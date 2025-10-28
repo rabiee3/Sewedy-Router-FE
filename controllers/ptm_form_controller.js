@@ -456,27 +456,68 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
     }
   }
 
-  async function deleteOldPtmConnection() {
-    try {
-      let objects = await getAtmConnectionObjects(
-        $scope.$parent.internetObject.split(",")[0]
-      );
-      let deleteRequest = "";
-      objects.forEach((objName) => {
-        if (
-          objName &&
-          !objName.includes("Device.PTM") &&
-          !objName.includes("DSL.Link")
-        ) {
-          deleteRequest += `Object=${objName}&Operation=Del&`;
+  // ---------- Recursive Layer Traversal (Skip ATM/PTM/DSL Layers) ----------
+  async function getConnectionObjects(ipInterface) {
+    const objectsToDelete = [];
+
+    async function traceLayers(layer) {
+      if (!layer) return;
+      const cleanLayer = layer.replace(/\.$/, "");
+
+      // Skip ATM/PTM/DSL layers
+      if (
+        !cleanLayer.includes("ATM") &&
+        !cleanLayer.includes("PTM") &&
+        !cleanLayer.includes("DSL")
+      ) {
+        if (!objectsToDelete.includes(cleanLayer)) {
+          objectsToDelete.push(cleanLayer);
         }
-      });
-      if (deleteRequest) {
-        await $http.post(URL + "cgi_set", deleteRequest);
       }
-    } catch (err) {
-      console.error("Error deleting ATM connection:", err);
+
+      try {
+        const res = await $http.get(
+          `${URL}cgi_get_nosubobj?Object=${cleanLayer}`
+        );
+        const obj = res.data.Objects?.[0];
+        if (!obj || !obj.Param) return;
+
+        const nextLayer = obj.Param.find((p) => p.ParamName === "LowerLayers")
+          ?.ParamValue;
+        if (nextLayer) {
+          await traceLayers(nextLayer);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch layer:", layer, err);
+      }
     }
+
+    try {
+      await traceLayers(ipInterface);
+    } catch (err) {
+      console.error("Error traversing ATM connection chain:", err);
+    }
+
+    return objectsToDelete;
+  }
+
+  async function deleteOldPtmConnection() {
+    let objects = await getConnectionObjects(
+      $scope.$parent.internetObject.split(",")[0]
+    );
+    let deleteRequest = "";
+    objects.forEach((objName) => {
+      if (
+        objName &&
+        !objName.includes("Device.PTM") &&
+        !objName.includes("DSL.Link")
+      ) {
+        deleteRequest += `Object=${objName}&Operation=Del&`;
+      }
+    });
+    
+    return await $http.post(URL + "cgi_set", deleteRequest);
+    
   }
 
   async function loadStaticDNSData() {
@@ -619,7 +660,7 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
           dnsRequest
         );
         if (dnsResult.status !== 200) {
-          alert("Failed to set user-defined DNS.");
+          console.log("Failed to set user-defined DNS.");
         }
         $("#ajaxLoaderSection").hide();
         $scope.$emit("connectionAdded", true);
@@ -629,11 +670,15 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
         } else {
           alert("Something wrong happened");
         }
-        $("#ajaxLoaderSection").hide();
+        if (window.$ && $("#ajaxLoaderSection").length) {
+          $("#ajaxLoaderSection").hide();
+        }
       }
     } catch (error) {
       console.error("Error adding new connection:", error);
-      $("#ajaxLoaderSection").hide();
+      if (window.$ && $("#ajaxLoaderSection").length) {
+        $("#ajaxLoaderSection").hide();
+      }
       alert("Failed to add connection.");
     }
   };
@@ -678,7 +723,6 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
           throw new Error("Failed to delete old connection");
         }
 
-        $("#ajaxLoaderSection").hide();
         console.log("Old connection deleted successfully:", deleteCgi);
       }
       $("#ajaxLoaderSection").hide();
@@ -710,8 +754,7 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
   async function detectVlanFromLowerLayers(objName) {
     try {
       // If this layer is VLAN termination → we’re done
-      if (objName.includes("Device.Ethernet.VLANTermination"))
-        return objName;
+      if (objName.includes("Device.Ethernet.VLANTermination")) return objName;
 
       // Step 1: Get LowerLayers of the given object (could be IP.Interface or PPP.Interface)
       const lowerResp = await $http.get(

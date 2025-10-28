@@ -184,10 +184,6 @@ myapp.controller("wan_wanconnectionsform", function(
     } catch (error) {
       console.error("Error during submit:", error);
       alert("Failed to save connection: " + error.message);
-    } finally {
-      if (window.$ && $("#ajaxLoaderSection").length) {
-        $("#ajaxLoaderSection").hide();
-      }
     }
   };
 

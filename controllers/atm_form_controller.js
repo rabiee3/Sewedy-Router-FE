@@ -193,6 +193,8 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   }
 
   async function fetchVpiVciName(atmLinkObjName) {
+    $("#ajaxLoaderSection").show();
+
     try {
       const response = await $http.get(
         URL + `cgi_get_fillparams?Object=${atmLinkObjName}`
@@ -208,10 +210,14 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       $scope.selectVpiVci(getParam("DestinationAddress"));
       $scope.atmData.linkType = getParam("LinkType");
       $scope.atmData.encapsulation = getParam("Encapsulation");
-      $("#ajaxLoaderSection").hide();
+      if (window.$ && $("#ajaxLoaderSection").length) {
+        $("#ajaxLoaderSection").hide();
+      }
     } catch (err) {
       console.error("Error fetching VPI/VCI name:", err);
-      $("#ajaxLoaderSection").hide();
+      if (window.$ && $("#ajaxLoaderSection").length) {
+        $("#ajaxLoaderSection").hide();
+      }
     }
   }
 
@@ -285,8 +291,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   async function detectVlanFromLowerLayers(objName) {
     try {
       // If this layer is VLAN termination → we’re done
-      if (objName.includes("Device.Ethernet.VLANTermination"))
-        return objName;
+      if (objName.includes("Device.Ethernet.VLANTermination")) return objName;
 
       // Step 1: Get LowerLayers of the given object (could be IP.Interface or PPP.Interface)
       const lowerResp = await $http.get(
@@ -507,7 +512,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
                 ? "1"
                 : "0";
           });
-          $("#ajaxLoaderSection").hide();
         }, 200);
 
         $scope.updateParent(); // Notify parent of updated data
@@ -736,7 +740,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
           );
 
           if (dnsResult.status !== 200) {
-            alert("Failed to set user-defined DNS.");
+            console.log("Failed to set user-defined DNS.");
           }
         }
 
@@ -805,64 +809,66 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     $scope.atmForm.$setValidity("dnsConflict", !same);
   };
 
-  async function getAtmConnectionObjects(ipInterface) {
-    let objectsToDelete = [];
-    try {
-      // 1. IP Interface
-      objectsToDelete.push(ipInterface);
+  // ---------- Recursive Layer Traversal (Skip ATM/PTM/DSL Layers) ----------
+  async function getConnectionObjects(ipInterface) {
+    const objectsToDelete = [];
 
-      // 2. Get PPP Interface from IP's LowerLayers
-      const ipData = await $http.get(
-        URL + "cgi_get_nosubobj?Object=" + ipInterface
-      );
-      const ipObj = ipData.data.Objects[0];
-      const pppInterface = ipObj.Param.find(
-        (x) => x.ParamName === "LowerLayers"
-      )?.ParamValue;
-      if (pppInterface) objectsToDelete.push(pppInterface);
+    async function traceLayers(layer) {
+      if (!layer) return;
+      const cleanLayer = layer.replace(/\.$/, "");
 
-      // 3. Get Ethernet Interface from PPP's LowerLayers
-      const pppData = await $http.get(
-        URL + "cgi_get_nosubobj?Object=" + pppInterface
-      );
-      const pppObj = pppData.data.Objects[0];
-      const ethInterface = pppObj.Param.find(
-        (x) => x.ParamName === "LowerLayers"
-      )?.ParamValue;
-      if (ethInterface) objectsToDelete.push(ethInterface);
+      // Skip ATM/PTM/DSL layers
+      if (
+        !cleanLayer.includes("ATM") &&
+        !cleanLayer.includes("PTM") &&
+        !cleanLayer.includes("DSL")
+      ) {
+        if (!objectsToDelete.includes(cleanLayer)) {
+          objectsToDelete.push(cleanLayer);
+        }
+      }
 
-      // 4. Get ATM Link from Ethernet's LowerLayers
-      const ethData = await $http.get(
-        URL + "cgi_get_nosubobj?Object=" + ethInterface
-      );
-      const ethObj = ethData.data.Objects[0];
-      const atmLink = ethObj.Param.find((x) => x.ParamName === "LowerLayers")
-        ?.ParamValue;
-      if (atmLink) objectsToDelete.push(atmLink);
+      try {
+        const res = await $http.get(
+          `${URL}cgi_get_nosubobj?Object=${cleanLayer}`
+        );
+        const obj = res.data.Objects?.[0];
+        if (!obj || !obj.Param) return;
 
-      return objectsToDelete;
-    } catch (err) {
-      console.error("Error traversing ATM connection chain", err);
-      return objectsToDelete;
+        const nextLayer = obj.Param.find((p) => p.ParamName === "LowerLayers")
+          ?.ParamValue;
+        if (nextLayer) {
+          await traceLayers(nextLayer);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch layer:", layer, err);
+      }
     }
+
+    try {
+      await traceLayers(ipInterface);
+    } catch (err) {
+      console.error("Error traversing ATM connection chain:", err);
+    }
+
+    return objectsToDelete;
   }
 
   $scope.deleteConnection = async function() {
-    try {
-      let objects = await getAtmConnectionObjects(
-        $scope.$parent.internetObject.split(",")[0]
-      );
-      let deleteRequest = "";
-      objects.forEach((objName) => {
-        if (objName && !objName.includes("Device.ATM") && !objName.includes("DSL.Link")) {
-          deleteRequest += `Object=${objName}&Operation=Del&`;
-        }
-      });
-      if (deleteRequest) {
-        await $http.post(URL + "cgi_set", deleteRequest);
+    let objects = await getConnectionObjects(
+      $scope.$parent.internetObject.split(",")[0]
+    );
+    let deleteRequest = "";
+    objects.forEach((objName) => {
+      if (
+        objName &&
+        !objName.includes("Device.ATM") &&
+        !objName.includes("DSL.Link")
+      ) {
+        deleteRequest += `Object=${objName}&Operation=Del&`;
       }
-    } catch (err) {
-      console.error("Error deleting ATM connection:", err);
-    }
+    });
+
+    return await $http.post(URL + "cgi_set", deleteRequest);
   };
 });
