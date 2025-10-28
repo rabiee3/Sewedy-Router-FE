@@ -564,7 +564,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         connectionRequest += `&LinkType=${$scope.atmData.linkType}`;
       }
 
-      debugger;
       if (!$scope.selectedATMLink) {
         connectionRequest += `&Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
       } else {
@@ -680,6 +679,10 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   };
 
   $scope.$on("addAtmConnection", function() {
+    $scope.addNewConnection();
+  });
+
+  $scope.$on("editAtmConnection", function() {
     $scope.addNewConnection();
   });
 

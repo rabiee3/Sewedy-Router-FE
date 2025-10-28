@@ -160,4 +160,8 @@ myapp.controller("menuController", function(
   // Initialize menu
   menuload();
   getSystemLogs();
+
+  $scope.gotoQuickSetup = function() {
+    location.href = "#/quicksetup/1";
+  };
 });

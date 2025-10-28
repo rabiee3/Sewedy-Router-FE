@@ -291,7 +291,12 @@ debugger;
     }&Operation=Del`;
     await $http.post(URL + "cgi_set", DELETE_Request);
 
-    //Main PPOE Request
+
+    //ATM PPoE request'
+    const atm_request = `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=cpe-WEB-ATMLink-79&LowerLayers=Device.DSL.Line.1.&DestinationAddress=0%2F35&Encapsulation=LLC&LinkType=EoA&Object=Device.ATM.Link.cpe-WEB-ATMLink-79.QoS&Operation=Modify&QoSClass=UBR&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-79&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-79&IPv6Enable=1&X_LANTIQ_COM_DefaultGateway=false&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-79&LowerLayers=Device.ATM.Link.cpe-WEB-ATMLink-79&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-79&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-79&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`
+    const res_atm = await $http.post(URL + "cgi_set", atm_request);
+
+    //PTM PPoE Request
     const result = await $http.post(URL + "cgi_set", PPPoE_Request);
 
     await $scope.toggle2_4G();
@@ -309,7 +314,7 @@ debugger;
 
     $("#ajaxLoaderSection").hide();
 
-    if (result.status == 200) {
+    if (result.status == 200 && res_atm.status == 200) {
       $location.path("/");
       $scope.$apply();
     } else {
