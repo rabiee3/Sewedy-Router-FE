@@ -709,6 +709,10 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
   // ---------- VLAN Detection (Enhanced) ----------
   async function detectVlanFromLowerLayers(objName) {
     try {
+      // If this layer is VLAN termination → we’re done
+      if (objName.includes("Device.Ethernet.VLANTermination"))
+        return objName;
+
       // Step 1: Get LowerLayers of the given object (could be IP.Interface or PPP.Interface)
       const lowerResp = await $http.get(
         URL + `/cgi_get_filterbyparamval?Object=${objName}&LowerLayers=`

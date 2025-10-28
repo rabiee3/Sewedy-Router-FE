@@ -281,27 +281,33 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     }
   }
 
-  // ---------- VLAN Detection ----------
-  async function resolveVlanFromLayer(layerName) {
-    if (!layerName) return null;
-    const cleanLayer = layerName.replace(/\.$/, "");
-    const res = await $http.get(`${URL}/cgi_get?Object=${cleanLayer}`);
-    const obj = res.data["Objects"]?.[0];
-    if (!obj || !obj.Param) return null;
+  // ---------- VLAN Detection (Enhanced) ----------
+  async function detectVlanFromLowerLayers(objName) {
+    try {
+      // If this layer is VLAN termination → we’re done
+      if (objName.includes("Device.Ethernet.VLANTermination"))
+        return objName;
 
-    // Check if this object is the VLAN itself
-    if (cleanLayer.includes("Device.Ethernet.VLANTermination")) {
-      return obj;
+      // Step 1: Get LowerLayers of the given object (could be IP.Interface or PPP.Interface)
+      const lowerResp = await $http.get(
+        URL + `/cgi_get_filterbyparamval?Object=${objName}&LowerLayers=`
+      );
+      if (lowerResp.status !== 200 || !lowerResp.data.Objects?.length)
+        return null;
+
+      const lowerLayer = lowerResp.data.Objects[0].Param[0]?.ParamValue;
+      if (!lowerLayer) return null;
+
+      // If this layer is VLAN termination → we’re done
+      if (lowerLayer.includes("Device.Ethernet.VLANTermination"))
+        return lowerLayer;
+
+      // Otherwise, recursively check next layer
+      return await detectVlanFromLowerLayers(lowerLayer.replace(/\.$/, ""));
+    } catch (err) {
+      console.warn("detectVlanFromLowerLayers failed for:", objName, err);
+      return null;
     }
-
-    // Otherwise, check if it has a LowerLayers param and keep tracing
-    const nextLayer = obj.Param.find((p) => p.ParamName === "LowerLayers")
-      ?.ParamValue;
-    if (nextLayer) {
-      return await resolveVlanFromLayer(nextLayer);
-    }
-
-    return null; // No VLAN found in the chain
   }
 
   // Ensure connectionType is set correctly during edit mode
@@ -363,7 +369,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
             (p) => p.ParamName === "LowerLayers"
           );
           if (lowerLayersParam) {
-            const vlanObj = await resolveVlanFromLayer(
+            const vlanObj = await detectVlanFromLowerLayers(
               lowerLayersParam.ParamValue
             );
             if (vlanObj) {
