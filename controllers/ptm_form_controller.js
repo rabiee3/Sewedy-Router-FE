@@ -457,8 +457,26 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
   }
 
   async function deleteOldPtmConnection() {
-    const DELETE_Request = `Object=${$scope.editIPInterface}&Operation=Del&Object=${$scope.editPPPInterface}&Operation=Del&Object=${$scope.editEthernetInterface}&Operation=Del`;
-    return await $http.post(URL + "cgi_set", DELETE_Request);
+    try {
+      let objects = await getAtmConnectionObjects(
+        $scope.$parent.internetObject.split(",")[0]
+      );
+      let deleteRequest = "";
+      objects.forEach((objName) => {
+        if (
+          objName &&
+          !objName.includes("Device.PTM") &&
+          !objName.includes("DSL.Link")
+        ) {
+          deleteRequest += `Object=${objName}&Operation=Del&`;
+        }
+      });
+      if (deleteRequest) {
+        await $http.post(URL + "cgi_set", deleteRequest);
+      }
+    } catch (err) {
+      console.error("Error deleting ATM connection:", err);
+    }
   }
 
   async function loadStaticDNSData() {
@@ -585,6 +603,7 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
         const deleteRes = await deleteOldPtmConnection();
         if (!deleteRes || deleteRes.status !== 200) {
           alert("Problem Deleting Old PTM Connection");
+          $("#ajaxLoaderSection").hide();
           throw new Error("Problem Deleting Old PTM Connection");
         }
       }
@@ -602,6 +621,7 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
         if (dnsResult.status !== 200) {
           alert("Failed to set user-defined DNS.");
         }
+        $("#ajaxLoaderSection").hide();
         $scope.$emit("connectionAdded", true);
       } else {
         if (addResult.data?.Objects?.[0]?.Param?.[0]?.ParamValue) {
@@ -609,12 +629,12 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
         } else {
           alert("Something wrong happened");
         }
+        $("#ajaxLoaderSection").hide();
       }
     } catch (error) {
       console.error("Error adding new connection:", error);
-      alert("Failed to add connection.");
-    } finally {
       $("#ajaxLoaderSection").hide();
+      alert("Failed to add connection.");
     }
   };
 
@@ -658,12 +678,14 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
           throw new Error("Failed to delete old connection");
         }
 
+        $("#ajaxLoaderSection").hide();
         console.log("Old connection deleted successfully:", deleteCgi);
       }
-
+      $("#ajaxLoaderSection").hide();
       alert("Connection saved successfully.");
     } catch (err) {
       console.error("Error saving edited connection:", err);
+      $("#ajaxLoaderSection").hide();
       alert(
         "Failed to save edited connection. Please check console for details."
       );
@@ -684,6 +706,31 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
     }
   });
 
+  // ---------- VLAN Detection (Enhanced) ----------
+  async function detectVlanFromLowerLayers(objName) {
+    try {
+      // Step 1: Get LowerLayers of the given object (could be IP.Interface or PPP.Interface)
+      const lowerResp = await $http.get(
+        URL + `/cgi_get_filterbyparamval?Object=${objName}&LowerLayers=`
+      );
+      if (lowerResp.status !== 200 || !lowerResp.data.Objects?.length)
+        return null;
+
+      const lowerLayer = lowerResp.data.Objects[0].Param[0]?.ParamValue;
+      if (!lowerLayer) return null;
+
+      // If this layer is VLAN termination → we’re done
+      if (lowerLayer.includes("Device.Ethernet.VLANTermination"))
+        return lowerLayer;
+
+      // Otherwise, recursively check next layer
+      return await detectVlanFromLowerLayers(lowerLayer.replace(/\.$/, ""));
+    } catch (err) {
+      console.warn("detectVlanFromLowerLayers failed for:", objName, err);
+      return null;
+    }
+  }
+
   // initialization & edit helpers (unchanged)
   async function initializeConnectionType() {
     try {
@@ -700,19 +747,21 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
           objects.find((o) => o.ObjName.includes(".IPv4Address.")) || null;
 
         // ---------- VLAN Detection ----------
-        const lowerLayersParam = ipInterfaceObj.Param.find(
+        const ipLowerLayers = ipInterfaceObj.Param.find(
           (p) => p.ParamName === "LowerLayers"
-        );
-        if (
-          lowerLayersParam &&
-          lowerLayersParam.ParamValue.includes(
-            "Device.Ethernet.VLANTermination"
-          )
-        ) {
-          const vlanObj = lowerLayersParam.ParamValue.replace(/\.$/, ""); // clean trailing dot
+        )?.ParamValue;
+
+        let vlanObjPath = null;
+        if (ipLowerLayers) {
+          vlanObjPath = await detectVlanFromLowerLayers(
+            ipLowerLayers.replace(/\.$/, "")
+          );
+        }
+
+        if (vlanObjPath) {
           try {
             const vlanResponse = await $http.get(
-              URL + `/cgi_get?Object=${vlanObj}`
+              URL + `/cgi_get?Object=${vlanObjPath.replace(/\.$/, "")}`
             );
             const vlanData = vlanResponse.data["Objects"]?.[0]?.Param || [];
             const vlanEnable = vlanData.find((p) => p.ParamName === "Enable")

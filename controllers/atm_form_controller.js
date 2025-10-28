@@ -281,6 +281,29 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     }
   }
 
+  // ---------- VLAN Detection ----------
+  async function resolveVlanFromLayer(layerName) {
+    if (!layerName) return null;
+    const cleanLayer = layerName.replace(/\.$/, "");
+    const res = await $http.get(`${URL}/cgi_get?Object=${cleanLayer}`);
+    const obj = res.data["Objects"]?.[0];
+    if (!obj || !obj.Param) return null;
+
+    // Check if this object is the VLAN itself
+    if (cleanLayer.includes("Device.Ethernet.VLANTermination")) {
+      return obj;
+    }
+
+    // Otherwise, check if it has a LowerLayers param and keep tracing
+    const nextLayer = obj.Param.find((p) => p.ParamName === "LowerLayers")
+      ?.ParamValue;
+    if (nextLayer) {
+      return await resolveVlanFromLayer(nextLayer);
+    }
+
+    return null; // No VLAN found in the chain
+  }
+
   // Ensure connectionType is set correctly during edit mode
   async function initializeConnectionType() {
     try {
@@ -322,6 +345,49 @@ myapp.controller("atm_form_controller", function($scope, $http) {
                 $scope.atmData.connectionType = "DHCP";
             }
           }
+        }
+
+        $scope.editIPInterface = $scope.$parent.internetObject.split(",")[0];
+
+        const response2 = await $http.get(
+          URL + `/cgi_get?Object=${$scope.editIPInterface}`
+        );
+        const objects = response2.data["Objects"] || [];
+        const ipInterfaceObj =
+          objects.find((o) => o.ObjName === $scope.editIPInterface + ".") ||
+          objects[0];
+
+        // ---------- VLAN Detection ----------
+        try {
+          const lowerLayersParam = ipInterfaceObj.Param.find(
+            (p) => p.ParamName === "LowerLayers"
+          );
+          if (lowerLayersParam) {
+            const vlanObj = await resolveVlanFromLayer(
+              lowerLayersParam.ParamValue
+            );
+            if (vlanObj) {
+              const vlanEnable = vlanObj.Param.find(
+                (p) => p.ParamName === "Enable"
+              )?.ParamValue;
+              const vlanId = vlanObj.Param.find((p) => p.ParamName === "VLANID")
+                ?.ParamValue;
+
+              $scope.ptmData.enableVlan =
+                vlanEnable === "true" || vlanEnable === "1" ? "1" : "0";
+              $scope.ptmData.vlanId = vlanId ? parseInt(vlanId, 10) : "";
+            } else {
+              $scope.ptmData.enableVlan = "0";
+              $scope.ptmData.vlanId = "";
+            }
+          } else {
+            $scope.ptmData.enableVlan = "0";
+            $scope.ptmData.vlanId = "";
+          }
+        } catch (vlanErr) {
+          console.warn("No VLAN data found:", vlanErr);
+          $scope.ptmData.enableVlan = "0";
+          $scope.ptmData.vlanId = "";
         }
       }
 
@@ -583,7 +649,10 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       const ipAlias = `cpe-WEB-IPInterface-${randomNumber}`;
 
       connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
-      if ($scope.atmData.enableVlan == "1" && $scope.atmData.connectionType === "Bridge") {
+      if (
+        $scope.atmData.enableVlan == "1" &&
+        $scope.atmData.connectionType === "Bridge"
+      ) {
         connectionRequest += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
       } else {
         connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
@@ -598,14 +667,12 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       if ($scope.atmData.connectionType === "Bridge") {
         connectionRequest += `&LowerLayers=${$scope.atmData.selectedBridge.objName}.Port.cpe-WEB-BridgingBridge${$scope.atmData.selectedBridge.id}Port-${randomNumber}`;
       } else {
-
         if ($scope.$parent.isEditMode) {
           //use atm link number for the selected Qos
           connectionRequest += `&LowerLayers=${$scope.selectedATMLink.ObjName}`;
-        }else{
+        } else {
           connectionRequest += `&LowerLayers=Device.ATM.Link.${atmAlias}`;
         }
-        
       }
 
       // 4. VLAN Termination (If Vlan add Vlan termination layer so that it can be used as lower layer for both PPP and IP interfaces)
@@ -684,8 +751,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       console.error("Error adding ATM connection:", err);
       $("#ajaxLoaderSection").hide();
       alert("Failed to add ATM connection.");
-    } finally {
-      $("#ajaxLoaderSection").hide();
     }
   };
 
@@ -783,7 +848,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       );
       let deleteRequest = "";
       objects.forEach((objName) => {
-        if (objName && !objName.includes("Device.ATM")) {
+        if (objName && !objName.includes("Device.ATM") && !objName.includes("DSL.Link")) {
           deleteRequest += `Object=${objName}&Operation=Del&`;
         }
       });
