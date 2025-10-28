@@ -525,10 +525,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
   $scope.addNewConnection = async function() {
     try {
-      // If edit mode, delete old connection first
-      if ($scope.$parent.isEditMode) {
-        await $scope.deleteConnection();
-      }
+      $("#ajaxLoaderSection").show();
 
       let randomNumber = parseInt(localStorage.getItem("randomvalue"));
       if (isNaN(randomNumber)) {
@@ -601,7 +598,14 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       if ($scope.atmData.connectionType === "Bridge") {
         connectionRequest += `&LowerLayers=${$scope.atmData.selectedBridge.objName}.Port.cpe-WEB-BridgingBridge${$scope.atmData.selectedBridge.id}Port-${randomNumber}`;
       } else {
-        connectionRequest += `&LowerLayers=Device.ATM.Link.${atmAlias}`;
+
+        if ($scope.$parent.isEditMode) {
+          //use atm link number for the selected Qos
+          connectionRequest += `&LowerLayers=${$scope.selectedATMLink.ObjName}`;
+        }else{
+          connectionRequest += `&LowerLayers=Device.ATM.Link.${atmAlias}`;
+        }
+        
       }
 
       // 4. VLAN Termination (If Vlan add Vlan termination layer so that it can be used as lower layer for both PPP and IP interfaces)
@@ -663,15 +667,22 @@ myapp.controller("atm_form_controller", function($scope, $http) {
           }
         }
 
+        // If edit mode, delete old connection after adding new one
+        if ($scope.$parent.isEditMode) {
+          await $scope.deleteConnection();
+        }
+        $("#ajaxLoaderSection").hide();
         $scope.$emit("connectionAdded", true);
       } else {
         alert(
           result.data?.Objects?.[0]?.Param?.[0]?.ParamValue ||
             "Something went wrong."
         );
+        $("#ajaxLoaderSection").hide();
       }
     } catch (err) {
       console.error("Error adding ATM connection:", err);
+      $("#ajaxLoaderSection").hide();
       alert("Failed to add ATM connection.");
     } finally {
       $("#ajaxLoaderSection").hide();
@@ -772,7 +783,9 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       );
       let deleteRequest = "";
       objects.forEach((objName) => {
-        if (objName) deleteRequest += `Object=${objName}&Operation=Del&`;
+        if (objName && !objName.includes("Device.ATM")) {
+          deleteRequest += `Object=${objName}&Operation=Del&`;
+        }
       });
       if (deleteRequest) {
         await $http.post(URL + "cgi_set", deleteRequest);
