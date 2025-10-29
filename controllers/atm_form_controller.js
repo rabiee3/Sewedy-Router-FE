@@ -72,12 +72,15 @@ myapp.controller("atm_form_controller", function($scope, $http) {
   // Watcher to update connectionTypes dynamically
   $scope.$watch("atmData.linkType", function(newVal) {
     $scope.connectionTypes = $scope.connectionTypeOptionsMap[newVal] || [];
-    $scope.atmData.connectionType = $scope.connectionTypes[0];
+    if (newVal) {
+      initializeConnectionType();
+    }
     $scope.updateParent();
   });
 
   // Emit changes to the parent when atmData is updated
   $scope.updateParent = function() {
+    if (!$scope.atmData.connectionType) return;
     $scope.$emit("atmDataChanged", $scope.atmData);
   };
 
@@ -209,6 +212,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
       $scope.selectVpiVci(getParam("DestinationAddress"));
       $scope.atmData.linkType = getParam("LinkType");
+      initializeConnectionType();
       $scope.atmData.encapsulation = getParam("Encapsulation");
       if (window.$ && $("#ajaxLoaderSection").length) {
         $("#ajaxLoaderSection").hide();
@@ -338,31 +342,39 @@ myapp.controller("atm_form_controller", function($scope, $http) {
             (x) => x.ParamName === "AddressingType"
           )?.ParamValue;
 
-          if (addressingType) {
-            switch (addressingType) {
-              case "X_LANTIQ_COM_PPPoE":
-                $scope.atmData.connectionType = "PPPoE";
-                loadUserPassData();
-                break;
-              case "Bridge":
-                $scope.atmData.connectionType = "Bridge";
-                loadBridgeConnections();
-                break;
-              case "Static":
-                $scope.atmData.connectionType = "Static";
-                $scope.atmData.subnetmask =
-                  ipInterfaceData.Param.find(
-                    (x) => x.ParamName === "SubnetMask"
-                  )?.ParamValue || "";
-                $scope.atmData.ipaddress =
-                  ipInterfaceData.Param.find((x) => x.ParamName === "IPAddress")
-                    ?.ParamValue || "";
-                loadStaticDNSData();
-                break;
-              default:
-                $scope.atmData.connectionType = "DHCP";
-            }
-          }
+          setTimeout(() => {
+            $scope.$apply(() => {
+              if (addressingType) {
+                switch (addressingType) {
+                  case "X_LANTIQ_COM_PPPoE":
+                    $scope.atmData.connectionType = "PPPoE";
+                    loadUserPassData();
+                    break;
+                  case "X_LANTIQ_COM_Bridged":
+                    $scope.atmData.connectionType = "Bridge";
+                    loadBridgeConnections();
+                    break;
+                  case "DHCP":
+                    $scope.atmData.connectionType = "DHCP";
+                    break;
+                  case "Static":
+                    $scope.atmData.connectionType = "Static";
+                    $scope.atmData.subnetmask =
+                      ipInterfaceData.Param.find(
+                        (x) => x.ParamName === "SubnetMask"
+                      )?.ParamValue || "";
+                    $scope.atmData.ipaddress =
+                      ipInterfaceData.Param.find(
+                        (x) => x.ParamName === "IPAddress"
+                      )?.ParamValue || "";
+                    loadStaticDNSData();
+                    break;
+                  default:
+                    $scope.atmData.connectionType = "PPPoE";
+                }
+              }
+            });
+          }, 200);
         }
 
         $scope.editIPInterface = $scope.$parent.internetObject.split(",")[0];
@@ -385,11 +397,8 @@ myapp.controller("atm_form_controller", function($scope, $http) {
               lowerLayersParam.ParamValue
             );
             if (vlanObj) {
-              const vlanEnable = vlanObj.Param.find(
-                (p) => p.ParamName === "Enable"
-              )?.ParamValue;
-              const vlanId = vlanObj.Param.find((p) => p.ParamName === "VLANID")
-                ?.ParamValue;
+              const vlanEnable = vlanObj.enableVlan;
+              const vlanId = vlanObj.vlanId;
 
               $scope.atmData.enableVlan =
                 vlanEnable === "true" || vlanEnable === "1" ? "1" : "0";
@@ -415,9 +424,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       console.error("Error initializing connection type:", error);
     }
   }
-
-  // Call initializeConnectionType during controller initialization
-  initializeConnectionType();
 
   // Initialize static DNS data
   $scope.staticDNSData =
@@ -450,6 +456,66 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     localStorage.setItem("staticDNSData", JSON.stringify($scope.staticDNSData));
   };
 
+  async function bindVpiVci() {
+    const deviceIpInterface = $scope.$parent.internetObject.split(",")[0];
+
+    const connectionChain = await getConnectionObjects(deviceIpInterface, true);
+    if (!Array.isArray(connectionChain) || connectionChain.length === 0) return;
+
+    const physicalLayer = connectionChain.find(
+      (x) =>
+        x.includes("ATM.Link") ||
+        x.includes("PTM.Link") ||
+        x.includes("DSL.Channel")
+    );
+
+    if (physicalLayer) {
+      const vpiVciName = await fetchVpiVciName(physicalLayer);
+      initializeConnectionType();
+      $scope.atmData.vpiVciName = vpiVciName || "";
+    } else {
+      console.warn("No physical layer found for this connection chain.");
+      $scope.atmData.vpiVciName = "";
+    }
+  }
+
+  async function bindVlan() {
+    const deviceIpInterface = $scope.$parent.internetObject.split(",")[0];
+
+    const connectionChain = await getConnectionObjects(deviceIpInterface, true);
+    if (!Array.isArray(connectionChain) || connectionChain.length === 0) return;
+
+    let tInterface = "";
+    switch ($scope.atmData.connectionType) {
+      case "PPPoE":
+      case "PPPoA":
+        tInterface = "PPP.Interface";
+        break;
+      case "Bridge":
+      case "Static":
+      case "DHCP":
+        tInterface = "Ethernet.Link";
+        break;
+      default:
+        console.warn("Unknown connectionType:", $scope.atmData.connectionType);
+        return;
+    }
+
+    const target_interface = connectionChain.find((x) =>
+      x.includes(tInterface)
+    );
+
+    if (!target_interface) return;
+    const vlanInfo = await detectVlanFromLowerLayers(target_interface);
+    if (vlanInfo && vlanInfo.enableVlan === "1") {
+      $scope.atmData.enableVlan = "1";
+      $scope.atmData.vlanId = vlanInfo.vlanId;
+    } else {
+      $scope.atmData.enableVlan = "0";
+      $scope.atmData.vlanId = "";
+    }
+  }
+
   async function loadUserPassData() {
     try {
       if (!$scope.$parent.internetObject) return;
@@ -477,33 +543,7 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       const pppObj = pppRes.data.Objects?.[0];
       if (!pppObj) return;
 
-      // --- Step 4: Detect VLAN recursively through the helper ---
-      const vlanInfo = await detectVlanFromLowerLayers(pppInterface);
-      if (vlanInfo && vlanInfo.enableVlan === "1") {
-        $scope.atmData.enableVlan = "1";
-        $scope.atmData.vlanId = vlanInfo.vlanId;
-      } else {
-        $scope.atmData.enableVlan = "0";
-        $scope.atmData.vlanId = "";
-      }
-
-      // --- Step 5: Find the physical link (ATM/PTM/DSL) ---
-      const physicalLayer = connectionChain.find(
-        (x) =>
-          x.includes("ATM.Link") ||
-          x.includes("PTM.Link") ||
-          x.includes("DSL.Channel")
-      );
-
-      if (physicalLayer) {
-        const vpiVciName = await fetchVpiVciName(physicalLayer);
-        $scope.atmData.vpiVciName = vpiVciName || "";
-      } else {
-        console.warn("No physical layer found for this connection chain.");
-        $scope.atmData.vpiVciName = "";
-      }
-
-      // --- Step 6: Load PPPoE credentials & MTU ---
+      // --- Step 4: Load PPPoE credentials & MTU ---
       const usernameParam = pppObj.Param.find(
         (p) => p.ParamName === "Username"
       );
@@ -541,28 +581,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     const match = alias.match(/-(\d+)$/);
     return match ? match[1] : null;
   }
-
-  /**
-   * Extract full ATM Link objects from the response data.
-   * cgi_get?Object=Device.ATM.Link
-   * @param {Object} response - The full API response (with Objects array)
-   * @returns {Array<Object>|null} Array of ATM Link objects, or null if none found
-   */
-  function getAtmLinkObjects(response) {
-    if (!response || !Array.isArray(response.Objects)) return null;
-
-    // Filter only main ATM link objects (ignore .QoS or .Stats)
-    const atmLinks = response.Objects.filter((obj) =>
-      /^Device\.ATM\.Link\.\d+$/.test(obj.ObjName)
-    );
-
-    return atmLinks.length > 0 ? atmLinks : null;
-  }
-
-  // Listen for reset event from parent
-  $scope.$on("resetAtmForm", function() {
-    $scope.resetForm();
-  });
 
   // Update the loadBridgeConnections function to store the bridge object name
   async function loadBridgeConnections() {
@@ -679,7 +697,9 @@ myapp.controller("atm_form_controller", function($scope, $http) {
       connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
         $scope.atmData.defaultGateway === "1" ? "true" : "false"
       }`;
-      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable === "1" ? "true" : "false"}`;
+      connectionRequest += `&IPv6Enable=${
+        $scope.atmData.ipv6enable === "1" ? "true" : "false"
+      }`;
 
       // 3. Ethernet Link
       connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
@@ -785,8 +805,6 @@ myapp.controller("atm_form_controller", function($scope, $http) {
     $scope.addNewConnection();
   });
 
-  loadUserPassData();
-
   // Watch for changes in connectionType and load data accordingly
   $scope.$watch("atmData.connectionType", function(newValue, oldValue) {
     if (newValue === oldValue) return;
@@ -883,4 +901,11 @@ myapp.controller("atm_form_controller", function($scope, $http) {
 
     return await $http.post(URL + "cgi_set", deleteRequest);
   };
+
+  async function init() {
+    await bindVpiVci();
+    bindVlan();
+  }
+
+  init();
 });
