@@ -670,13 +670,16 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         $scope.atmData.connectionType === "Bridge"
       ) {
         connectionRequest += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
+      } else if ($scope.atmData.connectionType === "DHCP") {
+        connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
       } else {
         connectionRequest += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
       }
+
       connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
         $scope.atmData.defaultGateway === "1" ? "true" : "false"
       }`;
-      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable}`;
+      connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable === "1" ? "true" : "false"}`;
 
       // 3. Ethernet Link
       connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
@@ -701,12 +704,11 @@ myapp.controller("atm_form_controller", function($scope, $http) {
         connectionRequest += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${pppAlias}`;
         connectionRequest += `&MaxMRUSize=${$scope.atmData.mtu_size}`;
         connectionRequest += `&Username=${pppUsername}&Password=${pppPassword}`;
-      }
-
-      if ($scope.atmData.enableVlan == "1") {
-        connectionRequest += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
-      } else {
-        connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
+        if ($scope.atmData.enableVlan == "1") {
+          connectionRequest += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
+        } else {
+          connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
+        }
       }
 
       // 6. Bridge Port (If exist)
@@ -719,6 +721,11 @@ myapp.controller("atm_form_controller", function($scope, $http) {
           );
           return;
         }
+      }
+
+      // DCHP layer (if applicable)
+      if ($scope.atmData.connectionType === "DHCP") {
+        connectionRequest += `&Object=Device.DHCPv4.Client&Operation=Add&Interface=Device.IP.Interface.${ipAlias}`;
       }
 
       // 7. Static DNS (if applicable)

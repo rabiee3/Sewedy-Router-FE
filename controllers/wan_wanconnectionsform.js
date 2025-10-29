@@ -7,7 +7,7 @@ myapp.controller("wan_wanconnectionsform", function(
 ) {
   // Initialize form state
   $scope.form = {
-    selectionMode: "PTM",
+    selectionMode: "",
   };
 
   //get route data
@@ -56,18 +56,17 @@ myapp.controller("wan_wanconnectionsform", function(
 
   // Function to initialize the form and dropdowns
   async function initInterfaceAndDropdown() {
-    if ($scope.isEditMode) {
-      await loadEditModeData();
-    } else {
-      resetForm();
+    if (!$scope.isEditMode) {
+      $scope.form.selectionMode = "PTM";
     }
 
-    $scope.loadForm();
+    await loadEditModeData();
     $scope.dataReady = true;
   }
 
   // Function to load data in edit mode
   async function loadEditModeData() {
+    if(!$scope.internetObject) return;
     $scope.DeviceIpInterface = $scope.internetObject.split(",")[0];
 
     if (window.$ && $("#ajaxLoaderSection").length) {
@@ -123,12 +122,6 @@ myapp.controller("wan_wanconnectionsform", function(
     }
   }
 
-  // Function to reset the form
-  function resetForm() {
-    $scope.$broadcast("resetPtmForm");
-    $scope.ptmData = getDefaultPtmData();
-  }
-
   // Function to load the appropriate subform
   $scope.loadForm = function() {
     switch ($scope.form.selectionMode) {
@@ -138,9 +131,10 @@ myapp.controller("wan_wanconnectionsform", function(
         break;
       case "PTM":
       case "ETH":
-      default:
         $scope.currentFormTemplate = "ptm-form.html";
         $scope.activeFormName = "ptmForm";
+        break;
+      default:
         break;
     }
   };

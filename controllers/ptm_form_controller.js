@@ -515,9 +515,8 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
         deleteRequest += `Object=${objName}&Operation=Del&`;
       }
     });
-    
+
     return await $http.post(URL + "cgi_set", deleteRequest);
-    
   }
 
   async function loadStaticDNSData() {
@@ -640,15 +639,6 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
         throw new Error("Unsupported connection type");
       }
 
-      if ($scope.$parent.isEditMode) {
-        const deleteRes = await deleteOldPtmConnection();
-        if (!deleteRes || deleteRes.status !== 200) {
-          alert("Problem Deleting Old PTM Connection");
-          $("#ajaxLoaderSection").hide();
-          throw new Error("Problem Deleting Old PTM Connection");
-        }
-      }
-
       const addResult = await $http.post(URL + "cgi_set", connectionRequest);
 
       if (addResult.status === 200) {
@@ -662,6 +652,16 @@ myapp.controller("ptm_form_controller", function($scope, $http, $routeParams) {
         if (dnsResult.status !== 200) {
           console.log("Failed to set user-defined DNS.");
         }
+
+        if ($scope.$parent.isEditMode) {
+          const deleteRes = await deleteOldPtmConnection();
+          if (!deleteRes || deleteRes.status !== 200) {
+            alert("Problem Deleting Old PTM Connection");
+            $("#ajaxLoaderSection").hide();
+            throw new Error("Problem Deleting Old PTM Connection");
+          }
+        }
+
         $("#ajaxLoaderSection").hide();
         $scope.$emit("connectionAdded", true);
       } else {
