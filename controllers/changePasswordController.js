@@ -30,17 +30,15 @@ myapp.controller("changePasswordController", function(
   $scope.Apply = function(event) {
     $scope.formsubmitted = true;
     if ($scope.checkPasswordsAreSame()) {
-      var post = "";
       var url = URL + "cgi_action";
       var data = "Newpassword=" + $scope.userpassword;
-      //var user = $rootScope.userDetails;
-      var postobject = "";
-
       $http
         .post(url, data)
         .success(function(responseData, status) {
           var formname = event.currentTarget.attributes["formname"].value;
           errorResponseDisplay(formname, responseData, status, event);
+          console.log(status);
+          $location.path( '/quicksetup');
         })
         .error(function(error) {});
     }
@@ -67,7 +65,6 @@ myapp.controller("changePasswordController", function(
     $("#ajaxLoaderSection").hide();
     if (status == 200) {
       $rootScope.$broadcast("rootScope:language_changed");
-      $location.path("/");
     } else if (500 <= status && status < 600) {
       $scope[formname + "popup"] = true;
       $scope[formname + "popupval"] = data.Objects[0].Param[0].ParamValue;
