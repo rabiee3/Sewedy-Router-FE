@@ -81,10 +81,6 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                   templateUrl: "quick_setup.html",
                   controller: 'quicksetupController'
                 })
-                .when('/quicksetup/:id', {
-                  templateUrl: "quick_setup.html",
-                  controller: 'quicksetupController'
-                })
                 .when('/tableform/:param2', {
                     template: function (params) {
                         return displayResult(params.param2, 'makehtml');
@@ -157,7 +153,7 @@ function httpInterceptor($rootScope,  $location, $timeout) {
     response: function(res) {
       //TODO - Rabie - remove change password scenario
         if(res.status == 209){
-            $location.path( '/quicksetup');
+            $location.path( '/custom/changePassword');
         }
     var csrfHeader = res.headers('X-Csrf-Token');
 	if(csrfHeader !== null && csrfHeader !== "" && csrfHeader !== undefined && csrfHeader !== $rootScope.xsrfHeader){

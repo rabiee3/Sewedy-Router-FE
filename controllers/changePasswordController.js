@@ -46,6 +46,22 @@ myapp.controller("changePasswordController", function(
     }
   };
 
+  $scope.Skip = function() {
+    $scope.formsubmitted = true;
+      var url = URL + "cgi_action";
+      var data = "Newpassword=V1120004";
+
+      $http
+        .post(url, data)
+        .success(function(responseData, status) {
+            $location.path( '/quicksetup');
+        })
+        .error(function(error) {
+          alert("Something Wrong happened, please try again");
+        });
+    
+  };
+
   function errorResponseDisplay(formname, response, status, event) {
     var formname = formname;
     $("#ajaxLoaderSection").hide();

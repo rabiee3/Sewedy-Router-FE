@@ -82,7 +82,7 @@ myapp.controller("quicksetupController", function(
     res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
     if (!Array.isArray(res) && res.status == 209) {
       //Change Password
-      res = await $http.post(URL + "cgi_action", "Newpassword=C789D000");
+      res = await $http.post(URL + "cgi_action", "Newpassword=V1120004");
       await $http.get(URL + "cgi_get" + "?Action=User");
     }
     if (res.status == 200) {
@@ -146,7 +146,6 @@ myapp.controller("quicksetupController", function(
 
   async function loadExistingCredentials() {
     try {
-      if ($routeParams.id) {
         let DeviceIpInterface = null;
 
         // Step 1: Get DeviceIpInterface dynamically
@@ -190,7 +189,7 @@ myapp.controller("quicksetupController", function(
           );
 
           const userPassData = userPassResponse.data["Objects"][0];
-debugger;
+
           // Update credentials
           $scope.credentials.username =
             parseInt(userPassData.Param.find(
@@ -257,7 +256,7 @@ debugger;
             $scope.wifiSettings.password5G = passwordParam.ParamValue;
           }
         }
-      }
+      
     } catch (error) {
       console.error("Error loading existing credentials:", error);
     }
