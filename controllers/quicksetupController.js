@@ -22,10 +22,10 @@ myapp.controller("quicksetupController", function(
 
   $scope.wifiSettings = {
     enable2_4G: true,
-    enable5G: false,
+    enable5G: true,
     ssid2_4G: "WE_F771A0",
     password2_4G: "c789d000",
-    ssid5G: "WE_F771A0_5G",
+    ssid5G: "WE_F771A0",
     password5G: "c789d000",
   };
 
@@ -88,6 +88,7 @@ myapp.controller("quicksetupController", function(
     if (res.status == 200) {
       $location.path("/");
       $scope.$apply();
+      window.location.reload();
     } else {
       console.log("Something wrong happened");
     }
@@ -269,7 +270,7 @@ debugger;
 
     var PPPoE_Request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-18&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-18&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=true&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-18&LowerLayers=Device.PTM.Link.1.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-18&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}&MaxMRUSize=1492&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-18`;
     var WIFI24G_Request = `Object=Device.WiFi.SSID.1&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.Radio.1&Operation=Modify&RegulatoryDomain=EG%20&AutoChannelEnable=true&OperatingStandards=b%2Cg%2Cn%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=40MHz&Object=Device.WiFi.AccessPoint.1&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.1.Security&Operation=Modify&ModeEnabled=WPA-WPA2-Personal&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
-    var WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable5G}&SSID=${$scope.wifiSettings.ssid5G}&Object=Device.WiFi.Radio.2&Operation=Modify&RegulatoryDomain=EG%20&Enable=true&AutoChannelEnable=true&IEEE80211hEnabled=true&OperatingStandards=a%2Cn%2Cac%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=Auto&Object=Device.WiFi.AccessPoint.2&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=WPA2-Personal&KeyPassphrase=${$scope.wifiSettings.password5G}&RekeyingInterval=3600&`;
+    var WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable5G}&SSID=${$scope.wifiSettings.ssid5G}&Object=Device.WiFi.Radio.2&Operation=Modify&RegulatoryDomain=EG%20&Enable=true&AutoChannelEnable=true&IEEE80211hEnabled=false&OperatingStandards=a%2Cn%2Cac%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=Auto&Object=Device.WiFi.AccessPoint.2&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=WPA2-Personal&KeyPassphrase=${$scope.wifiSettings.password5G}&RekeyingInterval=3600&`;
 
     let res;
     //Get ALL PVC Request
@@ -293,7 +294,7 @@ debugger;
 
 
     //ATM PPoE request'
-    const atm_request = `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=cpe-WEB-ATMLink-79&LowerLayers=Device.DSL.Line.1.&DestinationAddress=0%2F35&Encapsulation=LLC&LinkType=EoA&Object=Device.ATM.Link.cpe-WEB-ATMLink-79.QoS&Operation=Modify&QoSClass=UBR&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-79&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-79&IPv6Enable=1&X_LANTIQ_COM_DefaultGateway=false&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-79&LowerLayers=Device.ATM.Link.cpe-WEB-ATMLink-79&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-79&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-79&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`
+    const atm_request = `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=cpe-WEB-ATMLink-79&LowerLayers=Device.DSL.Line.1.&DestinationAddress=0%2F35&Encapsulation=LLC&LinkType=EoA&Object=Device.ATM.Link.cpe-WEB-ATMLink-79.QoS&Operation=Modify&QoSClass=UBR&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-79&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-79&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=false&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-79&LowerLayers=Device.ATM.Link.cpe-WEB-ATMLink-79&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-79&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-79&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`
     const res_atm = await $http.post(URL + "cgi_set", atm_request);
 
     //PTM PPoE Request
@@ -317,6 +318,7 @@ debugger;
     if (result.status == 200 && res_atm.status == 200) {
       $location.path("/");
       $scope.$apply();
+      window.location.reload();
     } else {
       console.log("Something wrong happened");
     }

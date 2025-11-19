@@ -72,16 +72,16 @@ and open the template in the editor.
                                 icon="dsl-panel-icon"
                                                     time="10000"
                                 polling="false"
-                                webname='["Modem Status","Power Management Mode","Vendor ID","Upstream Max Attainable Data Rate (Kbps)","Downstream Max Attainable Data Rate (Kbps)"]'
-                                url="cgi_get?Object=Device.DSL.Line.1&Status=&PowerManagementState=&XTUCVendor=&UpstreamMaxBitRate=&DownstreamMaxBitRate=">
+                                webname='["Modem Status","Power Management Mode","Vendor ID","Upstream Max Attainable Data Rate (Kbps)","Downstream Max Attainable Data Rate (Kbps)","Line Standard"]'
+                                url="cgi_get?Object=Device.DSL.Line.1&Status=&PowerManagementState=&XTUCVendor=&UpstreamMaxBitRate=&DownstreamMaxBitRate=&StandardUsed">
                             </adv-widget>
                         <adv-widget
                             title="Channel Information"
                             icon="dsl-panel-icon"
                             time="10000"
                             polling="false"
-                            webname='["Mode Selected","Latency Type","Upstream Data Rate (Kbps)","Downstream Data Rate (Kbps)","Interleaver Depth"]'
-                            url="cgi_get?Object=Device.DSL.Channel.1&LinkEncapsulationUsed=&LPATH=&UpstreamCurrRate=&DownstreamCurrRate=&INTLVDEPTH=">
+                            webname='["Latency Type","Upstream Data Rate (Kbps)","Downstream Data Rate (Kbps)","Interleaver Depth"]'
+                            url="cgi_get?Object=Device.DSL.Channel.1&LPATH=&UpstreamCurrRate=&DownstreamCurrRate=&INTLVDEPTH=">
                         </adv-widget>
                         <adv-widget
                             title="More Line Information"

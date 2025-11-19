@@ -409,7 +409,7 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 		$http.get(URL + 'cgi_get?Object=Device.DSL.Line.1').
 			success(function (data, status, headers, config) {
 				if (status === 200) {
-					data.Objects[2].Param[2].ParamValue === "READY" ? $scope.dslStatus = true : $scope.dslStatus = false;
+					data.Objects[2].Param[2].ParamValue === "UP" ? $scope.dslStatus = true : $scope.dslStatus = false;
 				}
 			}).
 			error(function (data, status, headers, config) { });
@@ -449,7 +449,7 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 		$http.get(URL + 'cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true').
 			success(function (data, status, headers, config) {
 				if (status === 200) {
-					$scope.internetStatus = getDefaultGatewayStatus(data.Objects) === "Up" ? true : false;
+					$scope.internetStatus = getDefaultGatewayStatus(data.Objects).status === "Up" ? true : false;
 				}
 			}).
 			error(function (data, status, headers, config) { });
