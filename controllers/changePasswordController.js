@@ -42,7 +42,6 @@ myapp.controller("changePasswordController", function(
 
     if ($scope.checkPasswordsAreSame() && formIsValid) {
       var url = URL + "cgi_action";
-      // Change this line:
       var payload =
         "Newpassword=" + encodeURIComponent($scope.passwords.userpassword);
 
@@ -62,9 +61,56 @@ myapp.controller("changePasswordController", function(
               : "changePassword";
           errorResponseDisplay(formname, responseData, status, event);
           console.log(status);
-          $location.path("/quicksetup");
+
+          // Fetch all users in the system
+          $http({
+            method: "GET",
+            url: URL + "cgi_get?Object=Device.Users.User",
+          })
+            .success(function(getResponse) {
+              if (getResponse && getResponse.Objects) {
+                // Find the admin user
+                var adminUser = getResponse.Objects.find(function(user) {
+                  return user.Param.some(function(param) {
+                    return param.ParamName === "Username" && param.ParamValue === "admin";
+                  });
+                });
+
+                if (adminUser) {
+                  var adminUserId = adminUser.ObjName.split(".").pop(); // Extract the ID
+
+                  // Change the password for the admin user
+                  var setPayload =
+                    "Object=Device.Users.User." +
+                    adminUserId +
+                    "&Operation=Modify&Password=" +
+                    encodeURIComponent($scope.passwords.userpassword);
+
+                  $http({
+                    method: "POST",
+                    url: URL + "cgi_set",
+                    data: setPayload,
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  })
+                    .success(function(setResponse) {
+                      console.log("Password updated for admin user.", setResponse);
+                      $location.path("/quicksetup");
+                    })
+                    .error(function(setError) {
+                      console.error("Failed to update password for admin user.", setError);
+                    });
+                } else {
+                  alert("Admin user not found.");
+                }
+              }
+            })
+            .error(function(getError) {
+              console.error("Failed to fetch users.", getError);
+            });
         })
-        .error(function(error) {});
+        .error(function(error) {
+          console.log(error)
+        });
     }
   };
 

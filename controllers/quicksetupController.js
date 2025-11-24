@@ -80,11 +80,6 @@ myapp.controller("quicksetupController", function(
     let res;
     //Get ALL PVC Request
     res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
-    if (!Array.isArray(res) && res.status == 209) {
-      //Change Password
-      res = await $http.post(URL + "cgi_action", "Newpassword=V1120004");
-      await $http.get(URL + "cgi_get" + "?Action=User");
-    }
     if (res.status == 200) {
       $location.path("/");
       $scope.$apply();
@@ -274,15 +269,6 @@ myapp.controller("quicksetupController", function(
     let res;
     //Get ALL PVC Request
     res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
-
-    if (!Array.isArray(res) && res.status == 209) {
-      //Change Password
-      await $http.post(URL + "cgi_action", "Newpassword=C789D000");
-      await $http.get(URL + "cgi_get" + "?Action=User");
-
-      res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
-    }
-
     //Delete Request
     var DELETE_Request = `Object=${
       $scope.getPTMInterfaceID(res.data)[0]
