@@ -342,9 +342,6 @@
                         }
                         var windowheight = $(window).height();
                         var windowwidth = $(window).width();
-                        $(window).on('beforeunload', function () {
-                            return "You should keep this page open.";
-                        });
                         $("#content-wrapper").css("min-height", windowheight);
                         setTimeout(function () {
                             $("#myTab li:first-child").addClass('active');
