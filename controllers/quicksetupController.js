@@ -108,9 +108,10 @@ myapp.controller("quicksetupController", function(
   };
 
   $scope.getPTMInterfaceID = function(pvcs) {
-    const regex = /(ptm|wan)/i;
+    const regex = /(ptm|wan|eth)/i;
     let ptmInterfaceFound = null;
 
+    if (!pvcs || pvcs.length <= 0) return;
     // Loop through the objects
     for (let object of pvcs.Objects) {
       // Loop through the params inside each object
@@ -132,7 +133,6 @@ myapp.controller("quicksetupController", function(
       return null;
     }
 
-    console.log(`PTM Interface ID: ${ptmInterfaceFound.ObjName}`);
     let lowerLayer = ptmInterfaceFound.Param.find(
       (x) => x.ParamName === "LowerLayers"
     );
@@ -141,128 +141,197 @@ myapp.controller("quicksetupController", function(
 
   async function loadExistingCredentials() {
     try {
-        let DeviceIpInterface = null;
+      let DeviceIpInterface = null;
 
-        // Step 1: Get DeviceIpInterface dynamically
-        const upstreamRes = await $http.get(
-          URL +
-            "cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true"
+      // Step 1: Get DeviceIpInterface dynamically
+      const dafaultGatewayRes = await $http.get(
+        URL +
+          "cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true"
+      );
+
+      if (
+        dafaultGatewayRes.data &&
+        dafaultGatewayRes.data.Objects &&
+        dafaultGatewayRes.data.Objects.length > 0
+      ) {
+        // Find the main interface object (not .Stats or .IPv4Address etc.)
+        const mainObj = dafaultGatewayRes.data.Objects.find((obj) =>
+          /^Device\.IP\.Interface\.\d+$/.test(obj.ObjName)
         );
+        if (mainObj) {
+          DeviceIpInterface = mainObj.ObjName;
+        }
+      }
 
-        if (
-          upstreamRes.data &&
-          upstreamRes.data.Objects &&
-          upstreamRes.data.Objects.length > 0
-        ) {
-          // Find the main interface object (not .Stats or .IPv4Address etc.)
-          const mainObj = upstreamRes.data.Objects.find((obj) =>
-            /^Device\.IP\.Interface\.\d+$/.test(obj.ObjName)
-          );
-          if (mainObj) {
-            DeviceIpInterface = mainObj.ObjName;
+      if (!DeviceIpInterface) {
+        console.error("No Default Device Ip Interface found.");
+        return;
+      }
+
+      const user_pass = await loadUserPassData(DeviceIpInterface);
+
+      setTimeout(() => {
+        $scope.$apply(() => {
+          $scope.credentials.username = Number(user_pass.Username);
+          if (user_pass.Password) {
+            $scope.credentials.password = user_pass.Password;
           }
-        }
+        });
+      }, 200);
 
-        if (!DeviceIpInterface) {
-          console.error("No DeviceIpInterface found.");
-          return;
-        }
+      // Get WiFi 2_4G SSID data
+      const ssidResponse = await $http.get(
+        URL + "cgi_get_nosubobj?Object=Device.WiFi.SSID.1"
+      );
 
-        // Get PPP interface data
-        const pppInterfaceData = await $http.get(
-          URL + "cgi_get_nosubobj?Object=" + DeviceIpInterface
+      if (ssidResponse.data?.Objects?.[0]?.Param) {
+        const ssidParam = ssidResponse.data.Objects[0].Param.find(
+          (x) => x.ParamName === "SSID"
         );
-        const pppObj = pppInterfaceData.data["Objects"][0];
-
-        const lowerPTM_link = pppObj.Param.find(
-          (x) => x.ParamName === "LowerLayers"
-        )?.ParamValue;
-
-        if (lowerPTM_link) {
-          const userPassResponse = await $http.get(
-            URL + "cgi_get_nosubobj?Object=" + lowerPTM_link
-          );
-
-          const userPassData = userPassResponse.data["Objects"][0];
-
-          // Update credentials
-          $scope.credentials.username =
-            parseInt(userPassData.Param.find(
-              (x) => x.ParamName === "Username"
-            )?.ParamValue.split("@")[0] || "");
-
-          $scope.credentials.password =
-            userPassData.Param.find((x) => x.ParamName === "Password")
-              ?.ParamValue || "";
+        if (ssidParam) {
+          $scope.wifiSettings.ssid2_4G = ssidParam.ParamValue;
         }
+      }
 
-        // Get WiFi 2_4G SSID data
-        const ssidResponse = await $http.get(
-          URL + "cgi_get_nosubobj?Object=Device.WiFi.SSID.1"
+      // Get WiFi 2_4G Password data
+      const securityResponse = await $http.get(
+        URL + "cgi_get_nosubobj?Object=Device.WiFi.AccessPoint.1.Security"
+      );
+
+      if (securityResponse.data?.Objects?.[0]?.Param) {
+        const passwordParam = securityResponse.data.Objects[0].Param.find(
+          (x) => x.ParamName === "KeyPassphrase"
         );
-
-        if (ssidResponse.data?.Objects?.[0]?.Param) {
-          const ssidParam = ssidResponse.data.Objects[0].Param.find(
-            (x) => x.ParamName === "SSID"
-          );
-          if (ssidParam) {
-            $scope.wifiSettings.ssid2_4G = ssidParam.ParamValue;
-          }
+        if (passwordParam && passwordParam.ParamValue != "") {
+          $scope.wifiSettings.password2_4G = passwordParam.ParamValue;
         }
+      }
 
-        // Get WiFi 2_4G Password data
-        const securityResponse = await $http.get(
-          URL + "cgi_get_nosubobj?Object=Device.WiFi.AccessPoint.1.Security"
+      // Get WiFi 5G SSID data
+      const ssidResponse5g = await $http.get(
+        URL + "cgi_get_nosubobj?Object=Device.WiFi.SSID.2"
+      );
+
+      if (ssidResponse5g.data?.Objects?.[0]?.Param) {
+        const ssidParam = ssidResponse5g.data.Objects[0].Param.find(
+          (x) => x.ParamName === "SSID"
         );
-
-        if (securityResponse.data?.Objects?.[0]?.Param) {
-          const passwordParam = securityResponse.data.Objects[0].Param.find(
-            (x) => x.ParamName === "KeyPassphrase"
-          );
-          if (passwordParam) {
-            $scope.wifiSettings.password2_4G = passwordParam.ParamValue;
-          }
+        if (ssidParam) {
+          $scope.wifiSettings.ssid5G = ssidParam.ParamValue;
         }
+      }
 
-        // Get WiFi 5G SSID data
-        const ssidResponse5g = await $http.get(
-          URL + "cgi_get_nosubobj?Object=Device.WiFi.SSID.2"
+      // Get WiFi 2_4G Password data
+      const securityResponse5G = await $http.get(
+        URL + "cgi_get_nosubobj?Object=Device.WiFi.AccessPoint.2.Security"
+      );
+
+      if (securityResponse5G.data?.Objects?.[0]?.Param) {
+        const passwordParam = securityResponse5G.data.Objects[0].Param.find(
+          (x) => x.ParamName === "KeyPassphrase"
         );
-
-        if (ssidResponse5g.data?.Objects?.[0]?.Param) {
-          const ssidParam = ssidResponse5g.data.Objects[0].Param.find(
-            (x) => x.ParamName === "SSID"
-          );
-          if (ssidParam) {
-            $scope.wifiSettings.ssid5G = ssidParam.ParamValue;
-          }
+        if (passwordParam && passwordParam.ParamValue != "") {
+          $scope.wifiSettings.password5G = passwordParam.ParamValue;
         }
-
-        // Get WiFi 2_4G Password data
-        const securityResponse5G = await $http.get(
-          URL + "cgi_get_nosubobj?Object=Device.WiFi.AccessPoint.2.Security"
-        );
-
-        if (securityResponse5G.data?.Objects?.[0]?.Param) {
-          const passwordParam = securityResponse5G.data.Objects[0].Param.find(
-            (x) => x.ParamName === "KeyPassphrase"
-          );
-          if (passwordParam) {
-            $scope.wifiSettings.password5G = passwordParam.ParamValue;
-          }
-        }
-      
+      }
     } catch (error) {
       console.error("Error loading existing credentials:", error);
+    }
+  }
+
+  async function getConnectionObjects(
+    objPath,
+    includePhysical = false,
+    visited = []
+  ) {
+    try {
+      if (!objPath || visited.includes(objPath)) return [];
+      visited.push(objPath);
+
+      const res = await $http.get(`${URL}cgi_get_nosubobj?Object=${objPath}`);
+      const obj = res.data.Objects?.[0];
+      if (!obj) return [];
+
+      const lowerParam = obj.Param.find((p) => p.ParamName === "LowerLayers");
+      if (!lowerParam || !lowerParam.ParamValue) {
+        // If no lower layer, we reached physical layer
+        return [objPath];
+      }
+
+      const lower = lowerParam.ParamValue.replace(/\.$/, "");
+
+      // If we’re at physical layer and caller wants it, stop here
+      if (
+        lower.includes("ATM.Link") ||
+        lower.includes("PTM.Link") ||
+        lower.includes("DSL.Channel")
+      ) {
+        return includePhysical ? [objPath, lower] : [objPath];
+      }
+
+      // Recurse deeper
+      const deeper = await getConnectionObjects(
+        lower,
+        includePhysical,
+        visited
+      );
+      return [objPath, ...deeper];
+    } catch (err) {
+      console.error("Error traversing connection chain:", err);
+      return [objPath];
+    }
+  }
+
+  async function loadUserPassData(deviceIpInterface) {
+    try {
+      // --- Step 1: Get the full connection chain ---
+      const connectionChain = await getConnectionObjects(
+        deviceIpInterface,
+        true
+      );
+      if (!Array.isArray(connectionChain) || connectionChain.length === 0)
+        return;
+
+      // --- Step 2: Identify PPP interface ---
+      const pppInterface = connectionChain.find((x) =>
+        x.includes("PPP.Interface")
+      );
+      if (!pppInterface) return;
+
+      // --- Step 3: Get PPP Interface object ---
+      const pppRes = await $http.get(
+        `${URL}cgi_get_nosubobj?Object=${pppInterface}`
+      );
+      const pppObj = pppRes.data.Objects?.[0];
+      if (!pppObj) return;
+
+      // --- Step 4: Load PPPoE credentials & MTU ---
+      const usernameParam = pppObj.Param.find(
+        (p) => p.ParamName === "Username"
+      );
+      const passwordParam = pppObj.Param.find(
+        (p) => p.ParamName === "Password"
+      );
+
+      return {
+        Username: usernameParam.ParamValue.split("@")[0],
+        Password: passwordParam.ParamValue,
+      };
+    } catch (error) {
+      console.error("Error loading PPPoE user/pass data:", error);
     }
   }
 
   $scope.submit = async function() {
     $("#ajaxLoaderSection").show();
 
-    var getAllPVCs = `Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true`;
+    let randomNumber1 = Math.floor(Math.random() * 100);
+    let randomNumber2 = Math.floor(Math.random() * 100);
+    let randomNumber3 = Math.floor(Math.random() * 100);
 
-    var PPPoE_Request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-18&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-18&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=true&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-18&LowerLayers=Device.PTM.Link.1.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-18&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}&MaxMRUSize=1492&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-18`;
+    var getAllPVCs = `Object=Device.IP.Interface`;
+
+    var PPPoE_Request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber1}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber1}&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=true&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber1}&LowerLayers=Device.PTM.Link.1.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber1}&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}&MaxMRUSize=1492&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-18`;
     var WIFI24G_Request = `Object=Device.WiFi.SSID.1&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.Radio.1&Operation=Modify&RegulatoryDomain=EG%20&AutoChannelEnable=true&OperatingStandards=b%2Cg%2Cn%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=40MHz&Object=Device.WiFi.AccessPoint.1&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.1.Security&Operation=Modify&ModeEnabled=WPA-WPA2-Personal&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
     var WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable5G}&SSID=${$scope.wifiSettings.ssid5G}&Object=Device.WiFi.Radio.2&Operation=Modify&RegulatoryDomain=EG%20&Enable=true&AutoChannelEnable=true&IEEE80211hEnabled=false&OperatingStandards=a%2Cn%2Cac%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=Auto&Object=Device.WiFi.AccessPoint.2&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=WPA2-Personal&KeyPassphrase=${$scope.wifiSettings.password5G}&RekeyingInterval=3600&`;
 
@@ -279,11 +348,15 @@ myapp.controller("quicksetupController", function(
 
 
     //ATM PPoE request'
-    const atm_request = `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=cpe-WEB-ATMLink-79&LowerLayers=Device.DSL.Line.1.&DestinationAddress=0%2F35&Encapsulation=LLC&LinkType=EoA&Object=Device.ATM.Link.cpe-WEB-ATMLink-79.QoS&Operation=Modify&QoSClass=UBR&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-79&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-79&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=false&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-79&LowerLayers=Device.ATM.Link.cpe-WEB-ATMLink-79&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-79&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-79&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`
+    const atm_request = `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=cpe-WEB-ATMLink-${randomNumber2}&LowerLayers=Device.DSL.Line.1.&DestinationAddress=0%2F35&Encapsulation=LLC&LinkType=EoA&Object=Device.ATM.Link.cpe-WEB-ATMLink-${randomNumber2}.QoS&Operation=Modify&QoSClass=UBR&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber2}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber2}&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=false&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber2}&LowerLayers=Device.ATM.Link.cpe-WEB-ATMLink-${randomNumber2}&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber2}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber2}&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`;
     const res_atm = await $http.post(URL + "cgi_set", atm_request);
 
     //PTM PPoE Request
     const result = await $http.post(URL + "cgi_set", PPPoE_Request);
+
+    //ETH PPoE Request
+    const eth_request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber3}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber3}&IPv6Enable=0&MaxMTUSize=1492&X_LANTIQ_COM_DefaultGateway=1&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber3}&LowerLayers=Device.Ethernet.Interface.5.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber3}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber3}&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`;
+    const res_eth = await $http.post(URL + "cgi_set", eth_request);
 
     await $scope.toggle2_4G();
     await $scope.toggle5G();
@@ -300,7 +373,11 @@ myapp.controller("quicksetupController", function(
 
     $("#ajaxLoaderSection").hide();
 
-    if (result.status == 200 && res_atm.status == 200) {
+    if (
+      result.status == 200 &&
+      res_atm.status == 200 &&
+      res_eth.status == 200
+    ) {
       $location.path("/");
       $scope.$apply();
       window.location.reload();
