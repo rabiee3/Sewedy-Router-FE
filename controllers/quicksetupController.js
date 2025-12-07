@@ -108,35 +108,64 @@ myapp.controller("quicksetupController", function(
   };
 
   $scope.getPTMInterfaceID = function(pvcs) {
-    const regex = /(ptm|wan|eth)/i;
-    let ptmInterfaceFound = null;
+    const regex = /(ptm|wan|eth|pppoe)/i;
+    let interfacesToDelete = [];
 
-    if (!pvcs || pvcs.length <= 0) return;
-    // Loop through the objects
+    if (!pvcs || !pvcs.Objects || pvcs.Objects.length <= 0) {
+      return [];
+    }
+
+    // Loop through all objects
     for (let object of pvcs.Objects) {
-      // Loop through the params inside each object
+      // Only process main IP Interface objects (not .Stats, .IPv4Address, etc.)
+      if (!/^Device\.IP\.Interface\.\d+$/.test(object.ObjName)) {
+        continue;
+      }
+
+      let lowerLayer = null;
+      let interfaceName = "";
+      let alias = "";
+
+      // Extract parameters
       for (let param of object.Param) {
-        if (regex.test(param.ParamValue)) {
-          ptmInterfaceFound = object; // Set ptmInterfaceFound to the outer object
-          break; // Break out of the inner loop when a match is found
+        if (param.ParamName === "LowerLayers") {
+          lowerLayer = param.ParamValue;
+        }
+        if (param.ParamName === "Name") {
+          interfaceName = param.ParamValue;
+        }
+        if (param.ParamName === "Alias") {
+          alias = param.ParamValue;
         }
       }
 
-      // If a match was found, break out of the outer loop too
-      if (ptmInterfaceFound) {
-        break;
+      // We want to delete ALL PPPoE interfaces (they have "pppoe" in the Name)
+      if (interfaceName && interfaceName.includes("pppoe") && lowerLayer) {
+        interfacesToDelete.push({
+          interfaceObj: object.ObjName,
+          lowerLayer: lowerLayer,
+          name: interfaceName,
+          alias: alias,
+        });
+      }
+      // Also check if it's a default gateway
+      else if (
+        object.Param.some(
+          (p) =>
+            p.ParamName === "X_LANTIQ_COM_DefaultGateway" &&
+            p.ParamValue === "true"
+        )
+      ) {
+        interfacesToDelete.push({
+          interfaceObj: object.ObjName,
+          lowerLayer: lowerLayer,
+          name: interfaceName,
+          alias: alias,
+        });
       }
     }
 
-    if (!ptmInterfaceFound) {
-      console.log("No PTM interface found.");
-      return null;
-    }
-
-    let lowerLayer = ptmInterfaceFound.Param.find(
-      (x) => x.ParamName === "LowerLayers"
-    );
-    return [ptmInterfaceFound.ObjName, lowerLayer.ParamValue];
+    return interfacesToDelete;
   };
 
   async function loadExistingCredentials() {
@@ -169,8 +198,6 @@ myapp.controller("quicksetupController", function(
       }
 
       const user_pass = await loadUserPassData(DeviceIpInterface);
-
-      debugger;
 
       setTimeout(() => {
         $scope.$apply(() => {
@@ -396,7 +423,6 @@ myapp.controller("quicksetupController", function(
 
           // Process each interface
           for (const interfaceObj of defaultInterfaces) {
-            console.log(`Processing: ${interfaceObj.ObjName}`);
 
             // Get the full chain for this interface
             const chainInfo = await getLowerLayerUntilPhysical(
@@ -408,9 +434,7 @@ myapp.controller("quicksetupController", function(
               const objToDelete = objectsToDelete[i];
               try {
                 const deleteRequest = `Object=${objToDelete}&Operation=Del`;
-                console.log(`Attempting to delete: ${objToDelete}`);
                 await $http.post(URL + "cgi_set", deleteRequest);
-                console.log(`Successfully deleted: ${objToDelete}`);
               } catch (deleteError) {
                 console.warn(
                   `Could not delete ${objToDelete}:`,
@@ -421,16 +445,23 @@ myapp.controller("quicksetupController", function(
           }
         }
       } else {
-        
         let res;
         const getAllPVCs = `Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true`;
         res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
+        const interfacesToDelete = $scope.getPTMInterfaceID(res.data);
 
-        if (res.data && res.data.Objects) {
-          const ptmInterfaceInfo = $scope.getPTMInterfaceID(res.data);
-          var DELETE_Request = `Object=${ptmInterfaceInfo[0]}&Operation=Del&Object=${ptmInterfaceInfo[1]}&Operation=Del`;
+        if (interfacesToDelete.length > 0) {
+          // Build the DELETE request for ALL interfaces
+          const DELETE_Request = buildDeleteRequestForAllInterfaces(
+            interfacesToDelete
+          );
+
           debugger;
+          // Execute the delete
           await $http.post(URL + "cgi_set", DELETE_Request);
+          await deleteOrphanedPPPInterfaces();
+        } else {
+          console.log("No interfaces found to delete");
         }
       }
     } catch (error) {
@@ -509,5 +540,80 @@ myapp.controller("quicksetupController", function(
       // Keep objects that should be deleted
       return !doNotDeletePatterns.some((pattern) => pattern.test(objPath));
     });
+  }
+
+  function buildDeleteRequestForAllInterfaces(interfacesToDelete) {
+
+    // Check if it's an array
+    if (!Array.isArray(interfacesToDelete)) {
+      console.error("interfacesToDelete is not an array:", interfacesToDelete);
+      return "";
+    }
+
+    if (interfacesToDelete.length === 0) {
+      return "";
+    }
+
+    let deleteParts = [];
+
+    for (let i = 0; i < interfacesToDelete.length; i++) {
+      const item = interfacesToDelete[i];
+
+      // Check if it's an object with the right properties
+      if (item && typeof item === "object") {
+        if (item.interfaceObj && item.lowerLayer) {
+          // Clean up the lowerLayer
+          let cleanLowerLayer = item.lowerLayer;
+          if (cleanLowerLayer && cleanLowerLayer.endsWith(".")) {
+            cleanLowerLayer = cleanLowerLayer.slice(0, -1);
+          }
+
+          deleteParts.push(`Object=${item.interfaceObj}&Operation=Del`);
+          deleteParts.push(`Object=${cleanLowerLayer}&Operation=Del`);
+
+        } else {
+          console.warn(`Item ${i} missing required properties:`, item);
+        }
+      }
+      // Handle if it's just a string (for backward compatibility)
+      else if (typeof item === "string") {
+        deleteParts.push(`Object=${item}&Operation=Del`);
+      } else {
+        console.warn(`Item ${i} is not valid:`, item);
+      }
+    }
+
+    const result = deleteParts.join("&");
+    return result;
+  }
+
+  async function deleteOrphanedPPPInterfaces() {
+    try {
+
+      // Get all PPP Interfaces
+      const res = await $http.get(
+        URL + "cgi_get_filterbyparamval?Object=Device.PPP.Interface"
+      );
+
+      if (res.data && res.data.Objects) {
+        for (const pppObj of res.data.Objects) {
+          if (/^Device\.PPP\.Interface\.\d+$/.test(pppObj.ObjName)) {
+
+            try {
+              await $http.post(
+                URL + "cgi_set",
+                `Object=${pppObj.ObjName}&Operation=Del`
+              );
+            } catch (err) {
+              console.log(
+                `Could not delete ${pppObj.ObjName}, might be in use`
+              );
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting orphaned PPP Interfaces:", error);
+    }
   }
 });
