@@ -81,6 +81,10 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                   templateUrl: "quick_setup.html",
                   controller: 'quicksetupController'
                 })
+                .when('/quicksetup/:id', {
+                  templateUrl: "quick_setup.html",
+                  controller: 'quicksetupController'
+                })
                 .when('/tableform/:param2', {
                     template: function (params) {
                         return displayResult(params.param2, 'makehtml');

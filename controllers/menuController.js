@@ -162,6 +162,6 @@ myapp.controller("menuController", function(
   getSystemLogs();
 
   $scope.gotoQuickSetup = function() {
-    location.href = "#/quicksetup";
+    location.href = "#/quicksetup/1";
   };
 });
