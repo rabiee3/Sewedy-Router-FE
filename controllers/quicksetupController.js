@@ -331,7 +331,7 @@ myapp.controller("quicksetupController", function(
     let randomNumber2 = Math.floor(Math.random() * 100);
     let randomNumber3 = Math.floor(Math.random() * 100);
 
-    var PPPoE_Request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-Default-${randomNumber1}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-Default-${randomNumber1}&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=true&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-Default-${randomNumber1}&LowerLayers=Device.PTM.Link.1.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-Default-${randomNumber1}&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}&MaxMRUSize=1492&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber1}`;
+    var PPPoE_Request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber1}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber1}&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=true&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber1}&LowerLayers=Device.PTM.Link.1.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber1}&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}&MaxMRUSize=1492&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber1}`;
     var WIFI24G_Request = `Object=Device.WiFi.SSID.1&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.Radio.1&Operation=Modify&RegulatoryDomain=EG%20&AutoChannelEnable=true&OperatingStandards=b%2Cg%2Cn%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=40MHz&Object=Device.WiFi.AccessPoint.1&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.1.Security&Operation=Modify&ModeEnabled=WPA-WPA2-Personal&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
     var WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable5G}&SSID=${$scope.wifiSettings.ssid5G}&Object=Device.WiFi.Radio.2&Operation=Modify&RegulatoryDomain=EG%20&Enable=true&AutoChannelEnable=true&IEEE80211hEnabled=false&OperatingStandards=a%2Cn%2Cac%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=Auto&Object=Device.WiFi.AccessPoint.2&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=WPA2-Personal&KeyPassphrase=${$scope.wifiSettings.password5G}&RekeyingInterval=3600&`;
 
@@ -339,14 +339,14 @@ myapp.controller("quicksetupController", function(
     await deleteOldConnections();
 
     //ATM PPoE request'
-    const atm_request = `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=cpe-WEB-ATMLink-Default-${randomNumber2}&LowerLayers=Device.DSL.Line.1.&DestinationAddress=0%2F35&Encapsulation=LLC&LinkType=EoA&Object=Device.ATM.Link.cpe-WEB-ATMLink-Default-${randomNumber2}.QoS&Operation=Modify&QoSClass=UBR&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-Default-${randomNumber2}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-Default-${randomNumber2}&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=false&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-Default-${randomNumber2}&LowerLayers=Device.ATM.Link.cpe-WEB-ATMLink-Default-${randomNumber2}&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-Default-${randomNumber2}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-Default-${randomNumber2}&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`;
+    const atm_request = `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=cpe-WEB-ATMLink-${randomNumber2}&LowerLayers=Device.DSL.Line.1.&DestinationAddress=0%2F35&Encapsulation=LLC&LinkType=EoA&Object=Device.ATM.Link.cpe-WEB-ATMLink-${randomNumber2}.QoS&Operation=Modify&QoSClass=UBR&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber2}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber2}&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=false&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber2}&LowerLayers=Device.ATM.Link.cpe-WEB-ATMLink-${randomNumber2}&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber2}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber2}&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`;
     const res_atm = await $http.post(URL + "cgi_set", atm_request);
 
     //PTM PPoE Request
     const result = await $http.post(URL + "cgi_set", PPPoE_Request);
 
     //ETH PPoE Request
-    const eth_request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-Default-${randomNumber3}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-Default-${randomNumber3}&IPv6Enable=0&MaxMTUSize=1492&X_LANTIQ_COM_DefaultGateway=1&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-Default-${randomNumber3}&LowerLayers=Device.Ethernet.Interface.5.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber3}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-Default-${randomNumber3}&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`;
+    const eth_request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber3}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber3}&IPv6Enable=0&MaxMTUSize=1492&X_LANTIQ_COM_DefaultGateway=1&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber3}&LowerLayers=Device.Ethernet.Interface.5.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber3}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber3}&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`;
     const res_eth = await $http.post(URL + "cgi_set", eth_request);
 
     await $scope.toggle2_4G();
@@ -386,7 +386,7 @@ myapp.controller("quicksetupController", function(
         );
 
         if (response.status === 200 && response.data.Objects) {
-          const defaultAliases = response.data.Objects.filter((obj) =>
+          const defaultInterfaces = response.data.Objects.filter((obj) =>
             obj.Param.some(
               (param) =>
                 param.ParamName === "Alias" &&
@@ -394,83 +394,120 @@ myapp.controller("quicksetupController", function(
             )
           );
 
-          const deleteRequests = [];
+          // Process each interface
+          for (const interfaceObj of defaultInterfaces) {
+            console.log(`Processing: ${interfaceObj.ObjName}`);
 
-          for (const aliasObj of defaultAliases) {
-            const { lowerLayer } = await getLowerLayerUntilPhysical(
-              aliasObj.ObjName
+            // Get the full chain for this interface
+            const chainInfo = await getLowerLayerUntilPhysical(
+              interfaceObj.ObjName
             );
+            const objectsToDelete = getObjectsToDelete(chainInfo.fullChain);
 
-            // Collect all layers to delete
-            let layersToDelete = [aliasObj.ObjName, lowerLayer];
-
-            layersToDelete = layersToDelete.filter(layer=>layer!==undefined);
-            debugger;//debugger 1
-            for (const layer of layersToDelete) {
-              const deleteRequest = `Object=${layer}&Operation=Del`;
-              deleteRequests.push($http.post(URL + "cgi_set", deleteRequest));
+            for (let i = objectsToDelete.length - 1; i >= 0; i--) {
+              const objToDelete = objectsToDelete[i];
+              try {
+                const deleteRequest = `Object=${objToDelete}&Operation=Del`;
+                console.log(`Attempting to delete: ${objToDelete}`);
+                await $http.post(URL + "cgi_set", deleteRequest);
+                console.log(`Successfully deleted: ${objToDelete}`);
+              } catch (deleteError) {
+                console.warn(
+                  `Could not delete ${objToDelete}:`,
+                  deleteError.message
+                );
+              }
             }
           }
-
-          debugger;//debugger 2
-          await Promise.all(deleteRequests);
         }
       } else {
+        
         let res;
-        // Get ALL Device.IP.Interfaces
-        res = await $http.get(
-          URL +
-            "cgi_get_filterbyparamval?Object=Device.IP.Interface" +
-            getAllPVCs
-        );
-        var DELETE_Request = `Object=${
-          $scope.getPTMInterfaceID(res.data)[0]
-        }&Operation=Del&Object=${
-          $scope.getPTMInterfaceID(res.data)[1]
-        }&Operation=Del`;
+        const getAllPVCs = `Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true`;
+        res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
 
-        await $http.post(URL + "cgi_set", DELETE_Request);
+        if (res.data && res.data.Objects) {
+          const ptmInterfaceInfo = $scope.getPTMInterfaceID(res.data);
+          var DELETE_Request = `Object=${ptmInterfaceInfo[0]}&Operation=Del&Object=${ptmInterfaceInfo[1]}&Operation=Del`;
+          debugger;
+          await $http.post(URL + "cgi_set", DELETE_Request);
+        }
       }
     } catch (error) {
-      console.error("Error deleting old connections:", error);
+      console.error("Error in deleteOldConnections:", error);
     }
   }
 
   async function getLowerLayerUntilPhysical(lowerLayer) {
+    let fullChain = [lowerLayer]; // Start with the current layer
+    let currentLayer = lowerLayer;
     let wanType = "UNKNOWN";
 
-    for (let i = 0; i < 2; i++) {
+    // Follow the chain up to 5 levels deep (should be enough for any connection chain)
+    for (let i = 0; i < 5; i++) {
       try {
         const deeper = await $http.get(
-          URL + `cgi_get_filterbyparamval?Object=${lowerLayer}&LowerLayers=`
+          URL + `cgi_get_nosubobj?Object=${currentLayer}`
         );
 
-        if (deeper.status !== 200 || !deeper.data.Objects?.[0]?.Param?.[0]?.ParamValue) {
-          console.warn(`Failed to get valid lower layer data (depth ${i + 1})`);
-          continue; // Skip to the next iteration
+        if (deeper.status !== 200 || !deeper.data.Objects?.[0]?.Param) {
+          break;
         }
 
-        lowerLayer = deeper.data.Objects[0].Param[0].ParamValue;
+        const lowerParam = deeper.data.Objects[0].Param.find(
+          (p) => p.ParamName === "LowerLayers"
+        );
 
-        if (lowerLayer.includes("ATM")) {
+        if (!lowerParam || !lowerParam.ParamValue) {
+          break; // No more lower layers
+        }
+
+        currentLayer = lowerParam.ParamValue.replace(/\.$/, "");
+        fullChain.push(currentLayer);
+
+        // Check for physical layer to determine WAN type
+        if (currentLayer.includes("ATM")) {
           wanType = "ATM";
           break;
-        } else if (lowerLayer.includes("PTM")) {
+        } else if (currentLayer.includes("PTM")) {
           wanType = "PTM";
           break;
-        } else if (lowerLayer.includes("Ethernet.Interface")) {
+        } else if (currentLayer.includes("Ethernet.Interface")) {
           wanType = "ETH";
           break;
         }
       } catch (error) {
-        console.error(`Error during cgi_get request (depth ${i + 1}):`, error);
+        console.error(`Error getting lower layer at depth ${i + 1}:`, error);
+        break;
       }
     }
 
-    if (wanType === "UNKNOWN") {
-      return { error: "Could not determine WAN type after traversing lower layers" };
-    }
+    return {
+      fullChain: fullChain, // Return the complete chain
+      lowerLayer: currentLayer, // Return the deepest layer found
+      wanType: wanType,
+    };
+  }
 
-    return { lowerLayer, wanType };
+  function getObjectsToDelete(fullChain) {
+    // Define patterns of objects that should NOT be deleted
+    const doNotDeletePatterns = [
+      /Device\.DSL\.Line\.\d+/, // Physical DSL lines
+      /Device\.PTM\.Link\.\d+/, // PTM links (physical)
+      /Device\.ATM\.Link\.\d+/, // ATM links (physical)
+      /Device\.Ethernet\.Interface\.\d+/, // Ethernet interfaces (physical)
+      /Device\.WiFi\.Radio\.\d+/, // WiFi radios
+      /Device\.WiFi\.SSID\.\d+/, // WiFi SSIDs
+      /Device\.WiFi\.AccessPoint\.\d+/, // WiFi access points
+      /\.Stats$/, // Statistics objects
+      /\.QoS$/, // QoS objects
+      /\.Security$/, // Security objects
+    ];
+
+    // Filter out objects that shouldn't be deleted
+    return fullChain.filter((objPath) => {
+      // Keep objects that should be deleted
+      return !doNotDeletePatterns.some((pattern) => pattern.test(objPath));
+    });
   }
 });
