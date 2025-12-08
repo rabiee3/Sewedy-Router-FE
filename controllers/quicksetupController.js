@@ -64,7 +64,7 @@ myapp.controller("quicksetupController", function(
       $scope.step === 2 &&
       (!$scope.is24GWifiValid() || !$scope.is5GWifiValid())
     ) {
-      return; // Prevent going to the next step if WiFi is invalid
+      return;
     }
     $scope.step++;
   };
@@ -154,7 +154,6 @@ myapp.controller("quicksetupController", function(
     try {
       let DeviceIpInterface = null;
 
-      // Step 1: Get DeviceIpInterface dynamically
       const dafaultGatewayRes = await $http.get(
         URL +
           "cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true"
@@ -271,7 +270,6 @@ myapp.controller("quicksetupController", function(
 
       const lower = lowerParam.ParamValue.replace(/\.$/, "");
 
-      // If we’re at physical layer and caller wants it, stop here
       if (
         lower.includes("ATM.Link") ||
         lower.includes("PTM.Link") ||
@@ -388,41 +386,29 @@ myapp.controller("quicksetupController", function(
 
   async function deleteOldConnections() {
     try {
-      debugger;
       if ($routeParams.id) {
         const getAllAliasesRequest = `Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true`;
         const response = await $http.get(
           URL + "cgi_get_filterbyparamval?" + getAllAliasesRequest
         );
 
-        debugger;
-
         if (response.status === 200 && response.data.Objects) {
           const ipInterfaces = response.data.Objects.filter((obj) =>
             /^Device\.IP\.Interface\.\d+$/.test(obj.ObjName)
           );
 
-          console.log(`Found ${ipInterfaces.length} IP Interfaces to process`);
-
           let allObjectsToDelete = [];
 
           // Process each interface
           for (const interfaceObj of ipInterfaces) {
-            console.log(`Processing interface: ${interfaceObj.ObjName}`);
 
             // Get the full chain for this interface
             const chainInfo = await getLowerLayerUntilPhysical(
               interfaceObj.ObjName
             );
 
-            console.log(
-              `Chain for ${interfaceObj.ObjName}:`,
-              chainInfo.fullChain
-            );
-
             // Get objects to delete from this chain
             const chainObjects = getObjectsToDelete(chainInfo.fullChain);
-            console.log(`Objects to delete from this chain:`, chainObjects);
 
             // Add to the master list
             allObjectsToDelete = [...allObjectsToDelete, ...chainObjects];
@@ -435,12 +421,6 @@ myapp.controller("quicksetupController", function(
 
           // Remove duplicates
           allObjectsToDelete = [...new Set(allObjectsToDelete)];
-
-          debugger;
-          console.log(
-            `Total unique objects to delete: ${allObjectsToDelete.length}`
-          );
-          console.log(`Objects:`, allObjectsToDelete);
 
           // Convert to the format expected by deleteInterfacesOneByOne
           const interfacesToDelete = allObjectsToDelete.map((objName) => {
@@ -475,8 +455,6 @@ myapp.controller("quicksetupController", function(
             };
           });
 
-          debugger;
-
           // Process all deletions at once
           const result = await deleteInterfacesOneByOne(interfacesToDelete);
 
@@ -493,15 +471,7 @@ myapp.controller("quicksetupController", function(
         const interfacesToDelete = $scope.getInterfacesToDelete(res.data);
 
         if (interfacesToDelete.length > 0) {
-          const result = await deleteInterfacesOneByOne(interfacesToDelete);
-
-          if (result.success) {
-            console.log("All interfaces deleted successfully!");
-          } else {
-            console.log(
-              `Some deletions failed: ${result.failed.length} failures`
-            );
-          }
+          await deleteInterfacesOneByOne(interfacesToDelete);
         } else {
           console.log("No interfaces found to delete");
         }
@@ -582,7 +552,6 @@ myapp.controller("quicksetupController", function(
     return fullChain.filter((objPath) => {
       // Skip if matches any "do not delete" pattern
       if (doNotDeletePatterns.some((pattern) => pattern.test(objPath))) {
-        console.log(`Skipping ${objPath} - matches doNotDelete pattern`);
         return false;
       }
 
@@ -609,7 +578,6 @@ myapp.controller("quicksetupController", function(
 
       // Skip if we've already processed this IP Interface
       if (processedInterfaces.has(item.interfaceObj)) {
-        console.log(`Skipping ${item.interfaceObj} - already processed`);
         continue;
       }
 
@@ -659,11 +627,6 @@ myapp.controller("quicksetupController", function(
       // Short 1s delay between operations
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-
-    console.log(
-      `\nCompleted. Processed ${processedInterfaces.size} IP Interfaces, ${processedPPP.size} PPP Interfaces`
-    );
-    console.log(`Failures: ${failed.length}`);
 
     return { success: failed.length === 0, failed };
   }
