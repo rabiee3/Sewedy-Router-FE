@@ -107,16 +107,16 @@ myapp.controller("quicksetupController", function(
     );
   };
 
-  $scope.getPTMInterfaceID = function(pvcs) {
+  $scope.getInterfacesToDelete = function(interfaces) {
     const regex = /(ptm|wan|eth|pppoe)/i;
     let interfacesToDelete = [];
 
-    if (!pvcs || !pvcs.Objects || pvcs.Objects.length <= 0) {
+    if (!interfaces || !interfaces.Objects || interfaces.Objects.length <= 0) {
       return [];
     }
 
     // Loop through all objects
-    for (let object of pvcs.Objects) {
+    for (let object of interfaces.Objects) {
       // Only process main IP Interface objects (not .Stats, .IPv4Address, etc.)
       if (!/^Device\.IP\.Interface\.\d+$/.test(object.ObjName)) {
         continue;
@@ -139,30 +139,12 @@ myapp.controller("quicksetupController", function(
         }
       }
 
-      // We want to delete ALL PPPoE interfaces (they have "pppoe" in the Name)
-      if (interfaceName && interfaceName.includes("pppoe") && lowerLayer) {
-        interfacesToDelete.push({
-          interfaceObj: object.ObjName,
-          lowerLayer: lowerLayer,
-          name: interfaceName,
-          alias: alias,
-        });
-      }
-      // Also check if it's a default gateway
-      else if (
-        object.Param.some(
-          (p) =>
-            p.ParamName === "X_LANTIQ_COM_DefaultGateway" &&
-            p.ParamValue === "true"
-        )
-      ) {
-        interfacesToDelete.push({
-          interfaceObj: object.ObjName,
-          lowerLayer: lowerLayer,
-          name: interfaceName,
-          alias: alias,
-        });
-      }
+      interfacesToDelete.push({
+        interfaceObj: object.ObjName,
+        lowerLayer: lowerLayer,
+        name: interfaceName,
+        alias: alias,
+      });
     }
 
     return interfacesToDelete;
@@ -407,23 +389,16 @@ myapp.controller("quicksetupController", function(
   async function deleteOldConnections() {
     try {
       if ($routeParams.id) {
-        const getAllAliasesRequest = `Object=Device.IP.Interface`;
+        const getAllAliasesRequest = `Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true`;
         const response = await $http.get(
           URL + "cgi_get_filterbyparamval?" + getAllAliasesRequest
         );
 
         if (response.status === 200 && response.data.Objects) {
-          const defaultInterfaces = response.data.Objects.filter((obj) =>
-            obj.Param.some(
-              (param) =>
-                param.ParamName === "Alias" &&
-                param.ParamValue.includes("Default")
-            )
-          );
+          const ipInterfaces = response.data.Objects;
 
           // Process each interface
-          for (const interfaceObj of defaultInterfaces) {
-
+          for (const interfaceObj of ipInterfaces) {
             // Get the full chain for this interface
             const chainInfo = await getLowerLayerUntilPhysical(
               interfaceObj.ObjName
@@ -448,18 +423,18 @@ myapp.controller("quicksetupController", function(
         let res;
         const getAllPVCs = `Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true`;
         res = await $http.get(URL + "cgi_get_filterbyparamval?" + getAllPVCs);
-        const interfacesToDelete = $scope.getPTMInterfaceID(res.data);
+        const interfacesToDelete = $scope.getInterfacesToDelete(res.data);
 
         if (interfacesToDelete.length > 0) {
-          // Build the DELETE request for ALL interfaces
-          const DELETE_Request = buildDeleteRequestForAllInterfaces(
-            interfacesToDelete
-          );
+          const result = await deleteInterfacesOneByOne(interfacesToDelete);
 
-          debugger;
-          // Execute the delete
-          await $http.post(URL + "cgi_set", DELETE_Request);
-          await deleteOrphanedPPPInterfaces();
+          if (result.success) {
+            console.log("All interfaces deleted successfully!");
+          } else {
+            console.log(
+              `Some deletions failed: ${result.failed.length} failures`
+            );
+          }
         } else {
           console.log("No interfaces found to delete");
         }
@@ -514,8 +489,8 @@ myapp.controller("quicksetupController", function(
     }
 
     return {
-      fullChain: fullChain, // Return the complete chain
-      lowerLayer: currentLayer, // Return the deepest layer found
+      fullChain: fullChain,
+      lowerLayer: currentLayer,
       wanType: wanType,
     };
   }
@@ -542,78 +517,72 @@ myapp.controller("quicksetupController", function(
     });
   }
 
-  function buildDeleteRequestForAllInterfaces(interfacesToDelete) {
+  async function deleteInterfacesOneByOne(interfacesToDelete) {
+    const processedInterfaces = new Set();
+    const processedPPP = new Set();
+    const failed = [];
 
-    // Check if it's an array
-    if (!Array.isArray(interfacesToDelete)) {
-      console.error("interfacesToDelete is not an array:", interfacesToDelete);
-      return "";
-    }
+    for (const item of interfacesToDelete) {
+      if (!item || !item.interfaceObj) continue;
 
-    if (interfacesToDelete.length === 0) {
-      return "";
-    }
+      // Skip if we've already processed this IP Interface
+      if (processedInterfaces.has(item.interfaceObj)) {
+        console.log(`Skipping ${item.interfaceObj} - already processed`);
+        continue;
+      }
 
-    let deleteParts = [];
+      // Clean lower layer
+      const cleanLowerLayer = item.lowerLayer
+        ? item.lowerLayer.replace(/\.$/, "")
+        : null;
 
-    for (let i = 0; i < interfacesToDelete.length; i++) {
-      const item = interfacesToDelete[i];
+      // Delete IP Interface
+      try {
+        const ipResponse = await $http.post(
+          URL + "cgi_set",
+          `Object=${item.interfaceObj}&Operation=Del`
+        );
 
-      // Check if it's an object with the right properties
-      if (item && typeof item === "object") {
-        if (item.interfaceObj && item.lowerLayer) {
-          // Clean up the lowerLayer
-          let cleanLowerLayer = item.lowerLayer;
-          if (cleanLowerLayer && cleanLowerLayer.endsWith(".")) {
-            cleanLowerLayer = cleanLowerLayer.slice(0, -1);
-          }
-
-          deleteParts.push(`Object=${item.interfaceObj}&Operation=Del`);
-          deleteParts.push(`Object=${cleanLowerLayer}&Operation=Del`);
-
+        if (ipResponse.status === 200) {
+          processedInterfaces.add(item.interfaceObj);
         } else {
-          console.warn(`Item ${i} missing required properties:`, item);
+          processedInterfaces.add(item.interfaceObj);
         }
+      } catch (error) {
+        failed.push({ object: item.interfaceObj, error: error.message });
       }
-      // Handle if it's just a string (for backward compatibility)
-      else if (typeof item === "string") {
-        deleteParts.push(`Object=${item}&Operation=Del`);
-      } else {
-        console.warn(`Item ${i} is not valid:`, item);
-      }
-    }
 
-    const result = deleteParts.join("&");
-    return result;
-  }
+      // Delete PPP Interface if it exists and we haven't processed it
+      if (cleanLowerLayer && !processedPPP.has(cleanLowerLayer)) {
+        try {
+          const pppResponse = await $http.post(
+            URL + "cgi_set",
+            `Object=${cleanLowerLayer}&Operation=Del`
+          );
 
-  async function deleteOrphanedPPPInterfaces() {
-    try {
-
-      // Get all PPP Interfaces
-      const res = await $http.get(
-        URL + "cgi_get_filterbyparamval?Object=Device.PPP.Interface"
-      );
-
-      if (res.data && res.data.Objects) {
-        for (const pppObj of res.data.Objects) {
-          if (/^Device\.PPP\.Interface\.\d+$/.test(pppObj.ObjName)) {
-
-            try {
-              await $http.post(
-                URL + "cgi_set",
-                `Object=${pppObj.ObjName}&Operation=Del`
-              );
-            } catch (err) {
-              console.log(
-                `Could not delete ${pppObj.ObjName}, might be in use`
-              );
-            }
+          if (pppResponse.status === 200) {
+            processedPPP.add(cleanLowerLayer);
+          } else if (pppResponse.status === 505) {
+            processedPPP.add(cleanLowerLayer);
+          } else {
+            processedPPP.add(cleanLowerLayer);
           }
+        } catch (error) {
+          failed.push({ object: cleanLowerLayer, error: error.message });
         }
+      } else if (cleanLowerLayer && processedPPP.has(cleanLowerLayer)) {
+        console.log(`Skipping ${cleanLowerLayer} - already deleted`);
       }
-    } catch (error) {
-      console.error("Error deleting orphaned PPP Interfaces:", error);
+
+      // Short 1s delay between operations
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+
+    console.log(
+      `\nCompleted. Processed ${processedInterfaces.size} IP Interfaces, ${processedPPP.size} PPP Interfaces`
+    );
+    console.log(`Failures: ${failed.length}`);
+
+    return { success: failed.length === 0, failed };
   }
 });
