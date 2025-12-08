@@ -398,22 +398,87 @@ myapp.controller("quicksetupController", function(
         debugger;
 
         if (response.status === 200 && response.data.Objects) {
-          const ipInterfaces = response.data.Objects;
+          const ipInterfaces = response.data.Objects.filter((obj) =>
+            /^Device\.IP\.Interface\.\d+$/.test(obj.ObjName)
+          );
 
-          let objectsToDelete = [];
+          console.log(`Found ${ipInterfaces.length} IP Interfaces to process`);
+
+          let allObjectsToDelete = [];
+
           // Process each interface
           for (const interfaceObj of ipInterfaces) {
+            console.log(`Processing interface: ${interfaceObj.ObjName}`);
+
             // Get the full chain for this interface
             const chainInfo = await getLowerLayerUntilPhysical(
               interfaceObj.ObjName
             );
-            objectsToDelete = getObjectsToDelete(chainInfo.fullChain);
 
+            console.log(
+              `Chain for ${interfaceObj.ObjName}:`,
+              chainInfo.fullChain
+            );
+
+            // Get objects to delete from this chain
+            const chainObjects = getObjectsToDelete(chainInfo.fullChain);
+            console.log(`Objects to delete from this chain:`, chainObjects);
+
+            // Add to the master list
+            allObjectsToDelete = [...allObjectsToDelete, ...chainObjects];
+
+            // Also check if we should add the interface itself
+            if (!allObjectsToDelete.includes(interfaceObj.ObjName)) {
+              allObjectsToDelete.push(interfaceObj.ObjName);
+            }
           }
 
+          // Remove duplicates
+          allObjectsToDelete = [...new Set(allObjectsToDelete)];
+
           debugger;
+          console.log(
+            `Total unique objects to delete: ${allObjectsToDelete.length}`
+          );
+          console.log(`Objects:`, allObjectsToDelete);
+
+          // Convert to the format expected by deleteInterfacesOneByOne
+          const interfacesToDelete = allObjectsToDelete.map((objName) => {
+            // For IP Interfaces, try to find their lower layer
+            if (objName.includes("Device.IP.Interface")) {
+              const ipInterface = ipInterfaces.find(
+                (i) => i.ObjName === objName
+              );
+              if (ipInterface) {
+                const lowerLayer = ipInterface.Param.find(
+                  (p) => p.ParamName === "LowerLayers"
+                );
+                return {
+                  interfaceObj: objName,
+                  lowerLayer: lowerLayer ? lowerLayer.ParamValue : null,
+                  name:
+                    ipInterface.Param.find((p) => p.ParamName === "Name")
+                      ?.ParamValue || "",
+                  alias:
+                    ipInterface.Param.find((p) => p.ParamName === "Alias")
+                      ?.ParamValue || "",
+                };
+              }
+            }
+
+            // For non-IP Interface objects, just return the object name
+            return {
+              interfaceObj: objName,
+              lowerLayer: null,
+              name: "",
+              alias: "",
+            };
+          });
+
+          debugger;
+
           // Process all deletions at once
-          const result = await deleteInterfacesOneByOne(objectsToDelete);
+          const result = await deleteInterfacesOneByOne(interfacesToDelete);
 
           if (!result.success) {
             console.warn(
@@ -498,24 +563,39 @@ myapp.controller("quicksetupController", function(
   }
 
   function getObjectsToDelete(fullChain) {
-    // Define patterns of objects that should NOT be deleted
+    // Define patterns of objects that should NOT be deleted (physical/system objects)
     const doNotDeletePatterns = [
-      /Device\.DSL\.Line\.\d+/, // Physical DSL lines
-      /Device\.PTM\.Link\.\d+/, // PTM links (physical)
-      /Device\.ATM\.Link\.\d+/, // ATM links (physical)
-      /Device\.Ethernet\.Interface\.\d+/, // Ethernet interfaces (physical)
-      /Device\.WiFi\.Radio\.\d+/, // WiFi radios
-      /Device\.WiFi\.SSID\.\d+/, // WiFi SSIDs
-      /Device\.WiFi\.AccessPoint\.\d+/, // WiFi access points
-      /\.Stats$/, // Statistics objects
-      /\.QoS$/, // QoS objects
-      /\.Security$/, // Security objects
+      /Device\.DSL\.Line\.\d+/, // Physical DSL lines - DO NOT DELETE
+      /Device\.PTM\.Link\.\d+/, // PTM links (physical) - DO NOT DELETE
+      /Device\.ATM\.Link\.\d+/, // ATM links (physical) - DO NOT DELETE
+      /Device\.Ethernet\.Interface\.\d+/, // Ethernet interfaces (physical) - DO NOT DELETE
+      /Device\.WiFi\./, // All WiFi objects - DO NOT DELETE
+      /\.Stats$/, // Statistics objects - OK to delete but usually auto-regenerated
+      /\.QoS$/, // QoS objects - OK to delete
+      /\.Security$/, // Security objects - OK to delete
+      /\.IPv4Address\.\d+$/, // IPv4 Address objects - OK to delete
+      /\.IPv6Address\.\d+$/, // IPv6 Address objects - OK to delete
+      /\.IPv6Prefix\.\d+$/, // IPv6 Prefix objects - OK to delete
     ];
 
     // Filter out objects that shouldn't be deleted
     return fullChain.filter((objPath) => {
-      // Keep objects that should be deleted
-      return !doNotDeletePatterns.some((pattern) => pattern.test(objPath));
+      // Skip if matches any "do not delete" pattern
+      if (doNotDeletePatterns.some((pattern) => pattern.test(objPath))) {
+        console.log(`Skipping ${objPath} - matches doNotDelete pattern`);
+        return false;
+      }
+
+      // Keep these objects (they should be deleted)
+      const shouldDeletePatterns = [
+        /^Device\.IP\.Interface\.\d+$/, // IP Interfaces - DELETE
+        /^Device\.PPP\.Interface\.\d+$/, // PPP Interfaces - DELETE
+        /^Device\.Ethernet\.Link\.\d+$/, // Ethernet Links - DELETE
+        /^Device\.ATM\.Link\.\d+$/, // ATM Links (non-physical) - DELETE
+        /^Device\.PTM\.Link\.\d+$/, // PTM Links (non-physical) - DELETE
+      ];
+
+      return shouldDeletePatterns.some((pattern) => pattern.test(objPath));
     });
   }
 
