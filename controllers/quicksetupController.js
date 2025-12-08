@@ -388,35 +388,37 @@ myapp.controller("quicksetupController", function(
 
   async function deleteOldConnections() {
     try {
+      debugger;
       if ($routeParams.id) {
         const getAllAliasesRequest = `Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true`;
         const response = await $http.get(
           URL + "cgi_get_filterbyparamval?" + getAllAliasesRequest
         );
 
+        debugger;
+
         if (response.status === 200 && response.data.Objects) {
           const ipInterfaces = response.data.Objects;
 
+          let objectsToDelete = [];
           // Process each interface
           for (const interfaceObj of ipInterfaces) {
             // Get the full chain for this interface
             const chainInfo = await getLowerLayerUntilPhysical(
               interfaceObj.ObjName
             );
-            const objectsToDelete = getObjectsToDelete(chainInfo.fullChain);
+            objectsToDelete = getObjectsToDelete(chainInfo.fullChain);
 
-            for (let i = objectsToDelete.length - 1; i >= 0; i--) {
-              const objToDelete = objectsToDelete[i];
-              try {
-                const deleteRequest = `Object=${objToDelete}&Operation=Del`;
-                await $http.post(URL + "cgi_set", deleteRequest);
-              } catch (deleteError) {
-                console.warn(
-                  `Could not delete ${objToDelete}:`,
-                  deleteError.message
-                );
-              }
-            }
+          }
+
+          debugger;
+          // Process all deletions at once
+          const result = await deleteInterfacesOneByOne(objectsToDelete);
+
+          if (!result.success) {
+            console.warn(
+              `Some deletions failed: ${result.failed.length} failures`
+            );
           }
         }
       } else {
