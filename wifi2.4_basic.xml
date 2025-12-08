@@ -81,7 +81,7 @@
         </object>
         <object name="Device.WiFi.AccessPoint.1.Security" url="cgi_get_nosubobj?Object=Device.WiFi.AccessPoint.1.Security" dependsonparamvalue="true" dependsonobject="Device.X_INTEL_COM_BEEROCKS" dependsonparam="Enable">
              <parameter  name="ModeEnabled"  type="dropdown" url="cgi_get_fillparams?Object=Device.WiFi.AccessPoint.1.Security&amp;ModesSupported=&amp;X_LANTIQ_COM_Vendor_ModesSupported=" webname="Security type" xmlvalidation="true" dependsonparams=""></parameter>
-            <parameter  parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal','WPA2-WPA3-Personal'" minlen="8" maxlen="63" parentname="Device.WiFi.AccessPoint.1.Security" depends="ModeEnabled" name="KeyPassphrase"  type="password" required="false" webname="Passphrase" ></parameter>
+            <parameter  parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal','WPA2-WPA3-Personal'" minlen="8" maxlen="63" parentname="Device.WiFi.AccessPoint.1.Security" depends="ModeEnabled" name="KeyPassphrase"  type="password" webname="Passphrase" ></parameter>
             <parameter  parent="'WPA3-Personal'" minlen="8" maxlen="64" parentname="Device.WiFi.AccessPoint.1.Security" depends="ModeEnabled" name="X_LANTIQ_COM_Vendor_SaePassword"  type="password" webname="Passphrase" ></parameter>
 
             <parameter  parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal','WPA2-WPA3-Personal'" parentname="Device.WiFi.AccessPoint.1.Security" depends="ModeEnabled" name="RekeyingInterval"  type="number" minval="0" webname="Rekey Interval" ></parameter>
@@ -97,7 +97,7 @@
         </object>
        <object name="Device.WiFi.AccessPoint.1.Security" url="cgi_get_nosubobj?Object=Device.WiFi.AccessPoint.1.Security" dependsonparamvalue="undefined" dependsonobject="Device.X_INTEL_COM_BEEROCKS" dependsonparam="Enable">
              <parameter  name="ModeEnabled"  type="dropdown" url="cgi_get_fillparams?Object=Device.WiFi.AccessPoint.1.Security&amp;ModesSupported=&amp;X_LANTIQ_COM_Vendor_ModesSupported=" webname="Security type" xmlvalidation="true" dependsonparams=""></parameter>
-            <parameter  parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal','WPA2-WPA3-Personal'" minlen="8" maxlen="63" parentname="Device.WiFi.AccessPoint.1.Security" depends="ModeEnabled" name="KeyPassphrase"  type="password" required="false" webname="Passphrase" ></parameter>
+            <parameter  parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal','WPA2-WPA3-Personal'" minlen="8" maxlen="63" parentname="Device.WiFi.AccessPoint.1.Security" depends="ModeEnabled" name="KeyPassphrase"  type="password" webname="Passphrase" ></parameter>
             <parameter  parent="'WPA3-Personal'" minlen="8" maxlen="64" parentname="Device.WiFi.AccessPoint.1.Security" depends="ModeEnabled" name="X_LANTIQ_COM_Vendor_SaePassword"  type="password" webname="Passphrase" ></parameter>
 
             <parameter  parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal','WPA2-WPA3-Personal'" parentname="Device.WiFi.AccessPoint.1.Security" depends="ModeEnabled" name="RekeyingInterval"  type="number" minval="0" webname="Rekey Interval" ></parameter>

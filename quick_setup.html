@@ -43,7 +43,9 @@
     margin-bottom: 0;
   }
 
-  .switch {margin-top:7px}
+  .switch {
+    margin-top: 7px;
+  }
 
   .field-container {
     width: 400px;
@@ -64,16 +66,18 @@
     color: #5c2d91;
   }
 
-  .wizard-data-continer td{
-    padding:7px;
+  .wizard-data-continer td {
+    padding: 7px;
   }
 
-  .wizard-data-continer .title{
+  .wizard-data-continer .title {
     font-weight: bold;
     font-size: 16px;
   }
 
-  .text-grey{color:grey}
+  .text-grey {
+    color: grey;
+  }
 </style>
 <div class="quick-setup-wizard">
   <div class="wizard-step" ng-show="step === 1">
@@ -127,7 +131,10 @@
         >
       </button>
       <button class="btn-align custom_btn" ng-click="skip()">
-        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Skip</span>
+        <span
+          class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px"
+          >Skip</span
+        >
       </button>
     </div>
   </div>
@@ -150,74 +157,186 @@
           </td>
           <td width="45%"></td>
         </tr>
-      
+
         <tr ng-show="wifiSettings.enable2_4G">
           <td>2.4GHz Wi-Fi Name</td>
           <td>
-            <input id="24ssid" type="text" ng-model="wifiSettings.ssid2_4G" ng-required="wifiSettings.enable2_4G" />
+            <input
+              id="24ssid"
+              type="text"
+              ng-model="wifiSettings.ssid2_4G"
+              ng-required="wifiSettings.enable2_4G"
+            />
           </td>
           <td class="text-grey">(1-32 Characters)</td>
         </tr>
+
+        <!--Security Modes 2.4G-->
         <tr ng-show="wifiSettings.enable2_4G">
-          <td>2.4GHz Wi-Fi Password</td>
+          <td>2.4GHz Security Mode</td>
           <td>
-            <input id="24password" type="password" ng-model="wifiSettings.password2_4G" ng-required="wifiSettings.enable2_4G" />
+            <select
+              id="security_modes2_4"
+              name="security_modes2_4"
+              class="dropdown-toggle small"
+              ng-model="wifiSettings.selected_security_2_4G"
+              ng-options="mode for mode in wifiSettings.security_modes2_4"
+              required
+            >
+            </select>
           </td>
           <td></td>
         </tr>
+
+        <!--Encryption 2.4G-->
+        <tr ng-show="wifiSettings.enable2_4G">
+          <td>2.4GHz Encryption</td>
+          <td>
+            <select
+              id="encription_modes2_4"
+              name="encription_modes2_4"
+              class="dropdown-toggle small"
+              ng-model="wifiSettings.selected_encryption_2_4G"
+              ng-options="mode for mode in wifiSettings.encription_modes2_4"
+              disabled
+              required
+            >
+            </select>
+          </td>
+          <td></td>
+        </tr>
+
+        <tr ng-show="wifiSettings.enable2_4G">
+          <td>2.4GHz Wi-Fi Password</td>
+          <td>
+            <input
+              id="24password"
+              type="password"
+              ng-model="wifiSettings.password2_4G"
+              ng-required="wifiSettings.enable2_4G"
+            />
+          </td>
+          <td></td>
+        </tr>
+
         <tr ng-show="wifiSettings.enable2_4G">
           <td colspan="3">
-            <p class="error" ng-show="!is24GWifiValid() && wifiSettings.enable2_4G">
+            <p
+              class="error"
+              ng-show="!is24GWifiValid() && wifiSettings.enable2_4G"
+            >
               Wi-Fi Name and Password are required for 2.4GHz if enabled.
             </p>
           </td>
         </tr>
-      
+
         <tr>
           <td colspan="3"><hr /></td>
         </tr>
-      
+
         <tr>
-          <td class="title">WLAN (5GHz) On/Off</td>
+          <td class="title">WLAN (5G) On/Off</td>
           <td>
             <switch class="x-small" ng-model="wifiSettings.enable5G"></switch>
           </td>
           <td></td>
         </tr>
-      
+
         <tr ng-show="wifiSettings.enable5G">
-          <td>5GHz Wi-Fi Name</td>
+          <td>5G Wi-Fi Name</td>
           <td>
-            <input id="5gssid" type="text" ng-model="wifiSettings.ssid5G" ng-required="wifiSettings.enable5G" />
+            <input
+              id="5gssid"
+              type="text"
+              ng-model="wifiSettings.ssid5G"
+              ng-required="wifiSettings.enable5G"
+            />
           </td>
           <td class="text-grey">(1-32 Characters)</td>
         </tr>
+
+        <!--Security Modes 5G-->
         <tr ng-show="wifiSettings.enable5G">
-          <td>5GHz Wi-Fi Password</td>
+          <td>5G Security Mode</td>
           <td>
-            <input id="5gpassword" type="password" ng-model="wifiSettings.password5G" ng-required="wifiSettings.enable5G" />
+            <select
+              id="security_modes5G"
+              name="security_modes5G"
+              class="dropdown-toggle small"
+              ng-model="wifiSettings.selected_security_5G"
+              ng-options="mode for mode in wifiSettings.security_modes5G"
+              required
+            >
+            </select>
+          </td>
+          <td></td>
+        </tr>
+
+        <!--Encryption 5G-->
+        <tr ng-show="wifiSettings.enable5G">
+          <td>5G Encryption</td>
+          <td>
+            <select
+              id="encription_modes5G"
+              name="encription_modes5G"
+              class="dropdown-toggle small"
+              ng-model="wifiSettings.selected_encryption_5G"
+              ng-options="mode for mode in wifiSettings.encription_modes5G"
+              disabled
+              required
+            >
+            </select>
+          </td>
+          <td></td>
+        </tr>
+
+        <tr ng-show="wifiSettings.enable5G">
+          <td>5G Wi-Fi Password</td>
+          <td>
+            <input
+              id="5gpassword"
+              type="password"
+              ng-model="wifiSettings.password5G"
+              ng-required="wifiSettings.enable5G"
+            />
           </td>
           <td></td>
         </tr>
         <tr ng-show="wifiSettings.enable5G">
           <td colspan="3">
-            <p class="error" ng-show="!is5GWifiValid() && wifiSettings.enable5G">
+            <p
+              class="error"
+              ng-show="!is5GWifiValid() && wifiSettings.enable5G"
+            >
               Wi-Fi Name and Password are required for 5GHz if enabled.
             </p>
           </td>
         </tr>
       </table>
-      
+
       <br />
-      
-      <button class="btn-align custom_btn" ng-click="nextStep()" ng-disabled="!is5GWifiValid() || !is24GWifiValid()">
-        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Next</span>
+
+      <button
+        class="btn-align custom_btn"
+        ng-click="nextStep()"
+        ng-disabled="!is5GWifiValid() || !is24GWifiValid()"
+      >
+        <span
+          class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px"
+          >Next</span
+        >
       </button>
       <button class="btn-align custom_btn" ng-click="prevStep()">
-        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Previous</span>
+        <span
+          class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px"
+          >Previous</span
+        >
       </button>
       <button class="btn-align custom_btn" ng-click="skip()">
-        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Skip</span>
+        <span
+          class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px"
+          >Skip</span
+        >
       </button>
     </div>
   </div>
@@ -270,7 +389,10 @@
         >
       </button>
       <button class="btn-align custom_btn" ng-click="skip()">
-        <span class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px">Skip</span>
+        <span
+          class="waves-effect waves-light btn btn-info waves-input-wrapper w-150px"
+          >Skip</span
+        >
       </button>
     </div>
   </div>

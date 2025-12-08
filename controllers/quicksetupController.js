@@ -24,12 +24,41 @@ myapp.controller("quicksetupController", function(
     enable2_4G: true,
     enable5G: true,
     ssid2_4G: "WE_F771A0",
+    security_modes2_4: ["WPA-Personal", "WPA2-Personal", "WPA-WPA2-Personal"],
+    selected_security_2_4G: "WPA-Personal",
+    encription_modes2_4: ["TKIP","AES","TKIP/AES"],
+    selected_encryption_2_4G: "TKIP",
     password2_4G: "c789d000",
     ssid5G: "WE_F771A0",
+    security_modes5G: ["WPA-Personal", "WPA2-Personal", "WPA-WPA2-Personal"],
+    selected_security_5G: "WPA-Personal",
+    encription_modes5G: ["TKIP","AES","TKIP/AES"],
+    selected_encryption_5G: "TKIP",
     password5G: "c789d000",
   };
 
+  // Security to Encryption mapping
+  const securityToEncryptionMap = {
+    "WPA-Personal": "TKIP",
+    "WPA2-Personal": "AES",
+    "WPA-WPA2-Personal": "TKIP/AES"
+  };
+
   loadExistingCredentials();
+
+  // Watch for 2.4G security mode changes
+  $scope.$watch('wifiSettings.selected_security_2_4G', function(newVal) {
+    if (newVal && securityToEncryptionMap[newVal]) {
+      $scope.wifiSettings.selected_encryption_2_4G = securityToEncryptionMap[newVal];
+    }
+  });
+
+  // Watch for 5G security mode changes
+  $scope.$watch('wifiSettings.selected_security_5G', function(newVal) {
+    if (newVal && securityToEncryptionMap[newVal]) {
+      $scope.wifiSettings.selected_encryption_5G = securityToEncryptionMap[newVal];
+    }
+  });
 
   // Validation functions
   $scope.isUsernameValid = function() {
@@ -339,8 +368,8 @@ myapp.controller("quicksetupController", function(
     let randomNumber3 = Math.floor(Math.random() * 100);
 
     var PPPoE_Request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber1}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber1}&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=true&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber1}&LowerLayers=Device.PTM.Link.1.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber1}&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}&MaxMRUSize=1492&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber1}`;
-    var WIFI24G_Request = `Object=Device.WiFi.SSID.1&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.Radio.1&Operation=Modify&RegulatoryDomain=EG%20&AutoChannelEnable=true&OperatingStandards=b%2Cg%2Cn%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=40MHz&Object=Device.WiFi.AccessPoint.1&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.1.Security&Operation=Modify&ModeEnabled=WPA-WPA2-Personal&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
-    var WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable5G}&SSID=${$scope.wifiSettings.ssid5G}&Object=Device.WiFi.Radio.2&Operation=Modify&RegulatoryDomain=EG%20&Enable=true&AutoChannelEnable=true&IEEE80211hEnabled=false&OperatingStandards=a%2Cn%2Cac%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=Auto&Object=Device.WiFi.AccessPoint.2&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=WPA2-Personal&KeyPassphrase=${$scope.wifiSettings.password5G}&RekeyingInterval=3600&`;
+    var WIFI24G_Request = `Object=Device.WiFi.SSID.1&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.Radio.1&Operation=Modify&RegulatoryDomain=EG%20&AutoChannelEnable=true&OperatingStandards=b%2Cg%2Cn%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=40MHz&Object=Device.WiFi.AccessPoint.1&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.1.Security&Operation=Modify&ModeEnabled=${$scope.wifiSettings.selected_security_2_4G}&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
+    var WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable5G}&SSID=${$scope.wifiSettings.ssid5G}&Object=Device.WiFi.Radio.2&Operation=Modify&RegulatoryDomain=EG%20&Enable=true&AutoChannelEnable=true&IEEE80211hEnabled=false&OperatingStandards=a%2Cn%2Cac%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=Auto&Object=Device.WiFi.AccessPoint.2&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=${$scope.wifiSettings.selected_security_5G}&KeyPassphrase=${$scope.wifiSettings.password5G}&RekeyingInterval=3600`;
 
     //Delete old connections
     await deleteOldConnections();
@@ -401,7 +430,6 @@ myapp.controller("quicksetupController", function(
 
           // Process each interface
           for (const interfaceObj of ipInterfaces) {
-
             // Get the full chain for this interface
             const chainInfo = await getLowerLayerUntilPhysical(
               interfaceObj.ObjName

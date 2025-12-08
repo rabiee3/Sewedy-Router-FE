@@ -602,7 +602,7 @@ a.menuitem-highlight:before {
     overflow: hidden;
     width: 240px;
 }
-
+.dropdown-toggle.small{height: 2rem !important;}
 .dropdown-toggle > i{font-size: 18px;}
 .language {margin-top:16px; }
 ul.notification_ul{padding-left:0px;}
