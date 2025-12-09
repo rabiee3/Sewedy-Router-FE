@@ -26,38 +26,40 @@ myapp.controller("quicksetupController", function(
     ssid2_4G: "WE_F771A0",
     security_modes2_4: ["WPA-Personal", "WPA2-Personal", "WPA-WPA2-Personal"],
     selected_security_2_4G: "WPA-Personal",
-    encription_modes2_4: ["TKIP","AES","TKIP/AES"],
+    encription_modes2_4: ["TKIP", "AES", "TKIP/AES"],
     selected_encryption_2_4G: "TKIP",
     password2_4G: "c789d000",
     ssid5G: "WE_F771A0",
     security_modes5G: ["WPA-Personal", "WPA2-Personal", "WPA-WPA2-Personal"],
     selected_security_5G: "WPA-Personal",
-    encription_modes5G: ["TKIP","AES","TKIP/AES"],
+    encription_modes5G: ["TKIP", "AES", "TKIP/AES"],
     selected_encryption_5G: "TKIP",
     password5G: "c789d000",
-    band_steering: false
+    band_steering: false,
   };
 
   // Security to Encryption mapping
   const securityToEncryptionMap = {
     "WPA-Personal": "TKIP",
     "WPA2-Personal": "AES",
-    "WPA-WPA2-Personal": "TKIP/AES"
+    "WPA-WPA2-Personal": "TKIP/AES",
   };
 
   loadExistingCredentials();
 
   // Watch for 2.4G security mode changes
-  $scope.$watch('wifiSettings.selected_security_2_4G', function(newVal) {
+  $scope.$watch("wifiSettings.selected_security_2_4G", function(newVal) {
     if (newVal && securityToEncryptionMap[newVal]) {
-      $scope.wifiSettings.selected_encryption_2_4G = securityToEncryptionMap[newVal];
+      $scope.wifiSettings.selected_encryption_2_4G =
+        securityToEncryptionMap[newVal];
     }
   });
 
   // Watch for 5G security mode changes
-  $scope.$watch('wifiSettings.selected_security_5G', function(newVal) {
+  $scope.$watch("wifiSettings.selected_security_5G", function(newVal) {
     if (newVal && securityToEncryptionMap[newVal]) {
-      $scope.wifiSettings.selected_encryption_5G = securityToEncryptionMap[newVal];
+      $scope.wifiSettings.selected_encryption_5G =
+        securityToEncryptionMap[newVal];
     }
   });
 
@@ -370,7 +372,7 @@ myapp.controller("quicksetupController", function(
 
     var PPPoE_Request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-basic-${randomNumber1}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-basic-${randomNumber1}&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=true&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-basic-${randomNumber1}&LowerLayers=Device.PTM.Link.1.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-basic-${randomNumber1}&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}&MaxMRUSize=1492&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-basic-${randomNumber1}`;
     var WIFI24G_Request = `Object=Device.WiFi.SSID.1&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.Radio.1&Operation=Modify&RegulatoryDomain=EG%20&AutoChannelEnable=true&OperatingStandards=b%2Cg%2Cn%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=40MHz&Object=Device.WiFi.AccessPoint.1&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.1.Security&Operation=Modify&ModeEnabled=${$scope.wifiSettings.selected_security_2_4G}&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
-    
+
     // When band_steering is enabled, duplicate 2.4G settings for 5G
     var WIFI5G_Request;
     if (!$scope.wifiSettings.band_steering) {
@@ -426,19 +428,38 @@ myapp.controller("quicksetupController", function(
   async function deleteOldConnections() {
     try {
       if ($routeParams.id) {
+        // Get all upstream interfaces with their Aliases
         const getAllAliasesRequest = `Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true`;
         const response = await $http.get(
           URL + "cgi_get_filterbyparamval?" + getAllAliasesRequest
         );
 
         if (response.status === 200 && response.data.Objects) {
-          const ipInterfaces = response.data.Objects.filter((obj) =>
-            /^Device\.IP\.Interface\.\d+$/.test(obj.ObjName)
-          );
+          // Filter interfaces that have 'basic' in their Alias
+          const ipInterfaces = response.data.Objects.filter((obj) => {
+            // Only process main IP Interface objects
+            if (!/^Device\.IP\.Interface\.\d+$/.test(obj.ObjName)) {
+              return false;
+            }
+
+            // Check if this object has 'basic' in its Alias
+            const aliasParam = obj.Param.find((p) => p.ParamName === "Alias");
+            return (
+              aliasParam &&
+              aliasParam.ParamValue &&
+              aliasParam.ParamValue.toLowerCase().includes("basic")
+            );
+          });
+
+          // If no interfaces with 'basic' in Alias, exit early
+          if (ipInterfaces.length === 0) {
+            console.log("No interfaces with 'basic' in Alias found to delete");
+            return;
+          }
 
           let allObjectsToDelete = [];
 
-          // Process each interface
+          // Process each interface that has 'basic' in its Alias
           for (const interfaceObj of ipInterfaces) {
             // Get the full chain for this interface
             const chainInfo = await getLowerLayerUntilPhysical(
@@ -462,7 +483,7 @@ myapp.controller("quicksetupController", function(
 
           // Convert to the format expected by deleteInterfacesOneByOne
           const interfacesToDelete = allObjectsToDelete.map((objName) => {
-            // For IP Interfaces, try to find their lower layer
+            // For IP Interfaces, find their object details
             if (objName.includes("Device.IP.Interface")) {
               const ipInterface = ipInterfaces.find(
                 (i) => i.ObjName === objName
@@ -471,15 +492,16 @@ myapp.controller("quicksetupController", function(
                 const lowerLayer = ipInterface.Param.find(
                   (p) => p.ParamName === "LowerLayers"
                 );
+                const aliasParam = ipInterface.Param.find(
+                  (p) => p.ParamName === "Alias"
+                );
                 return {
                   interfaceObj: objName,
                   lowerLayer: lowerLayer ? lowerLayer.ParamValue : null,
                   name:
                     ipInterface.Param.find((p) => p.ParamName === "Name")
                       ?.ParamValue || "",
-                  alias:
-                    ipInterface.Param.find((p) => p.ParamName === "Alias")
-                      ?.ParamValue || "",
+                  alias: aliasParam?.ParamValue || "",
                 };
               }
             }
@@ -499,6 +521,10 @@ myapp.controller("quicksetupController", function(
           if (!result.success) {
             console.warn(
               `Some deletions failed: ${result.failed.length} failures`
+            );
+          } else {
+            console.log(
+              `Successfully deleted ${interfacesToDelete.length} interfaces with 'basic' in Alias`
             );
           }
         }
