@@ -391,8 +391,8 @@ myapp.controller("quicksetupController", function(
     //PTM PPoE Request
     const result = await $http.post(URL + "cgi_set", PPPoE_Request);
 
-    //ETH PPoE Request
-    const eth_request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber3}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber3}&IPv6Enable=0&MaxMTUSize=1492&X_LANTIQ_COM_DefaultGateway=1&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber3}&LowerLayers=Device.Ethernet.Interface.5.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber3}&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber3}&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`;
+    //ETH PPoE Request with Vlan id = 10
+    const eth_request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-${randomNumber3}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-${randomNumber3}&IPv6Enable=0&MaxMTUSize=1492&X_LANTIQ_COM_DefaultGateway=0&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-${randomNumber3}&LowerLayers=Device.Ethernet.Interface.5.&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-${randomNumber3}&Alias=cpe-WEB-EthernetVLANTermination-${randomNumber3}&Enable=1&VLANID=10&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-${randomNumber3}&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber3}&MaxMRUSize=1492&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}`;
     const res_eth = await $http.post(URL + "cgi_set", eth_request);
 
     await $scope.toggle2_4G();

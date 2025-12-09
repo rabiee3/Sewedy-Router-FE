@@ -95,7 +95,7 @@
       }
 
       .panel-body {
-        padding: 20px;
+        padding: 12px;
       }
 
       .panel-heading {
@@ -149,6 +149,30 @@
       }
       .text-center {
         text-align: center;
+      }
+
+      #forget_password{
+        color:#818181;
+        text-align: center;
+        cursor: pointer;
+      }
+
+      #info{
+        border: 1px solid #e3e3e3;
+        background: #f9f9f9;
+        font-size: 12px;
+        padding: 7px;
+      }
+
+      #forget_password_msg{
+        max-height: 0;
+        transition: all 0.5s;
+        overflow: hidden;
+        color:#818181;
+      }
+
+      #forget_password_msg.visible{
+        max-height: 150px;
       }
 
       @media screen and (max-width: 600px) {
@@ -205,6 +229,8 @@
             </button>
           </div>
         </div>
+        
+        <p id="forget_password">Forget Password?</p>
 
         <div id="timer">
           <p>
@@ -221,6 +247,13 @@
           id="warning"
           style="display:none; color:orange; text-align:center; margin-bottom:10px;"
         ></div>
+
+        <div id="forget_password_msg">
+          <div id="info">If you forgot the login password, press and hold the Reset button for about 10 seconds to restore your device to its factory settings. You will then be able to log in using the default login password. The default login password is the last 8 characters of the serial number on the back of the device housing.</div>
+          <p style="color:red;text-align: center;">
+            Attention: All customized settings will be lost after you restore the device to its factory settings.
+          </p>
+        </div>
       </div>
     </div>
     <script>
@@ -329,6 +362,14 @@
           }
         }, 1000);
       };
+      
+      var forget_password = document.getElementById("forget_password");
+      var forget_password_msg = document.getElementById("forget_password_msg");
+
+      forget_password.addEventListener("click", function() {
+          forget_password_msg.classList.toggle("visible");
+      });
+      
     </script>
   </body>
 </html>
