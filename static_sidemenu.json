@@ -436,8 +436,8 @@
             {
               "name": "MAC Filtering",
               "order": "4",
-              "view": "adv_macFiltering",
-              "viewtype": "tableform",
+              "view": "macFiltering/1",
+              "viewtype": "html",
               "childrens": []
             },
             {
@@ -486,8 +486,8 @@
             {
               "name": "MAC Filtering",
               "order": "4",
-              "view": "adv5_macFiltering",
-              "viewtype": "tableform",
+              "view": "macFiltering/2",
+              "viewtype": "html",
               "childrens": []
             },
             {
