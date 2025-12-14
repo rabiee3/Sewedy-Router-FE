@@ -253,6 +253,7 @@ myapp.controller("diagnosticsController", function(
   $scope.startIPPingTest = function(object, event) {
     $scope["diagnoseformstatus"] = true;
     $scope.loadingipping = false;
+    $scope.loadingipping1 = true;
     if (event.currentTarget.attributes["formstatus"].value == "true") {
       if ($scope["IPHost"] !== "" && $scope["IPHost"] !== undefined) {
         urlstatus = false;
