@@ -1133,51 +1133,51 @@ and open the template in the editor.
                               <!-- Loading -->
                               <div
                                 class="progress progress-striped active"
-                                ng-show="loadingtrace1"
+                                ng-show="loadingipping1"
                               >
                                 <div
                                   class="progress-bar progress-bar-success"
                                   style="width: 100%"
                                 ></div>
                               </div>
-
-                              <!-- Results -->
-                              <div ng-show="loadingtrace">
-                                <table class="table table-bordered table-sm">
-                                  <thead>
-                                    <tr>
-                                      <th>#</th>
-                                      <th>Host</th>
-                                      <th>Address</th>
-                                      <th>RTT (ms)</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <tr ng-repeat="hop in tracerouteArray">
-                                      <td>{{$index + 1}}</td>
-                                      <td>{{hop.Host}}</td>
-                                      <td>{{hop.HostAddress}}</td>
-                                      <td>{{hop.RTTimes}}</td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-
-                                <div
-                                  ng-if="errorMessage"
-                                  class="alert alert-warning mt-2"
-                                >
-                                  <i class="fa fa-exclamation-triangle"></i>
-                                  {{errorMessage}}
-                                </div>
-                              </div>
-
-                              <!-- Validation Error -->
-                              <span class="error" ng-show="erroronvalidation">
-                                <i class="fa fa-times fa-lg custom_times"></i>
-                                Invalid hostname or IP format.
-                              </span>
                             </li>
                           </ul>
+
+                          <!--Results Ping Test-->
+                          <div ng-show="loadingipping">
+                            <div class="pargraph">
+                              <div ng-repeat="ipping in ippingArray">
+                                <span
+                                  ><i
+                                    class="fa"
+                                    ng-class="ipping.SuccessCount > 0 ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"
+                                  ></i
+                                ></span>
+                                <span
+                                  >Ping to Host:
+                                  {{ipping.Host==""?"UNKNOWN":ipping.Host}}</span
+                                >
+                                <span>
+                                  {{ipping.SuccessCount >
+                                  0?"SUCCESS":"FAILURE"}}</span
+                                >
+                              </div>
+                              <span
+                                class="error"
+                                forname="ipping_SuccessCount"
+                                ng-show="ipping_SuccessCountresponsestatus"
+                              >
+                                {{ipping_SuccessCountval}}
+                              </span>
+                              <span
+                                class="error"
+                                forname="ipping_Host"
+                                ng-show="ipping_Hostresponsestatus"
+                              >
+                                {{ipping_Hostval}}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </li>
@@ -1212,6 +1212,14 @@ and open the template in the editor.
                             </div>
                           </div>
 
+
+
+                          <!-- Validation Error -->
+                          <span class="error" ng-show="erroronvalidation">
+                            <i class="fa fa-times fa-lg custom_times"></i>
+                            Invalid hostname or IP format.
+                          </span>
+
                           <!--TraceRoute Results-->
                           <ul>
                             <li>
@@ -1230,8 +1238,35 @@ and open the template in the editor.
                                 ></div>
                               </div>
 
-                              <!-- Results -->
+                              <!-- Trace Route Results -->
                               <div ng-show="loadingtrace">
+                                <table class="table table-bordered table-sm" ng-if="!errorMessage">
+                                  <thead>
+                                    <tr>
+                                      <th>#</th>
+                                      <th>Host</th>
+                                      <th>Address</th>
+                                      <th>RTT (ms)</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr ng-repeat="hop in tracerouteArray">
+                                      <td>{{$index + 1}}</td>
+                                      <td>{{hop.Host}}</td>
+                                      <td>{{hop.HostAddress}}</td>
+                                      <td>{{hop.RTTimes}}</td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+
+                                <div
+                                  ng-if="errorMessage"
+                                  class="alert alert-warning mt-2"
+                                >
+                                  <i class="fa fa-exclamation-triangle"></i>
+                                  {{errorMessage}}
+                                </div>
+
                                 <!-- Errors -->
                                 <span
                                   class="error"
