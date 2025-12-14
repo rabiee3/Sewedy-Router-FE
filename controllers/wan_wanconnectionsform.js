@@ -88,29 +88,6 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.atmData = defaultAtm();
 
   // ------------------------------------------------------------
-  // Selection handling
-  // ------------------------------------------------------------
-  $scope.$watch("form.selectionMode", function(newValue) {
-    if (!newValue) return;
-    $scope.loadForm();
-  });
-
-  $scope.loadForm = function() {
-    switch ($scope.form.selectionMode) {
-      case "ATM":
-        $scope.currentFormTemplate = "atm-form.html";
-        $scope.activeFormName = "atmForm";
-        break;
-      case "PTM":
-      case "ETH":
-      default:
-        $scope.currentFormTemplate = "ptm-form.html";
-        $scope.activeFormName = "ptmForm";
-        break;
-    }
-  };
-
-  // ------------------------------------------------------------
   // Shared submit / navigation
   // ------------------------------------------------------------
   $scope.submit = async function() {
@@ -183,17 +160,11 @@ myapp.controller("wan_wanconnectionsform", function(
       if (newVal) {
         initializeAtmConnectionType();
       }
-      $scope.updateAtmParent();
     });
 
     $scope.connectionTypeOptionsMap = {
       EoA: ["PPPoE", "Bridge", "DHCP", "Static"],
       PPPoA: ["PPPoA"],
-    };
-
-    $scope.updateAtmParent = function() {
-      if (!$scope.atmData.connectionType) return;
-      // mimic previous emit; now just keep data in scope
     };
 
     $scope.showDNSFields = function() {
@@ -242,7 +213,6 @@ myapp.controller("wan_wanconnectionsform", function(
         $scope.atmData.maximumBSize = "";
         $scope.atmData.sustainableCellRate = "";
       }
-      $scope.updateAtmParent();
     };
 
     function getAtmParamValue(obj, paramName) {
@@ -252,7 +222,6 @@ myapp.controller("wan_wanconnectionsform", function(
 
     $scope.resetAtmForm = function() {
       $scope.atmData = defaultAtm();
-      $scope.updateAtmParent();
     };
 
     async function loadAtmLinksAndQos() {
@@ -344,7 +313,6 @@ myapp.controller("wan_wanconnectionsform", function(
             $scope.atmData.secondaryDNS = value || "";
           }
         });
-        $scope.updateAtmParent();
       } catch (error) {
         console.error("Error loading user-defined DNS data:", error);
       }
@@ -539,8 +507,6 @@ myapp.controller("wan_wanconnectionsform", function(
             $scope.atmData.mtu_size = parseInt(mtuParam?.ParamValue) || 1492;
           });
         }, 200);
-
-        $scope.updateAtmParent();
       } catch (error) {
         console.error("Error loading PPPoE user/pass data:", error);
       }
