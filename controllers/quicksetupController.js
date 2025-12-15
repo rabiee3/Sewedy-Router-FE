@@ -247,6 +247,13 @@ myapp.controller("quicksetupController", function(
         if (passwordParam && passwordParam.ParamValue != "") {
           $scope.wifiSettings.password2_4G = passwordParam.ParamValue;
         }
+
+        const securityMode24G = securityResponse.data.Objects[0].Param.find(
+          (x) => x.ParamName === "ModeEnabled"
+        );
+        if (securityMode24G && securityMode24G.ParamValue != "") {
+          $scope.wifiSettings.selected_security_2_4G = securityMode24G.ParamValue;
+        }
       }
 
       // Get WiFi 5G SSID data
@@ -263,7 +270,7 @@ myapp.controller("quicksetupController", function(
         }
       }
 
-      // Get WiFi 2_4G Password data
+      // Get WiFi 5G Password data
       const securityResponse5G = await $http.get(
         URL + "cgi_get_nosubobj?Object=Device.WiFi.AccessPoint.2.Security"
       );
@@ -274,6 +281,13 @@ myapp.controller("quicksetupController", function(
         );
         if (passwordParam && passwordParam.ParamValue != "") {
           $scope.wifiSettings.password5G = passwordParam.ParamValue;
+        }
+
+        const securityMode5G = securityResponse5G.data.Objects[0].Param.find(
+          (x) => x.ParamName === "ModeEnabled"
+        );
+        if (securityMode5G && securityMode5G.ParamValue != "") {
+          $scope.wifiSettings.selected_security_5G = securityMode5G.ParamValue;
         }
       }
     } catch (error) {
@@ -371,16 +385,16 @@ myapp.controller("quicksetupController", function(
     let randomNumber3 = Math.floor(Math.random() * 100);
 
     var PPPoE_Request = `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-IPInterface-basic-${randomNumber1}&LowerLayers=Device.PPP.Interface.cpe-WEB-PPPInterface-basic-${randomNumber1}&IPv6Enable=true&X_LANTIQ_COM_DefaultGateway=true&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=cpe-WEB-EthernetLink-basic-${randomNumber1}&LowerLayers=Device.PTM.Link.1.&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=cpe-WEB-PPPInterface-basic-${randomNumber1}&Username=${$scope.credentials.username}%40tedata.net.eg&Password=${$scope.credentials.password}&MaxMRUSize=1492&LowerLayers=Device.Ethernet.Link.cpe-WEB-EthernetLink-basic-${randomNumber1}`;
-    var WIFI24G_Request = `Object=Device.WiFi.SSID.1&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.Radio.1&Operation=Modify&RegulatoryDomain=EG%20&AutoChannelEnable=true&OperatingStandards=b%2Cg%2Cn%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=40MHz&Object=Device.WiFi.AccessPoint.1&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.1.Security&Operation=Modify&ModeEnabled=${$scope.wifiSettings.selected_security_2_4G}&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
+    var WIFI24G_Request = `Object=Device.WiFi.SSID.1&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.AccessPoint.1.Security&Operation=Modify&ModeEnabled=${$scope.wifiSettings.selected_security_2_4G}&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
 
     // When band_steering is enabled, duplicate 2.4G settings for 5G
     var WIFI5G_Request;
     if (!$scope.wifiSettings.band_steering) {
-      WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable5G}&SSID=${$scope.wifiSettings.ssid5G}&Object=Device.WiFi.Radio.2&Operation=Modify&RegulatoryDomain=EG%20&Enable=true&AutoChannelEnable=true&IEEE80211hEnabled=false&OperatingStandards=a%2Cn%2Cac%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=Auto&Object=Device.WiFi.AccessPoint.2&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=${$scope.wifiSettings.selected_security_5G}&KeyPassphrase=${$scope.wifiSettings.password5G}&RekeyingInterval=3600`;
+      WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable5G}&SSID=${$scope.wifiSettings.ssid5G}&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=${$scope.wifiSettings.selected_security_5G}&KeyPassphrase=${$scope.wifiSettings.password5G}&RekeyingInterval=3600`;
     } else {
       // Enable 5G & Duplicate 2.4G settings to 5G
       $scope.wifiSettings.enable5G = true;
-      WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.Radio.2&Operation=Modify&RegulatoryDomain=EG%20&Enable=true&AutoChannelEnable=true&IEEE80211hEnabled=false&OperatingStandards=a%2Cn%2Cac%2Cax&ExtensionChannel=AboveControlChannel&OperatingChannelBandwidth=Auto&Object=Device.WiFi.AccessPoint.2&Operation=Modify&SSIDAdvertisementEnabled=true&IsolationEnable=false&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=${$scope.wifiSettings.selected_security_2_4G}&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
+      WIFI5G_Request = `Object=Device.WiFi.SSID.2&Operation=Modify&Enable=${$scope.wifiSettings.enable2_4G}&SSID=${$scope.wifiSettings.ssid2_4G}&Object=Device.WiFi.AccessPoint.2.Security&Operation=Modify&ModeEnabled=${$scope.wifiSettings.selected_security_2_4G}&KeyPassphrase=${$scope.wifiSettings.password2_4G}&RekeyingInterval=3600`;
     }
 
     //Delete old connections
