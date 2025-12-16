@@ -95,18 +95,38 @@ myapp.controller("wan_wanconnectionsform", function(
       $("#ajaxLoaderSection").show();
     }
 
-    const activeForm = $scope.activeFormName;
+    // Determine active form based on selectionMode
+    let activeForm;
+    if ($scope.form.selectionMode === "ATM") {
+      activeForm = "atmForm";
+    } else if (
+      $scope.form.selectionMode === "PTM" ||
+      $scope.form.selectionMode === "ETH"
+    ) {
+      activeForm = "ptmForm";
+    } else {
+      // Default or error handling
+      alert("Please select a valid mode (ATM, PTM, or ETH)");
+      $("#ajaxLoaderSection").hide();
+      return;
+    }
+
     try {
-      if (!$scope.customWanForm[activeForm] || !$scope.customWanForm[activeForm].$valid) {
+      if (
+        !$scope.customWanForm[activeForm] ||
+        !$scope.customWanForm[activeForm].$valid
+      ) {
         const formName = activeForm === "atmForm" ? "ATM" : "PTM";
-        alert(`Please fix all errors in the ${formName} form before submitting.`);
+        alert(
+          `Please fix all errors in the ${formName} form before submitting.`
+        );
         $("#ajaxLoaderSection").hide();
         return;
       }
 
       await helperService.removeExistingIPTVConnection();
 
-      if ($scope.activeFormName === "atmForm") {
+      if (activeForm === "atmForm") {
         await $scope.addAtmConnection();
       } else {
         if ($scope.isEditMode) {
@@ -167,28 +187,23 @@ myapp.controller("wan_wanconnectionsform", function(
       PPPoA: ["PPPoA"],
     };
 
-    $scope.showDNSFields = function() {
-      return (
-        $scope.activeFormName === "atmForm" &&
-        $scope.atmData.isUserDefinedDNS &&
-        $scope.atmData.connectionType !== "Bridge"
-      );
-    };
-
     $scope.isPrimaryDNSValid = function() {
       return $scope.patterns.ipv4.test($scope.atmData.primaryDNS);
     };
 
     $scope.isSecondaryDNSValid = function() {
       if (!$scope.atmData.secondaryDNS) return true;
-      if ($scope.atmData.secondaryDNS === $scope.atmData.primaryDNS) return false;
+      if ($scope.atmData.secondaryDNS === $scope.atmData.primaryDNS)
+        return false;
       return $scope.patterns.ipv4.test($scope.atmData.secondaryDNS);
     };
 
     $scope.selectVpiVci = function(vpiVci) {
       $scope.atmData.vpiVci = vpiVci;
       const linkObj = $scope.atmLinks.find((obj) => {
-        const addrParam = obj.Param.find((p) => p.ParamName === "DestinationAddress");
+        const addrParam = obj.Param.find(
+          (p) => p.ParamName === "DestinationAddress"
+        );
         return addrParam && addrParam.ParamValue === vpiVci;
       });
       $scope.selectedATMLink = linkObj;
@@ -203,8 +218,10 @@ myapp.controller("wan_wanconnectionsform", function(
       }
       if (qosObj) {
         $scope.atmData.atmQosClass = getAtmParamValue(qosObj, "QoSClass");
-        $scope.atmData.peakCellRate = parseInt(getAtmParamValue(qosObj, "PeakCellRate")) || "";
-        $scope.atmData.maximumBSize = parseInt(getAtmParamValue(qosObj, "MaximumBurstSize")) || "";
+        $scope.atmData.peakCellRate =
+          parseInt(getAtmParamValue(qosObj, "PeakCellRate")) || "";
+        $scope.atmData.maximumBSize =
+          parseInt(getAtmParamValue(qosObj, "MaximumBurstSize")) || "";
         $scope.atmData.sustainableCellRate =
           parseInt(getAtmParamValue(qosObj, "SustainableCellRate")) || "";
       } else {
@@ -230,13 +247,21 @@ myapp.controller("wan_wanconnectionsform", function(
         $("#ajaxLoaderSection").show();
       }
       try {
-        const response = await $http.get(URL + "cgi_get?Object=Device.ATM.Link");
+        const response = await $http.get(
+          URL + "cgi_get?Object=Device.ATM.Link"
+        );
         const objects = response.data.Objects || [];
-        $scope.atmLinks = objects.filter((obj) => /^Device\.ATM\.Link\.\d+$/.test(obj.ObjName));
-        $scope.atmLinksQos = objects.filter((obj) => /\.QoS$/.test(obj.ObjName));
+        $scope.atmLinks = objects.filter((obj) =>
+          /^Device\.ATM\.Link\.\d+$/.test(obj.ObjName)
+        );
+        $scope.atmLinksQos = objects.filter((obj) =>
+          /\.QoS$/.test(obj.ObjName)
+        );
         $scope.vpiVciOptions = $scope.atmLinks
           .map((obj) => {
-            const addrParam = obj.Param.find((p) => p.ParamName === "DestinationAddress");
+            const addrParam = obj.Param.find(
+              (p) => p.ParamName === "DestinationAddress"
+            );
             return addrParam ? addrParam.ParamValue : null;
           })
           .filter(Boolean);
@@ -253,7 +278,9 @@ myapp.controller("wan_wanconnectionsform", function(
     async function fetchVpiVciName(atmLinkObjName) {
       $("#ajaxLoaderSection").show();
       try {
-        const response = await $http.get(URL + `cgi_get_fillparams?Object=${atmLinkObjName}`);
+        const response = await $http.get(
+          URL + `cgi_get_fillparams?Object=${atmLinkObjName}`
+        );
         const resObj = response.data["Objects"][0];
         const getParam = (name) => {
           const param = resObj.Param.find((p) => p.ParamName === name);
@@ -275,24 +302,36 @@ myapp.controller("wan_wanconnectionsform", function(
     async function loadStaticDNSDataAtm() {
       if ($scope.atmData.connectionType !== "Static") return;
       try {
-        const response = await $http.get("https://192.168.1.1/cgi/cgi_get?Object=Device.DNS.Client.Server");
+        const response = await $http.get(
+          "https://192.168.1.1/cgi/cgi_get?Object=Device.DNS.Client.Server"
+        );
         if (response.data && response.data.Objects) {
-          const currentInterface = ($scope.editIPInterface || "").replace(/\.$/, "");
+          const currentInterface = ($scope.editIPInterface || "").replace(
+            /\.$/,
+            ""
+          );
           $scope.staticDNSData = response.data.Objects.filter((dns) => {
-            const interfaceParam = dns.Param.find((x) => x.ParamName === "Interface");
+            const interfaceParam = dns.Param.find(
+              (x) => x.ParamName === "Interface"
+            );
             return (
               interfaceParam &&
               interfaceParam.ParamValue.replace(/\.$/, "") === currentInterface
             );
           }).map((dns) => {
-            const serverParam = dns.Param.find((x) => x.ParamName === "DNSServer");
+            const serverParam = dns.Param.find(
+              (x) => x.ParamName === "DNSServer"
+            );
             return {
               id: dns.ObjName,
               ip: serverParam ? serverParam.ParamValue : "",
               editable: false,
             };
           });
-          localStorage.setItem("staticDNSData", JSON.stringify($scope.staticDNSData));
+          localStorage.setItem(
+            "staticDNSData",
+            JSON.stringify($scope.staticDNSData)
+          );
         } else {
           $scope.staticDNSData = [];
         }
@@ -309,6 +348,9 @@ myapp.controller("wan_wanconnectionsform", function(
           const [key, value] = line.split("=");
           if (key === "UsrDefDNS1") {
             $scope.atmData.primaryDNS = value || "";
+            if (value && value.trim() !== "") {
+              $scope.atmData.isUserDefinedDNS = true;
+            }
           } else if (key === "UsrDefDNS2") {
             $scope.atmData.secondaryDNS = value || "";
           }
@@ -322,15 +364,21 @@ myapp.controller("wan_wanconnectionsform", function(
       try {
         const chain = await atmGetConnectionObjects(objName);
         if (!Array.isArray(chain) || chain.length === 0) return null;
-        const vlanObjName = chain.find((o) => o.includes("Device.Ethernet.VLANTermination"));
+        const vlanObjName = chain.find((o) =>
+          o.includes("Device.Ethernet.VLANTermination")
+        );
         if (!vlanObjName) return null;
 
-        const vlanResp = await $http.get(`${URL}cgi_get_nosubobj?Object=${vlanObjName}`);
+        const vlanResp = await $http.get(
+          `${URL}cgi_get_nosubobj?Object=${vlanObjName}`
+        );
         const vlanObj = vlanResp.data.Objects?.[0];
         if (!vlanObj) return null;
 
-        const vlanEnable = vlanObj.Param.find((p) => p.ParamName === "Enable")?.ParamValue;
-        const vlanId = vlanObj.Param.find((p) => p.ParamName === "VLANID")?.ParamValue;
+        const vlanEnable = vlanObj.Param.find((p) => p.ParamName === "Enable")
+          ?.ParamValue;
+        const vlanId = vlanObj.Param.find((p) => p.ParamName === "VLANID")
+          ?.ParamValue;
 
         return {
           enableVlan: vlanEnable === "true" || vlanEnable === "1" ? "1" : "0",
@@ -346,11 +394,18 @@ myapp.controller("wan_wanconnectionsform", function(
       try {
         if ($scope.internetObject) {
           $scope.editIPInterface = $scope.internetObject.split(",")[0];
-          const response = await $http.get(URL + `/cgi_get?Object=${$scope.editIPInterface}`);
+
+          // Load NAT settings for ATM
+          await loadNATSettingsATM($scope.editIPInterface);
+
+          const response = await $http.get(
+            URL + `/cgi_get?Object=${$scope.editIPInterface}`
+          );
           const ipInterfaceData = response.data["Objects"][1];
           if (ipInterfaceData) {
-            const addressingType = ipInterfaceData.Param.find((x) => x.ParamName === "AddressingType")
-              ?.ParamValue;
+            const addressingType = ipInterfaceData.Param.find(
+              (x) => x.ParamName === "AddressingType"
+            )?.ParamValue;
             setTimeout(() => {
               $scope.$apply(() => {
                 if (addressingType) {
@@ -369,32 +424,51 @@ myapp.controller("wan_wanconnectionsform", function(
                     case "Static":
                       $scope.atmData.connectionType = "Static";
                       $scope.atmData.subnetmask =
-                        ipInterfaceData.Param.find((x) => x.ParamName === "SubnetMask")?.ParamValue || "";
+                        ipInterfaceData.Param.find(
+                          (x) => x.ParamName === "SubnetMask"
+                        )?.ParamValue || "";
                       $scope.atmData.ipaddress =
-                        ipInterfaceData.Param.find((x) => x.ParamName === "IPAddress")?.ParamValue || "";
+                        ipInterfaceData.Param.find(
+                          (x) => x.ParamName === "IPAddress"
+                        )?.ParamValue || "";
                       loadStaticDNSDataAtm();
                       break;
                     default:
                       $scope.atmData.connectionType = "PPPoE";
+                  }
+                  // If connection type is PPPoE and DNS fields have values, check the box
+                  if (
+                    $scope.atmData.connectionType === "PPPoE" &&
+                    ($scope.atmData.primaryDNS || $scope.atmData.secondaryDNS)
+                  ) {
+                    $scope.atmData.isUserDefinedDNS = true;
                   }
                 }
               });
             }, 200);
           }
 
-          const response2 = await $http.get(URL + `/cgi_get?Object=${$scope.editIPInterface}`);
+          const response2 = await $http.get(
+            URL + `/cgi_get?Object=${$scope.editIPInterface}`
+          );
           const objects = response2.data["Objects"] || [];
           const ipInterfaceObj =
-            objects.find((o) => o.ObjName === $scope.editIPInterface + ".") || objects[0];
+            objects.find((o) => o.ObjName === $scope.editIPInterface + ".") ||
+            objects[0];
 
           try {
-            const lowerLayersParam = ipInterfaceObj.Param.find((p) => p.ParamName === "LowerLayers");
+            const lowerLayersParam = ipInterfaceObj.Param.find(
+              (p) => p.ParamName === "LowerLayers"
+            );
             if (lowerLayersParam) {
-              const vlanObj = await detectVlanFromLowerLayers(lowerLayersParam.ParamValue);
+              const vlanObj = await detectVlanFromLowerLayers(
+                lowerLayersParam.ParamValue
+              );
               if (vlanObj) {
                 const vlanEnable = vlanObj.enableVlan;
                 const vlanId = vlanObj.vlanId;
-                $scope.atmData.enableVlan = vlanEnable === "true" || vlanEnable === "1" ? "1" : "0";
+                $scope.atmData.enableVlan =
+                  vlanEnable === "true" || vlanEnable === "1" ? "1" : "0";
                 $scope.atmData.vlanId = vlanId ? parseInt(vlanId, 10) : "";
               } else {
                 $scope.atmData.enableVlan = "0";
@@ -416,7 +490,8 @@ myapp.controller("wan_wanconnectionsform", function(
       }
     }
 
-    $scope.staticDNSData = JSON.parse(localStorage.getItem("staticDNSData")) || [];
+    $scope.staticDNSData =
+      JSON.parse(localStorage.getItem("staticDNSData")) || [];
     $scope.addStaticDNSRow = function() {
       $scope.staticDNSData.push({ id: null, ip: "", editable: true });
     };
@@ -424,23 +499,36 @@ myapp.controller("wan_wanconnectionsform", function(
       const dns = $scope.staticDNSData[index];
       if ($scope.patterns.ipv4.test(dns.ip)) {
         dns.editable = false;
-        localStorage.setItem("staticDNSData", JSON.stringify($scope.staticDNSData));
+        localStorage.setItem(
+          "staticDNSData",
+          JSON.stringify($scope.staticDNSData)
+        );
       } else {
         alert("Please enter a valid IPv4 address.");
       }
     };
     $scope.removeStaticDNSRow = function(index) {
       $scope.staticDNSData.splice(index, 1);
-      localStorage.setItem("staticDNSData", JSON.stringify($scope.staticDNSData));
+      localStorage.setItem(
+        "staticDNSData",
+        JSON.stringify($scope.staticDNSData)
+      );
     };
 
     async function bindVpiVci() {
       if (!$scope.internetObject) return;
       const deviceIpInterface = $scope.internetObject.split(",")[0];
-      const connectionChain = await atmGetConnectionObjects(deviceIpInterface, true);
-      if (!Array.isArray(connectionChain) || connectionChain.length === 0) return;
+      const connectionChain = await atmGetConnectionObjects(
+        deviceIpInterface,
+        true
+      );
+      if (!Array.isArray(connectionChain) || connectionChain.length === 0)
+        return;
       const physicalLayer = connectionChain.find(
-        (x) => x.includes("ATM.Link") || x.includes("PTM.Link") || x.includes("DSL.Channel")
+        (x) =>
+          x.includes("ATM.Link") ||
+          x.includes("PTM.Link") ||
+          x.includes("DSL.Channel")
       );
       if (physicalLayer) {
         const vpiVciName = await fetchVpiVciName(physicalLayer);
@@ -454,8 +542,12 @@ myapp.controller("wan_wanconnectionsform", function(
     async function bindVlan() {
       if (!$scope.internetObject) return;
       const deviceIpInterface = $scope.internetObject.split(",")[0];
-      const connectionChain = await atmGetConnectionObjects(deviceIpInterface, true);
-      if (!Array.isArray(connectionChain) || connectionChain.length === 0) return;
+      const connectionChain = await atmGetConnectionObjects(
+        deviceIpInterface,
+        true
+      );
+      if (!Array.isArray(connectionChain) || connectionChain.length === 0)
+        return;
 
       let tInterface = "";
       switch ($scope.atmData.connectionType) {
@@ -471,7 +563,9 @@ myapp.controller("wan_wanconnectionsform", function(
         default:
           return;
       }
-      const target_interface = connectionChain.find((x) => x.includes(tInterface));
+      const target_interface = connectionChain.find((x) =>
+        x.includes(tInterface)
+      );
       if (!target_interface) return;
       const vlanInfo = await detectVlanFromLowerLayers(target_interface);
       if (vlanInfo && vlanInfo.enableVlan === "1") {
@@ -487,22 +581,35 @@ myapp.controller("wan_wanconnectionsform", function(
       try {
         if (!$scope.internetObject) return;
         const deviceIpInterface = $scope.internetObject.split(",")[0];
-        const connectionChain = await atmGetConnectionObjects(deviceIpInterface, true);
-        if (!Array.isArray(connectionChain) || connectionChain.length === 0) return;
-        const pppInterface = connectionChain.find((x) => x.includes("PPP.Interface"));
+        const connectionChain = await atmGetConnectionObjects(
+          deviceIpInterface,
+          true
+        );
+        if (!Array.isArray(connectionChain) || connectionChain.length === 0)
+          return;
+        const pppInterface = connectionChain.find((x) =>
+          x.includes("PPP.Interface")
+        );
         if (!pppInterface) return;
 
-        const pppRes = await $http.get(`${URL}cgi_get_nosubobj?Object=${pppInterface}`);
+        const pppRes = await $http.get(
+          `${URL}cgi_get_nosubobj?Object=${pppInterface}`
+        );
         const pppObj = pppRes.data.Objects?.[0];
         if (!pppObj) return;
 
-        const usernameParam = pppObj.Param.find((p) => p.ParamName === "Username");
-        const passwordParam = pppObj.Param.find((p) => p.ParamName === "Password");
+        const usernameParam = pppObj.Param.find(
+          (p) => p.ParamName === "Username"
+        );
+        const passwordParam = pppObj.Param.find(
+          (p) => p.ParamName === "Password"
+        );
         const mtuParam = pppObj.Param.find((p) => p.ParamName === "MaxMRUSize");
 
         setTimeout(() => {
           $scope.$apply(() => {
-            $scope.atmData.username = usernameParam?.ParamValue?.split("@")[0] || "";
+            $scope.atmData.username =
+              usernameParam?.ParamValue?.split("@")[0] || "";
             $scope.atmData.password = passwordParam?.ParamValue || "";
             $scope.atmData.mtu_size = parseInt(mtuParam?.ParamValue) || 1492;
           });
@@ -512,9 +619,56 @@ myapp.controller("wan_wanconnectionsform", function(
       }
     }
 
+    // Add NAT loading function for ATM
+    async function loadNATSettingsATM(ipInterface) {
+      try {
+        const natResponse = await $http.get(
+          URL + "cgi_get?Object=Device.NAT.InterfaceSetting"
+        );
+
+        if (natResponse.data && natResponse.data.Objects) {
+          const interfaceNatSetting = natResponse.data.Objects.find((nat) => {
+            const interfaceParam = nat.Param.find(
+              (p) => p.ParamName === "Interface"
+            );
+            return interfaceParam && interfaceParam.ParamValue === ipInterface;
+          });
+
+          if (interfaceNatSetting) {
+            const enableParam = interfaceNatSetting.Param.find(
+              (p) => p.ParamName === "Enable"
+            );
+            const natTypeParam = interfaceNatSetting.Param.find(
+              (p) => p.ParamName === "X_LANTIQ_COM_NATType"
+            );
+
+            setTimeout(() => {
+              $scope.$apply(() => {
+                if (enableParam) {
+                  $scope.atmData.enableNAT =
+                    enableParam.ParamValue === "true" ||
+                    enableParam.ParamValue === "1"
+                      ? "1"
+                      : "0";
+                }
+                if (natTypeParam && $scope.atmData.enableNAT === "1") {
+                  $scope.atmData.natType = natTypeParam.ParamValue;
+                }
+              });
+            }, 100);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading NAT settings for ATM:", error);
+      }
+    }
+
     function getAtmAliasNumber(selectedATMLink) {
-      if (!selectedATMLink || !Array.isArray(selectedATMLink.Param)) return null;
-      const aliasParam = selectedATMLink.Param.find((p) => p.ParamName === "Alias");
+      if (!selectedATMLink || !Array.isArray(selectedATMLink.Param))
+        return null;
+      const aliasParam = selectedATMLink.Param.find(
+        (p) => p.ParamName === "Alias"
+      );
       if (!aliasParam || !aliasParam.ParamValue) return null;
       const alias = aliasParam.ParamValue;
       const match = alias.match(/-(\d+)$/);
@@ -525,12 +679,21 @@ myapp.controller("wan_wanconnectionsform", function(
       if ($scope.atmData.connectionType !== "Bridge") return;
       try {
         const response = await $http.get(
-          URL + "cgi_get_fillparams?Object=Device.Bridging.Bridge&X_LANTIQ_COM_Name="
+          URL +
+            "cgi_get_fillparams?Object=Device.Bridging.Bridge&X_LANTIQ_COM_Name="
         );
-        if (response.data && response.data.Objects && response.data.Objects.length > 0) {
+        if (
+          response.data &&
+          response.data.Objects &&
+          response.data.Objects.length > 0
+        ) {
           $scope.bridgeConnections = response.data.Objects.map((bridge) => {
-            const nameParam = bridge.Param.find((x) => x.ParamName === "X_LANTIQ_COM_Name");
-            const match = bridge.ObjName.match(/Device\.Bridging\.Bridge\.(\d+)/);
+            const nameParam = bridge.Param.find(
+              (x) => x.ParamName === "X_LANTIQ_COM_Name"
+            );
+            const match = bridge.ObjName.match(
+              /Device\.Bridging\.Bridge\.(\d+)/
+            );
             const id = match ? parseInt(match[1], 10) : null;
             return {
               id,
@@ -563,14 +726,18 @@ myapp.controller("wan_wanconnectionsform", function(
         const atmAlias = `cpe-WEB-ATMLink-${randomNumber}`;
         const ethAlias = `cpe-WEB-EthernetLink-${randomNumber}`;
         const pppAlias = `cpe-WEB-PPPInterface-${randomNumber}`;
-        const pppUsername = encodeURIComponent(`${$scope.atmData.username}@tedata.net.eg`);
+        const pppUsername = encodeURIComponent(
+          `${$scope.atmData.username}@tedata.net.eg`
+        );
         const pppPassword = encodeURIComponent($scope.atmData.password);
         let connectionRequest = "";
 
         if (!$scope.selectedATMLink) {
           connectionRequest += `&Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${atmAlias}`;
           connectionRequest += `&LowerLayers=${dslLowerLayer}`;
-          connectionRequest += `&DestinationAddress=${encodeURIComponent($scope.atmData.vpiVci)}`;
+          connectionRequest += `&DestinationAddress=${encodeURIComponent(
+            $scope.atmData.vpiVci
+          )}`;
           connectionRequest += `&Encapsulation=${$scope.atmData.encapsulation}`;
           connectionRequest += `&LinkType=${$scope.atmData.linkType}`;
         }
@@ -593,7 +760,10 @@ myapp.controller("wan_wanconnectionsform", function(
 
         const ipAlias = `cpe-WEB-IPInterface-${randomNumber}`;
         connectionRequest += `&Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${ipAlias}`;
-        if ($scope.atmData.enableVlan == "1" && $scope.atmData.connectionType === "Bridge") {
+        if (
+          $scope.atmData.enableVlan == "1" &&
+          $scope.atmData.connectionType === "Bridge"
+        ) {
           connectionRequest += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomNumber}`;
         } else if ($scope.atmData.connectionType === "DHCP") {
           connectionRequest += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
@@ -603,7 +773,9 @@ myapp.controller("wan_wanconnectionsform", function(
         connectionRequest += `&X_LANTIQ_COM_DefaultGateway=${
           $scope.atmData.defaultGateway === "1" ? "true" : "false"
         }`;
-        connectionRequest += `&IPv6Enable=${$scope.atmData.ipv6enable === "1" ? "true" : "false"}`;
+        connectionRequest += `&IPv6Enable=${
+          $scope.atmData.ipv6enable === "1" ? "true" : "false"
+        }`;
 
         connectionRequest += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${ethAlias}`;
         if ($scope.atmData.connectionType === "Bridge") {
@@ -635,7 +807,9 @@ myapp.controller("wan_wanconnectionsform", function(
           if ($scope.selectedATMLink) {
             connectionRequest += `&Object=${$scope.atmData.selectedBridge.objName}.Port&Operation=Add&Enable=true&Alias=cpe-WEB-BridgingBridge${$scope.atmData.selectedBridge.id}Port-${randomNumber}&LowerLayers=${$scope.selectedATMLink.ObjName}`;
           } else {
-            alert("No ATM links found, please create one first before creating a bridge");
+            alert(
+              "No ATM links found, please create one first before creating a bridge"
+            );
             return;
           }
         }
@@ -660,7 +834,10 @@ myapp.controller("wan_wanconnectionsform", function(
         if (result.status === 200) {
           if ($scope.atmData.isUserDefinedDNS) {
             const dnsRequest = `UsrDefDNS1=${$scope.atmData.primaryDNS}&UsrDefDNS2=${$scope.atmData.secondaryDNS}`;
-            const dnsResult = await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
+            const dnsResult = await $http.post(
+              URL + "cgi_setUserDefinedDNS",
+              dnsRequest
+            );
             if (dnsResult.status !== 200) {
               console.log("Failed to set user-defined DNS.");
             }
@@ -669,7 +846,10 @@ myapp.controller("wan_wanconnectionsform", function(
             await $scope.deleteAtmConnection();
           }
         } else {
-          alert(result.data?.Objects?.[0]?.Param?.[0]?.ParamValue || "Something went wrong.");
+          alert(
+            result.data?.Objects?.[0]?.Param?.[0]?.ParamValue ||
+              "Something went wrong."
+          );
         }
       } catch (err) {
         console.error("Error adding ATM connection:", err);
@@ -693,7 +873,9 @@ myapp.controller("wan_wanconnectionsform", function(
 
     $scope.$watch("atmData.vpiVci", function() {
       const found = $scope.atmLinks.find((obj) => {
-        const addrParam = obj.Param.find((p) => p.ParamName === "DestinationAddress");
+        const addrParam = obj.Param.find(
+          (p) => p.ParamName === "DestinationAddress"
+        );
         return addrParam && addrParam.ParamValue === $scope.atmData.vpiVci;
       });
       if (!found) {
@@ -704,11 +886,16 @@ myapp.controller("wan_wanconnectionsform", function(
     $scope.validateDNSForm = function() {
       if (!$scope.atmForm) return;
       const same =
-        $scope.atmData.secondaryDNS && $scope.atmData.secondaryDNS === $scope.atmData.primaryDNS;
+        $scope.atmData.secondaryDNS &&
+        $scope.atmData.secondaryDNS === $scope.atmData.primaryDNS;
       $scope.atmForm.$setValidity("dnsConflict", !same);
     };
 
-    async function atmGetConnectionObjects(objPath, includePhysical = false, visited = []) {
+    async function atmGetConnectionObjects(
+      objPath,
+      includePhysical = false,
+      visited = []
+    ) {
       try {
         if (!objPath || visited.includes(objPath)) return [];
         visited.push(objPath);
@@ -727,7 +914,11 @@ myapp.controller("wan_wanconnectionsform", function(
         ) {
           return includePhysical ? [objPath, lower] : [objPath];
         }
-        const deeper = await atmGetConnectionObjects(lower, includePhysical, visited);
+        const deeper = await atmGetConnectionObjects(
+          lower,
+          includePhysical,
+          visited
+        );
         return [objPath, ...deeper];
       } catch (err) {
         console.error("Error traversing connection chain:", err);
@@ -736,10 +927,16 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     $scope.deleteAtmConnection = async function() {
-      let objects = await atmGetConnectionObjects($scope.internetObject.split(",")[0]);
+      let objects = await atmGetConnectionObjects(
+        $scope.internetObject.split(",")[0]
+      );
       let deleteRequest = "";
       objects.forEach((objName) => {
-        if (objName && !objName.includes("Device.ATM") && !objName.includes("DSL.Link")) {
+        if (
+          objName &&
+          !objName.includes("Device.ATM") &&
+          !objName.includes("DSL.Link")
+        ) {
           deleteRequest += `Object=${objName}&Operation=Del&`;
         }
       });
@@ -766,7 +963,8 @@ myapp.controller("wan_wanconnectionsform", function(
     $scope.editIPInterface = "";
     $scope.editAlias = "";
     $scope.Passwordfieldstatus = false;
-    $scope.staticDNSData = JSON.parse(localStorage.getItem("staticDNSData")) || [];
+    $scope.staticDNSData =
+      JSON.parse(localStorage.getItem("staticDNSData")) || [];
 
     function ensureRandomValue() {
       let v = localStorage.getItem("randomvalue");
@@ -785,7 +983,9 @@ myapp.controller("wan_wanconnectionsform", function(
       return `${username}@tedata.net.eg`;
     }
     function enc(v) {
-      return encodeURIComponent(v === undefined || v === null ? "" : v.toString());
+      return encodeURIComponent(
+        v === undefined || v === null ? "" : v.toString()
+      );
     }
     function buildStaticDnsEntries(staticDNSData, randomValue) {
       if (!staticDNSData || !staticDNSData.length) return "";
@@ -804,24 +1004,33 @@ myapp.controller("wan_wanconnectionsform", function(
       const pppAlias = makeAlias("cpe-WEB-PPPInterface", randomValue);
 
       if (model.enableVlan === "1" && model.vlanId) {
-        const vlanAlias = makeAlias("cpe-WEB-EthernetVLANTermination", randomValue);
+        const vlanAlias = makeAlias(
+          "cpe-WEB-EthernetVLANTermination",
+          randomValue
+        );
         let r = "";
-        r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(ipAlias)}&LowerLayers=Device.PPP.Interface.${enc(
-          pppAlias
-        )}&IPv6Enable=${enc(model.ipv6enable)}&MaxMTUSize=${enc(model.mtu_size)}&X_LANTIQ_COM_DefaultGateway=${enc(
+        r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+          ipAlias
+        )}&LowerLayers=Device.PPP.Interface.${enc(pppAlias)}&IPv6Enable=${enc(
+          model.ipv6enable
+        )}&MaxMTUSize=${enc(model.mtu_size)}&X_LANTIQ_COM_DefaultGateway=${enc(
           model.defaultGateway
         )}`;
-        r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(ethLinkAlias)}&LowerLayers=${enc(
-          wanLayer
-        )}`;
+        r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
+          ethLinkAlias
+        )}&LowerLayers=${enc(wanLayer)}`;
         if (model.macCloneEnabled && model.mac_address) {
-          r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(model.mac_address)}`;
+          r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
+            model.mac_address
+          )}`;
         }
         r += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.${enc(
           ethLinkAlias
         )}&Alias=${enc(vlanAlias)}&Enable=1&VLANID=${enc(model.vlanId)}`;
         const username = appendTedata(model.username);
-        r += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${enc(pppAlias)}&LowerLayers=Device.Ethernet.VLANTermination.${enc(
+        r += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${enc(
+          pppAlias
+        )}&LowerLayers=Device.Ethernet.VLANTermination.${enc(
           vlanAlias
         )}&MaxMRUSize=${enc(model.mtu_size)}`;
         if (username) r += `&Username=${enc(username)}`;
@@ -830,21 +1039,27 @@ myapp.controller("wan_wanconnectionsform", function(
       }
 
       let req = "";
-      req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(ipAlias)}&LowerLayers=Device.PPP.Interface.${enc(
-        pppAlias
-      )}&IPv6Enable=${enc(model.ipv6enable)}&MaxMTUSize=${enc(model.mtu_size)}&X_LANTIQ_COM_DefaultGateway=${enc(
+      req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+        ipAlias
+      )}&LowerLayers=Device.PPP.Interface.${enc(pppAlias)}&IPv6Enable=${enc(
+        model.ipv6enable
+      )}&MaxMTUSize=${enc(model.mtu_size)}&X_LANTIQ_COM_DefaultGateway=${enc(
         model.defaultGateway
       )}`;
-      req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(ethLinkAlias)}&LowerLayers=${enc(
-        wanLayer
-      )}`;
+      req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
+        ethLinkAlias
+      )}&LowerLayers=${enc(wanLayer)}`;
       if (model.macCloneEnabled && model.mac_address) {
-        req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(model.mac_address)}`;
+        req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
+          model.mac_address
+        )}`;
       }
       const username = appendTedata(model.username);
-      req += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${enc(pppAlias)}&LowerLayers=Device.Ethernet.Link.${enc(
-        ethLinkAlias
-      )}&MaxMRUSize=${enc(model.mtu_size)}`;
+      req += `&Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${enc(
+        pppAlias
+      )}&LowerLayers=Device.Ethernet.Link.${enc(ethLinkAlias)}&MaxMRUSize=${enc(
+        model.mtu_size
+      )}`;
       if (username) req += `&Username=${enc(username)}`;
       if (model.password) req += `&Password=${enc(model.password)}`;
       return req;
@@ -853,20 +1068,30 @@ myapp.controller("wan_wanconnectionsform", function(
     function buildBridgeRequest(model, wanLayer, randomValue) {
       const ipAlias = makeAlias("cpe-WEB-IPInterface", randomValue);
       const ethLinkAlias = makeAlias("cpe-WEB-EthernetLink", randomValue);
-      const bridgePortAlias = makeAlias("cpe-WEB-BridgingBridge1Port", randomValue);
+      const bridgePortAlias = makeAlias(
+        "cpe-WEB-BridgingBridge1Port",
+        randomValue
+      );
       if (!model.selectedBridge || !model.selectedBridge.objName) {
         throw new Error("Bridge object name not found");
       }
       if (model.enableVlan === "1" && model.vlanId) {
-        const vlanAlias = makeAlias("cpe-WEB-EthernetVLANTermination", randomValue);
+        const vlanAlias = makeAlias(
+          "cpe-WEB-EthernetVLANTermination",
+          randomValue
+        );
         let r = "";
-        r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(ipAlias)}&LowerLayers=Device.Ethernet.VLANTermination.${enc(
-          vlanAlias
-        )}`;
+        r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+          ipAlias
+        )}&LowerLayers=Device.Ethernet.VLANTermination.${enc(vlanAlias)}`;
         r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
           ethLinkAlias
-        )}&LowerLayers=${enc(model.selectedBridge.objName + ".Port." + bridgePortAlias)}`;
-        r += `&Object=${enc(model.selectedBridge.objName)}.Port&Operation=Add&Enable=true&Alias=${enc(
+        )}&LowerLayers=${enc(
+          model.selectedBridge.objName + ".Port." + bridgePortAlias
+        )}`;
+        r += `&Object=${enc(
+          model.selectedBridge.objName
+        )}.Port&Operation=Add&Enable=true&Alias=${enc(
           bridgePortAlias
         )}&LowerLayers=${enc(wanLayer)}`;
         r += `&Object=Device.Ethernet.VLANTermination&Operation=Add&TPID=&LowerLayers=Device.Ethernet.Link.${enc(
@@ -875,13 +1100,17 @@ myapp.controller("wan_wanconnectionsform", function(
         return r;
       }
       let req = "";
-      req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(ipAlias)}&LowerLayers=Device.Ethernet.Link.${enc(
-        ethLinkAlias
-      )}`;
+      req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+        ipAlias
+      )}&LowerLayers=Device.Ethernet.Link.${enc(ethLinkAlias)}`;
       req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
         ethLinkAlias
-      )}&LowerLayers=${enc(model.selectedBridge.objName + ".Port." + bridgePortAlias)}`;
-      req += `&Object=${enc(model.selectedBridge.objName)}.Port&Operation=Add&Enable=true&Alias=${enc(
+      )}&LowerLayers=${enc(
+        model.selectedBridge.objName + ".Port." + bridgePortAlias
+      )}`;
+      req += `&Object=${enc(
+        model.selectedBridge.objName
+      )}.Port&Operation=Add&Enable=true&Alias=${enc(
         bridgePortAlias
       )}&LowerLayers=${enc(wanLayer)}`;
       return req;
@@ -890,23 +1119,33 @@ myapp.controller("wan_wanconnectionsform", function(
     function buildStaticRequest(model, wanLayer, randomValue) {
       const ipAlias = makeAlias("cpe-WEB-IPInterface", randomValue);
       const ethLinkAlias = makeAlias("cpe-WEB-EthernetLink", randomValue);
-      const dnsEntries = buildStaticDnsEntries($scope.staticDNSData, randomValue);
+      const dnsEntries = buildStaticDnsEntries(
+        $scope.staticDNSData,
+        randomValue
+      );
       if (model.enableVlan === "1" && model.vlanId) {
-        const vlanAlias = makeAlias("cpe-WEB-EthernetVLANTermination", randomValue);
+        const vlanAlias = makeAlias(
+          "cpe-WEB-EthernetVLANTermination",
+          randomValue
+        );
         let r = "";
-        r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(ipAlias)}&LowerLayers=Device.Ethernet.VLANTermination.${enc(
-          vlanAlias
-        )}`;
+        r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+          ipAlias
+        )}&LowerLayers=Device.Ethernet.VLANTermination.${enc(vlanAlias)}`;
         r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
           ethLinkAlias
         )}&LowerLayers=${enc(wanLayer)}`;
         if (model.macCloneEnabled && model.mac_address) {
-          r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(model.mac_address)}`;
+          r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
+            model.mac_address
+          )}`;
         }
         r += `&Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.${enc(
           ethLinkAlias
         )}&Alias=${enc(vlanAlias)}&Enable=1&VLANID=${enc(model.vlanId)}`;
-        r += `&Object=Device.IP.Interface.${enc(ipAlias)}.IPv4Address&Operation=Add&IPAddress=${enc(
+        r += `&Object=Device.IP.Interface.${enc(
+          ipAlias
+        )}.IPv4Address&Operation=Add&IPAddress=${enc(
           model.ipaddress
         )}&SubnetMask=${enc(model.subnetmask)}`;
         r += `&Object=Device.Routing.Router.1.IPv4Forwarding&Operation=Add&Interface=Device.IP.Interface.${enc(
@@ -923,9 +1162,13 @@ myapp.controller("wan_wanconnectionsform", function(
         ethLinkAlias
       )}&LowerLayers=${enc(wanLayer)}`;
       if (model.macCloneEnabled && model.mac_address) {
-        req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(model.mac_address)}`;
+        req += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
+          model.mac_address
+        )}`;
       }
-      req += `&Object=Device.IP.Interface.${enc(ipAlias)}.IPv4Address&Operation=Add&IPAddress=${enc(
+      req += `&Object=Device.IP.Interface.${enc(
+        ipAlias
+      )}.IPv4Address&Operation=Add&IPAddress=${enc(
         model.ipaddress
       )}&SubnetMask=${enc(model.subnetmask)}`;
       req += `&Object=Device.Routing.Router.1.IPv4Forwarding&Operation=Add&Interface=Device.IP.Interface.${enc(
@@ -939,16 +1182,23 @@ myapp.controller("wan_wanconnectionsform", function(
       const ipAlias = makeAlias("cpe-WEB-IPInterface", randomValue);
       const ethLinkAlias = makeAlias("cpe-WEB-EthernetLink", randomValue);
       if (model.enableVlan === "1" && model.vlanId) {
-        const vlanAlias = makeAlias("cpe-WEB-EthernetVLANTermination", randomValue);
+        const vlanAlias = makeAlias(
+          "cpe-WEB-EthernetVLANTermination",
+          randomValue
+        );
         let r = "";
-        r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(ipAlias)}&LowerLayers=Device.Ethernet.VLANTermination.${enc(
+        r += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
+          ipAlias
+        )}&LowerLayers=Device.Ethernet.VLANTermination.${enc(
           vlanAlias
         )}&X_LANTIQ_COM_DefaultGateway=${enc(model.defaultGateway)}`;
         r += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
           ethLinkAlias
         )}&LowerLayers=${enc(wanLayer)}`;
         if (model.macCloneEnabled && model.mac_address) {
-          r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(model.mac_address)}`;
+          r += `&X_INTEL_COM_MACCloning=true&MACAddress=${enc(
+            model.mac_address
+          )}`;
         }
         r += `&Object=Device.DHCPv4.Client&Operation=Add&Interface=Device.IP.Interface.${enc(
           ipAlias
@@ -961,7 +1211,9 @@ myapp.controller("wan_wanconnectionsform", function(
       let req = "";
       req += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${enc(
         ipAlias
-      )}&LowerLayers=${enc(wanLayer)}&X_LANTIQ_COM_DefaultGateway=${enc(model.defaultGateway)}`;
+      )}&LowerLayers=${enc(wanLayer)}&X_LANTIQ_COM_DefaultGateway=${enc(
+        model.defaultGateway
+      )}`;
       req += `&Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${enc(
         ethLinkAlias
       )}&LowerLayers=${enc(wanLayer)}`;
@@ -975,25 +1227,43 @@ myapp.controller("wan_wanconnectionsform", function(
       try {
         if ($scope.internetObject) {
           $scope.editIPInterface = $scope.internetObject.split(",")[0];
-          const pppInterfaceData = await $http.get(URL + "cgi_get_nosubobj?Object=" + $scope.editIPInterface);
+          const pppInterfaceData = await $http.get(
+            URL + "cgi_get_nosubobj?Object=" + $scope.editIPInterface
+          );
           const pppObj = pppInterfaceData.data["Objects"][0];
-          $scope.editPPPInterface = pppObj.Param.find((x) => x.ParamName === "LowerLayers")?.ParamValue;
-          const userPassResponse = await $http.get(URL + "cgi_get_nosubobj?Object=" + $scope.editPPPInterface);
+          $scope.editPPPInterface = pppObj.Param.find(
+            (x) => x.ParamName === "LowerLayers"
+          )?.ParamValue;
+          const userPassResponse = await $http.get(
+            URL + "cgi_get_nosubobj?Object=" + $scope.editPPPInterface
+          );
           $scope.ptmData.defaultGateway =
-            pppObj.Param.find((x) => x.ParamName === "X_LANTIQ_COM_DefaultGateway")?.ParamValue === "true"
+            pppObj.Param.find(
+              (x) => x.ParamName === "X_LANTIQ_COM_DefaultGateway"
+            )?.ParamValue === "true"
               ? "1"
               : "0";
-          $scope.ptmData.mtu_size = pppObj.Param.find((x) => x.ParamName === "MaxMTUSize")?.ParamValue;
+          $scope.ptmData.mtu_size = pppObj.Param.find(
+            (x) => x.ParamName === "MaxMTUSize"
+          )?.ParamValue;
           $scope.ptmData.ipv6enable =
-            pppObj.Param.find((x) => x.ParamName === "IPv6Enable")?.ParamValue === "true" ? "1" : "0";
+            pppObj.Param.find((x) => x.ParamName === "IPv6Enable")
+              ?.ParamValue === "true"
+              ? "1"
+              : "0";
           const userPassData = userPassResponse.data["Objects"][0];
-          $scope.editEthernetInterface = userPassData.Param.find((x) => x.ParamName === "LowerLayers")?.ParamValue;
+          $scope.editEthernetInterface = userPassData.Param.find(
+            (x) => x.ParamName === "LowerLayers"
+          )?.ParamValue;
           setTimeout(() => {
             $scope.$apply(() => {
               $scope.ptmData.username =
-                userPassData.Param.find((x) => x.ParamName === "Username")?.ParamValue.split("@")[0] || "";
+                userPassData.Param.find(
+                  (x) => x.ParamName === "Username"
+                )?.ParamValue.split("@")[0] || "";
               $scope.ptmData.password =
-                userPassData.Param.find((x) => x.ParamName === "Password")?.ParamValue || "";
+                userPassData.Param.find((x) => x.ParamName === "Password")
+                  ?.ParamValue || "";
             });
           }, 200);
         }
@@ -1008,11 +1278,18 @@ myapp.controller("wan_wanconnectionsform", function(
       }
       try {
         const response = await $http.get(
-          URL + "cgi_get_fillparams?Object=Device.Bridging.Bridge&X_LANTIQ_COM_Name="
+          URL +
+            "cgi_get_fillparams?Object=Device.Bridging.Bridge&X_LANTIQ_COM_Name="
         );
-        if (response.data && response.data.Objects && response.data.Objects.length > 0) {
+        if (
+          response.data &&
+          response.data.Objects &&
+          response.data.Objects.length > 0
+        ) {
           $scope.bridgeConnections = response.data.Objects.map((bridge) => {
-            const nameParam = bridge.Param.find((x) => x.ParamName === "X_LANTIQ_COM_Name");
+            const nameParam = bridge.Param.find(
+              (x) => x.ParamName === "X_LANTIQ_COM_Name"
+            );
             return {
               objName: bridge.ObjName,
               name: nameParam ? nameParam.ParamValue : bridge.ObjName,
@@ -1032,16 +1309,23 @@ myapp.controller("wan_wanconnectionsform", function(
       async function traceLayers(layer) {
         if (!layer) return;
         const cleanLayer = layer.replace(/\.$/, "");
-        if (!cleanLayer.includes("ATM") && !cleanLayer.includes("PTM") && !cleanLayer.includes("DSL")) {
+        if (
+          !cleanLayer.includes("ATM") &&
+          !cleanLayer.includes("PTM") &&
+          !cleanLayer.includes("DSL")
+        ) {
           if (!objectsToDelete.includes(cleanLayer)) {
             objectsToDelete.push(cleanLayer);
           }
         }
         try {
-          const res = await $http.get(`${URL}cgi_get_nosubobj?Object=${cleanLayer}`);
+          const res = await $http.get(
+            `${URL}cgi_get_nosubobj?Object=${cleanLayer}`
+          );
           const obj = res.data.Objects?.[0];
           if (!obj || !obj.Param) return;
-          const nextLayer = obj.Param.find((p) => p.ParamName === "LowerLayers")?.ParamValue;
+          const nextLayer = obj.Param.find((p) => p.ParamName === "LowerLayers")
+            ?.ParamValue;
           if (nextLayer) {
             await traceLayers(nextLayer);
           }
@@ -1058,10 +1342,16 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     async function deleteOldPtmConnection() {
-      let objects = await getConnectionObjects($scope.internetObject.split(",")[0]);
+      let objects = await getConnectionObjects(
+        $scope.internetObject.split(",")[0]
+      );
       let deleteRequest = "";
       objects.forEach((objName) => {
-        if (objName && !objName.includes("Device.PTM") && !objName.includes("DSL.Link")) {
+        if (
+          objName &&
+          !objName.includes("Device.PTM") &&
+          !objName.includes("DSL.Link")
+        ) {
           deleteRequest += `Object=${objName}&Operation=Del&`;
         }
       });
@@ -1071,27 +1361,40 @@ myapp.controller("wan_wanconnectionsform", function(
     async function loadStaticDNSData() {
       if ($scope.ptmData.connectionType !== "Static") return;
       try {
-        const response = await $http.get("https://192.168.1.1/cgi/cgi_get?Object=Device.DNS.Client.Server");
+        const response = await $http.get(
+          "https://192.168.1.1/cgi/cgi_get?Object=Device.DNS.Client.Server"
+        );
         if (response.data && response.data.Objects) {
-          const currentInterface = ($scope.editIPInterface || "").replace(/\.$/, "");
+          const currentInterface = ($scope.editIPInterface || "").replace(
+            /\.$/,
+            ""
+          );
           if (!currentInterface) {
             localStorage.setItem("staticDNSData", "");
             return;
           }
           $scope.staticDNSData = response.data.Objects.filter((dns) => {
-            const interfaceParam = dns.Param.find((x) => x.ParamName === "Interface");
+            const interfaceParam = dns.Param.find(
+              (x) => x.ParamName === "Interface"
+            );
             return (
-              interfaceParam && interfaceParam.ParamValue.replace(/\.$/, "") === currentInterface
+              interfaceParam &&
+              interfaceParam.ParamValue.replace(/\.$/, "") === currentInterface
             );
           }).map((dns) => {
-            const serverParam = dns.Param.find((x) => x.ParamName === "DNSServer");
+            const serverParam = dns.Param.find(
+              (x) => x.ParamName === "DNSServer"
+            );
             return {
               id: dns.ObjName,
               ip: serverParam ? serverParam.ParamValue : "",
               editable: false,
             };
           });
-          localStorage.setItem("staticDNSData", JSON.stringify($scope.staticDNSData));
+          localStorage.setItem(
+            "staticDNSData",
+            JSON.stringify($scope.staticDNSData)
+          );
         } else {
           $scope.staticDNSData = [];
         }
@@ -1107,25 +1410,50 @@ myapp.controller("wan_wanconnectionsform", function(
       const dns = $scope.staticDNSData[index];
       if ($scope.patterns.ipv4.test(dns.ip)) {
         dns.editable = false;
-        localStorage.setItem("staticDNSData", JSON.stringify($scope.staticDNSData));
+        localStorage.setItem(
+          "staticDNSData",
+          JSON.stringify($scope.staticDNSData)
+        );
       } else {
         alert("Please enter a valid IPv4 address.");
       }
     };
     $scope.removeStaticDNSRow = function(index) {
       $scope.staticDNSData.splice(index, 1);
-      localStorage.setItem("staticDNSData", JSON.stringify($scope.staticDNSData));
+      localStorage.setItem(
+        "staticDNSData",
+        JSON.stringify($scope.staticDNSData)
+      );
     };
 
     async function loadUserDefinedDNS() {
       try {
         const response = await $http.get(URL + "cgi_get_dns");
         const dnsData = response.data.split("\n");
+        let hasDNSValues = false;
+
         dnsData.forEach((line) => {
           const [key, value] = line.split("=");
-          if (key === "UsrDefDNS1") $scope.ptmData.primaryDNS = value || "";
-          if (key === "UsrDefDNS2") $scope.ptmData.secondaryDNS = value || "";
+          if (key === "UsrDefDNS1") {
+            $scope.ptmData.primaryDNS = value || "";
+            if (value && value.trim() !== "") {
+              hasDNSValues = true;
+            }
+          }
+          if (key === "UsrDefDNS2") {
+            $scope.ptmData.secondaryDNS = value || "";
+            if (value && value.trim() !== "") {
+              hasDNSValues = true;
+            }
+          }
         });
+
+        // Set checkbox state based on DNS values and connection type
+        setTimeout(() => {
+          if ($scope.ptmData.connectionType === "PPPoE" && hasDNSValues) {
+            $scope.ptmData.isUserDefinedDNS = true;
+          }
+        }, 100);
       } catch (error) {
         console.error("Error loading user-defined DNS data:", error);
       }
@@ -1140,9 +1468,11 @@ myapp.controller("wan_wanconnectionsform", function(
           wanLayer = "Device.Ethernet.Interface.5.";
         } else {
           const lowerLayerRes = await $http.get(
-            URL + `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup.1&MappingLowerLayer=`
+            URL +
+              `cgi_get_fillparams?Object=Device.X_LANTIQ_COM_NwHardware.WANGroup.1&MappingLowerLayer=`
           );
-          wanLayer = lowerLayerRes.data["Objects"][0].Param[0].ParamValue || wanLayer;
+          wanLayer =
+            lowerLayerRes.data["Objects"][0].Param[0].ParamValue || wanLayer;
         }
 
         let connectionRequest = "";
@@ -1161,10 +1491,13 @@ myapp.controller("wan_wanconnectionsform", function(
 
         const addResult = await $http.post(URL + "cgi_set", connectionRequest);
         if (addResult.status === 200) {
-          const dnsRequest = `UsrDefDNS1=${enc($scope.ptmData.primaryDNS)}&UsrDefDNS2=${enc(
-            $scope.ptmData.secondaryDNS
-          )}`;
-          const dnsResult = await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
+          const dnsRequest = `UsrDefDNS1=${enc(
+            $scope.ptmData.primaryDNS
+          )}&UsrDefDNS2=${enc($scope.ptmData.secondaryDNS)}`;
+          const dnsResult = await $http.post(
+            URL + "cgi_setUserDefinedDNS",
+            dnsRequest
+          );
           if ($scope.isEditMode) {
             const deleteRes = await deleteOldPtmConnection();
             if (!deleteRes || deleteRes.status !== 200) {
@@ -1197,22 +1530,23 @@ myapp.controller("wan_wanconnectionsform", function(
         await $scope.addPtmConnection();
       } catch (err) {
         console.error("Error saving edited connection:", err);
-        alert("Failed to save edited connection. Please check console for details.");
+        alert(
+          "Failed to save edited connection. Please check console for details."
+        );
       }
     };
 
     $scope.updateParent = function() {
       // placeholder used by templates
     };
-    $scope.showDNSFields = function() {
-      return $scope.ptmData.isUserDefinedDNS && $scope.ptmData.connectionType !== "Bridge";
-    };
+
     $scope.isPrimaryDNSValid = function() {
       return $scope.patterns.ipv4.test($scope.ptmData.primaryDNS);
     };
     $scope.isSecondaryDNSValid = function() {
       if (!$scope.ptmData.secondaryDNS) return true;
-      if ($scope.ptmData.secondaryDNS === $scope.ptmData.primaryDNS) return false;
+      if ($scope.ptmData.secondaryDNS === $scope.ptmData.primaryDNS)
+        return false;
       return $scope.patterns.ipv4.test($scope.ptmData.secondaryDNS);
     };
     $scope.resetPtmForm = function() {
@@ -1221,7 +1555,8 @@ myapp.controller("wan_wanconnectionsform", function(
     $scope.validateDNSForm = function() {
       if (!$scope.ptmForm) return;
       const same =
-        $scope.ptmData.secondaryDNS && $scope.ptmData.secondaryDNS === $scope.ptmData.primaryDNS;
+        $scope.ptmData.secondaryDNS &&
+        $scope.ptmData.secondaryDNS === $scope.ptmData.primaryDNS;
       $scope.ptmForm.$setValidity("dnsConflict", !same);
     };
 
@@ -1231,10 +1566,12 @@ myapp.controller("wan_wanconnectionsform", function(
         const lowerResp = await $http.get(
           URL + `/cgi_get_filterbyparamval?Object=${objName}&LowerLayers=`
         );
-        if (lowerResp.status !== 200 || !lowerResp.data.Objects?.length) return null;
+        if (lowerResp.status !== 200 || !lowerResp.data.Objects?.length)
+          return null;
         const lowerLayer = lowerResp.data.Objects[0].Param[0]?.ParamValue;
         if (!lowerLayer) return null;
-        if (lowerLayer.includes("Device.Ethernet.VLANTermination")) return lowerLayer;
+        if (lowerLayer.includes("Device.Ethernet.VLANTermination"))
+          return lowerLayer;
         return await detectVlanFromLowerLayers(lowerLayer.replace(/\.$/, ""));
       } catch (err) {
         console.warn("detectVlanFromLowerLayers failed for:", objName, err);
@@ -1246,17 +1583,28 @@ myapp.controller("wan_wanconnectionsform", function(
       try {
         if ($scope.internetObject) {
           $scope.editIPInterface = $scope.internetObject.split(",")[0];
-          const response = await $http.get(URL + `/cgi_get?Object=${$scope.editIPInterface}`);
+
+          const response = await $http.get(
+            URL + `/cgi_get?Object=${$scope.editIPInterface}`
+          );
           const objects = response.data["Objects"] || [];
           const ipInterfaceObj =
-            objects.find((o) => o.ObjName === $scope.editIPInterface + ".") || objects[0];
-          const ipInterfaceData = objects.find((o) => o.ObjName.includes(".IPv4Address.")) || null;
+            objects.find((o) => o.ObjName === $scope.editIPInterface + ".") ||
+            objects[0];
+          const ipInterfaceData =
+            objects.find((o) => o.ObjName.includes(".IPv4Address.")) || null;
 
-          const ipLowerLayers = ipInterfaceObj.Param.find((p) => p.ParamName === "LowerLayers")
-            ?.ParamValue;
+          // Load NAT settings
+          await loadNATSettings($scope.editIPInterface);
+
+          const ipLowerLayers = ipInterfaceObj.Param.find(
+            (p) => p.ParamName === "LowerLayers"
+          )?.ParamValue;
           let vlanObjPath = null;
           if (ipLowerLayers) {
-            vlanObjPath = await detectVlanFromLowerLayers(ipLowerLayers.replace(/\.$/, ""));
+            vlanObjPath = await detectVlanFromLowerLayers(
+              ipLowerLayers.replace(/\.$/, "")
+            );
           }
           if (vlanObjPath) {
             try {
@@ -1264,9 +1612,12 @@ myapp.controller("wan_wanconnectionsform", function(
                 URL + `/cgi_get?Object=${vlanObjPath.replace(/\.$/, "")}`
               );
               const vlanData = vlanResponse.data["Objects"]?.[0]?.Param || [];
-              const vlanEnable = vlanData.find((p) => p.ParamName === "Enable")?.ParamValue;
-              const vlanId = vlanData.find((p) => p.ParamName === "VLANID")?.ParamValue;
-              $scope.ptmData.enableVlan = vlanEnable === "true" || vlanEnable === "1" ? "1" : "0";
+              const vlanEnable = vlanData.find((p) => p.ParamName === "Enable")
+                ?.ParamValue;
+              const vlanId = vlanData.find((p) => p.ParamName === "VLANID")
+                ?.ParamValue;
+              $scope.ptmData.enableVlan =
+                vlanEnable === "true" || vlanEnable === "1" ? "1" : "0";
               $scope.ptmData.vlanId = vlanId ? parseInt(vlanId, 10) : "";
             } catch (vlanErr) {
               console.warn("No VLAN data found:", vlanErr);
@@ -1279,8 +1630,9 @@ myapp.controller("wan_wanconnectionsform", function(
           }
 
           if (ipInterfaceData) {
-            const addressingType = ipInterfaceData.Param.find((x) => x.ParamName === "AddressingType")
-              ?.ParamValue;
+            const addressingType = ipInterfaceData.Param.find(
+              (x) => x.ParamName === "AddressingType"
+            )?.ParamValue;
             if (addressingType) {
               switch (addressingType) {
                 case "X_LANTIQ_COM_PPPoE":
@@ -1294,9 +1646,13 @@ myapp.controller("wan_wanconnectionsform", function(
                 case "Static":
                   $scope.ptmData.connectionType = "Static";
                   $scope.ptmData.subnetmask =
-                    ipInterfaceData.Param.find((x) => x.ParamName === "SubnetMask")?.ParamValue || "";
+                    ipInterfaceData.Param.find(
+                      (x) => x.ParamName === "SubnetMask"
+                    )?.ParamValue || "";
                   $scope.ptmData.ipaddress =
-                    ipInterfaceData.Param.find((x) => x.ParamName === "IPAddress")?.ParamValue || "";
+                    ipInterfaceData.Param.find(
+                      (x) => x.ParamName === "IPAddress"
+                    )?.ParamValue || "";
                   await loadStaticDNSData();
                   break;
                 default:
@@ -1304,7 +1660,13 @@ myapp.controller("wan_wanconnectionsform", function(
               }
             }
           }
-          await loadUserDefinedDNS();
+          // Check DNS checkbox if DNS values exist and it's PPPoE
+          if ($scope.ptmData.connectionType === "PPPoE") {
+            await loadUserDefinedDNS();
+            if ($scope.ptmData.primaryDNS || $scope.ptmData.secondaryDNS) {
+              $scope.ptmData.isUserDefinedDNS = true;
+            }
+          }
         }
       } catch (error) {
         console.error("Error initializing connection type:", error);
@@ -1312,7 +1674,11 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     $scope.$watch("ptmData.connectionType", function(newValue, oldValue) {
-      if ($scope.form.selectionMode !== "PTM" && $scope.form.selectionMode !== "ETH") return;
+      if (
+        $scope.form.selectionMode !== "PTM" &&
+        $scope.form.selectionMode !== "ETH"
+      )
+        return;
       if (newValue === oldValue) return;
       if (newValue === "Static") {
         loadStaticDNSData();
@@ -1322,6 +1688,52 @@ myapp.controller("wan_wanconnectionsform", function(
         loadUserPassDataPtm();
       }
     });
+
+    async function loadNATSettings(ipInterface) {
+      try {
+        // Get the NAT settings for this interface
+        const natResponse = await $http.get(
+          URL + "cgi_get?Object=Device.NAT.InterfaceSetting"
+        );
+
+        if (natResponse.data && natResponse.data.Objects) {
+          // Find NAT setting for this specific interface
+          const interfaceNatSetting = natResponse.data.Objects.find((nat) => {
+            const interfaceParam = nat.Param.find(
+              (p) => p.ParamName === "Interface"
+            );
+            return interfaceParam && interfaceParam.ParamValue === ipInterface;
+          });
+
+          if (interfaceNatSetting) {
+            const enableParam = interfaceNatSetting.Param.find(
+              (p) => p.ParamName === "Enable"
+            );
+            const natTypeParam = interfaceNatSetting.Param.find(
+              (p) => p.ParamName === "X_LANTIQ_COM_NATType"
+            );
+
+            // Update PTM data
+            setTimeout(() => {
+              $scope.$apply(() => {
+                if (enableParam) {
+                  $scope.ptmData.enableNAT =
+                    enableParam.ParamValue === "true" ||
+                    enableParam.ParamValue === "1"
+                      ? "1"
+                      : "0";
+                }
+                if (natTypeParam && $scope.ptmData.enableNAT === "1") {
+                  $scope.ptmData.natType = natTypeParam.ParamValue;
+                }
+              });
+            }, 100);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading NAT settings:", error);
+      }
+    }
 
     initializeConnectionType();
   }
@@ -1336,7 +1748,9 @@ myapp.controller("wan_wanconnectionsform", function(
       $("#ajaxLoaderSection").show();
     }
     try {
-      const ipInterfaceData = await $http.get(URL + "cgi_get?Object=" + $scope.DeviceIpInterface);
+      const ipInterfaceData = await $http.get(
+        URL + "cgi_get?Object=" + $scope.DeviceIpInterface
+      );
       processEditModeData(ipInterfaceData.data);
     } catch (error) {
       console.error("Error loading edit mode data:", error);
@@ -1350,11 +1764,16 @@ myapp.controller("wan_wanconnectionsform", function(
   function processEditModeData(data) {
     const ipObj = data["Objects"][0];
     const ipParams = ipObj.Param;
-    const getParam = (name) => ipParams.find((x) => x.ParamName === name)?.ParamValue || "";
-    $scope.X_LANTIQ_COM_DefaultGateway = getParam("X_LANTIQ_COM_DefaultGateway");
+    const getParam = (name) =>
+      ipParams.find((x) => x.ParamName === name)?.ParamValue || "";
+    $scope.X_LANTIQ_COM_DefaultGateway = getParam(
+      "X_LANTIQ_COM_DefaultGateway"
+    );
     let X_LANTIQ_COM_Description = "";
     for (let obj of data["Objects"]) {
-      const descParam = obj.Param.find((x) => x.ParamName === "X_LANTIQ_COM_Description");
+      const descParam = obj.Param.find(
+        (x) => x.ParamName === "X_LANTIQ_COM_Description"
+      );
       if (descParam && descParam.ParamValue) {
         X_LANTIQ_COM_Description = descParam.ParamValue;
         break;
@@ -1378,10 +1797,45 @@ myapp.controller("wan_wanconnectionsform", function(
     $scope.dataReady = true;
   }
 
+  // Add this to the main controller, after $scope.form definition
+  $scope.showDNSFields = function() {
+    if ($scope.form.selectionMode === "ATM") {
+      return (
+        $scope.atmData.isUserDefinedDNS &&
+        $scope.atmData.connectionType !== "Bridge" &&
+        $scope.atmData.connectionType !== ""
+      );
+    } else if (
+      $scope.form.selectionMode === "PTM" ||
+      $scope.form.selectionMode === "ETH"
+    ) {
+      return (
+        $scope.ptmData.isUserDefinedDNS &&
+        $scope.ptmData.connectionType !== "Bridge" &&
+        $scope.ptmData.connectionType !== ""
+      );
+    }
+    return false;
+  };
+
+  $scope.$watch("form.selectionMode", function(newMode, oldMode) {
+    if (newMode !== oldMode) {
+      if (newMode === "PTM" || newMode === "ETH") {
+        // Reset to PTM/ETH connection types
+        $scope.connectionTypes = ["PPPoE", "Bridge", "DHCP", "Static"];
+        $scope.resetPtmForm();
+      }
+    }
+  });
+
   // ------------------------------------------------------------
   // Bootstrap
   // ------------------------------------------------------------
-  setupAtmLogic();
-  setupPtmLogic();
-  initInterfaceAndDropdown();
+  async function bootstrap() {
+    await initInterfaceAndDropdown();
+    setupAtmLogic();
+    setupPtmLogic();
+  }
+
+  bootstrap();
 });
