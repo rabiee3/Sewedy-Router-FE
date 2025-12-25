@@ -10,15 +10,15 @@ myapp.controller("wan_wanconnectionsform", function(
   // ------------------------------------------------------------
   $scope.form = {
     accessType: "",
-    encapsulationMode: "",
+    encapsulationMode: "PPPoE",
     protocolType: "",
     wanMode: "",
     enableVlan: "0",
     vlanId: "",
-    mtu_mru_size: 1492,
-    policy802:"",
-    value802:0,
-    ipAcqMode:"",
+    mtu_mru_size: "1492",
+    policy802: "",
+    value802: 0,
+    ipAcqMode: "PPPoE",
     username: "",
     password: "",
     mac_address: "",
@@ -42,15 +42,11 @@ myapp.controller("wan_wanconnectionsform", function(
     selectedATMLink: null,
   };
   $scope.serviceTypes = ["TR069_Internet", "IPTV"];
-  $scope.policies802 = [
-    "Custom",
-    "From IP",
-    "DSCP"
-  ];
+  $scope.policies802 = ["Custom", "From IP", "DSCP"];
   $scope.encapsulationOptions = ["LLC", "VCMUX"];
   $scope.atmQosClassOptions = ["UBR", "CBR", "NRT-VBR", "RT-VBR", "UBR+"];
-  $scope.ipAcqModes = ["PPPoE","DHCP", "Static","Bridge"];
-
+  $scope.ipAcqModes = ["DHCP", "Static", "Bridge"];
+  $scope.values802 = [1, 2, 3, 4, 5, 6, 7];
   $scope.internetObject = $routeParams.id;
   $scope.isEditMode = !!$scope.internetObject;
   $scope.dataReady = false;
@@ -1653,10 +1649,7 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     $scope.$watch("ptmData.connectionType", function(newValue, oldValue) {
-      if (
-        $scope.form.accessType !== "PTM" &&
-        $scope.form.accessType !== "ETH"
-      )
+      if ($scope.form.accessType !== "PTM" && $scope.form.accessType !== "ETH")
         return;
       if (newValue === oldValue) return;
       if (newValue === "Static") {
@@ -1780,18 +1773,18 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.showDNSFields = function() {
     if ($scope.form.accessType === "ATM") {
       return (
-        $scope.atmData.isUserDefinedDNS &&
-        $scope.atmData.connectionType !== "Bridge" &&
-        $scope.atmData.connectionType !== ""
+        $scope.form.isUserDefinedDNS &&
+        $scope.form.ipAcqMode !== "Bridge" &&
+        $scope.form.ipAcqMode !== ""
       );
     } else if (
       $scope.form.accessType === "PTM" ||
       $scope.form.accessType === "ETH"
     ) {
       return (
-        $scope.ptmData.isUserDefinedDNS &&
-        $scope.ptmData.connectionType !== "Bridge" &&
-        $scope.ptmData.connectionType !== ""
+        $scope.form.isUserDefinedDNS &&
+        $scope.form.ipAcqMode !== "Bridge" &&
+        $scope.form.ipAcqMode !== ""
       );
     }
     return false;
