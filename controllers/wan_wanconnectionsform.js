@@ -9,8 +9,48 @@ myapp.controller("wan_wanconnectionsform", function(
   // Shared base state
   // ------------------------------------------------------------
   $scope.form = {
-    selectionMode: "",
+    accessType: "",
+    encapsulationMode: "",
+    protocolType: "",
+    wanMode: "",
+    enableVlan: "0",
+    vlanId: "",
+    mtu_mru_size: 1492,
+    policy802:"",
+    value802:0,
+    ipAcqMode:"",
+    username: "",
+    password: "",
+    mac_address: "",
+    macCloneEnabled: false,
+    ipv6enable: "0",
+    defaultGateway: "1",
+    isUserDefinedDNS: false,
+    natType: "Port Restricted Cone NAT",
+    primaryDNS: "",
+    secondaryDNS: "",
+    ipaddress: "",
+    subnetmask: "",
+    gatewayaddress: "",
+    encapsulation: "LLC",
+    atmQosClass: "UBR",
+    peakCellRate: null,
+    maximumBSize: null,
+    sustainableCellRate: null,
+    vpiVci: "",
+    selectedBridge: null,
+    selectedATMLink: null,
   };
+  $scope.serviceTypes = ["TR069_Internet", "IPTV"];
+  $scope.policies802 = [
+    "Custom",
+    "From IP",
+    "DSCP"
+  ];
+  $scope.encapsulationOptions = ["LLC", "VCMUX"];
+  $scope.atmQosClassOptions = ["UBR", "CBR", "NRT-VBR", "RT-VBR", "UBR+"];
+  $scope.ipAcqModes = ["PPPoE","DHCP", "Static","Bridge"];
+
   $scope.internetObject = $routeParams.id;
   $scope.isEditMode = !!$scope.internetObject;
   $scope.dataReady = false;
@@ -22,70 +62,9 @@ myapp.controller("wan_wanconnectionsform", function(
     username: /^\d+$/,
     password: /^\d+$/,
     macAddress: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/,
-    mtuSize: /^\d+$/,
+    mtu_mru_size: /^\d+$/,
     ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
   };
-
-  // ------------------------------------------------------------
-  // Models
-  // ------------------------------------------------------------
-  function defaultPtm() {
-    return {
-      connectionType: "PPPoE",
-      username: "",
-      password: "",
-      mac_address: "",
-      mtu_size: "1492",
-      macCloneEnabled: false,
-      enableVlan: "0",
-      vlanId: "",
-      ipv6enable: "0",
-      defaultGateway: "1",
-      isUserDefinedDNS: false,
-      primaryDNS: "",
-      secondaryDNS: "",
-      ipaddress: "",
-      subnetmask: "",
-      gatewayaddress: "",
-      enableNAT: "1",
-      natType: "Port Restricted Cone NAT",
-    };
-  }
-
-  function defaultAtm() {
-    return {
-      connectionType: "",
-      username: "",
-      password: "",
-      mac_address: "",
-      mtu_size: 1492,
-      macCloneEnabled: false,
-      enableVlan: "0",
-      ipv6enable: "0",
-      defaultGateway: "1",
-      linkType: "",
-      encapsulation: "LLC",
-      atmQosClass: "UBR",
-      peakCellRate: null,
-      maximumBSize: null,
-      sustainableCellRate: null,
-      vpiVci: "",
-      isUserDefinedDNS: false,
-      primaryDNS: "",
-      secondaryDNS: "",
-      ipaddress: "",
-      subnetmask: "",
-      gatewayaddress: "",
-      enableNAT: "1",
-      natType: "Port Restricted Cone NAT",
-      vlanId: "",
-      selectedBridge: null,
-      selectedATMLink: null,
-    };
-  }
-
-  $scope.ptmData = defaultPtm();
-  $scope.atmData = defaultAtm();
 
   // ------------------------------------------------------------
   // Shared submit / navigation
@@ -97,11 +76,11 @@ myapp.controller("wan_wanconnectionsform", function(
 
     // Determine active form based on selectionMode
     let activeForm;
-    if ($scope.form.selectionMode === "ATM") {
+    if ($scope.form.accessType === "ATM") {
       activeForm = "atmForm";
     } else if (
-      $scope.form.selectionMode === "PTM" ||
-      $scope.form.selectionMode === "ETH"
+      $scope.form.accessType === "PTM" ||
+      $scope.form.accessType === "ETH"
     ) {
       activeForm = "ptmForm";
     } else {
@@ -175,7 +154,7 @@ myapp.controller("wan_wanconnectionsform", function(
     $scope.ethInterfaceLink = "";
 
     $scope.$watch("atmData.linkType", function(newVal) {
-      if ($scope.form.selectionMode !== "ATM") return;
+      if ($scope.form.accessType !== "ATM") return;
       $scope.connectionTypes = $scope.connectionTypeOptionsMap[newVal] || [];
       if (newVal) {
         initializeAtmConnectionType();
@@ -242,7 +221,7 @@ myapp.controller("wan_wanconnectionsform", function(
     };
 
     async function loadAtmLinksAndQos() {
-      if ($scope.form.selectionMode !== "ATM") return;
+      if ($scope.form.accessType !== "ATM") return;
       if (window.$ && $("#ajaxLoaderSection").length) {
         $("#ajaxLoaderSection").show();
       }
@@ -860,7 +839,7 @@ myapp.controller("wan_wanconnectionsform", function(
     };
 
     $scope.$watch("atmData.connectionType", function(newValue, oldValue) {
-      if ($scope.form.selectionMode !== "ATM") return;
+      if ($scope.form.accessType !== "ATM") return;
       if (newValue === oldValue) return;
       if (newValue === "Static") {
         loadStaticDNSDataAtm();
@@ -1464,7 +1443,7 @@ myapp.controller("wan_wanconnectionsform", function(
         $("#ajaxLoaderSection").show();
         const randomValue = ensureRandomValue();
         let wanLayer = "Device.PTM.Link.1.";
-        if ($scope.form && $scope.form.selectionMode === "ETH") {
+        if ($scope.form && $scope.form.accessType === "ETH") {
           wanLayer = "Device.Ethernet.Interface.5.";
         } else {
           const lowerLayerRes = await $http.get(
@@ -1675,8 +1654,8 @@ myapp.controller("wan_wanconnectionsform", function(
 
     $scope.$watch("ptmData.connectionType", function(newValue, oldValue) {
       if (
-        $scope.form.selectionMode !== "PTM" &&
-        $scope.form.selectionMode !== "ETH"
+        $scope.form.accessType !== "PTM" &&
+        $scope.form.accessType !== "ETH"
       )
         return;
       if (newValue === oldValue) return;
@@ -1781,17 +1760,17 @@ myapp.controller("wan_wanconnectionsform", function(
     }
     $scope.X_LANTIQ_COM_Description = X_LANTIQ_COM_Description;
     if (X_LANTIQ_COM_Description.includes("PTM")) {
-      $scope.form.selectionMode = "PTM";
+      $scope.form.accessType = "PTM";
     } else if (X_LANTIQ_COM_Description.includes("ATM")) {
-      $scope.form.selectionMode = "ATM";
+      $scope.form.accessType = "ATM";
     } else if (X_LANTIQ_COM_Description.includes("ETH")) {
-      $scope.form.selectionMode = "ETH";
+      $scope.form.accessType = "ETH";
     }
   }
 
   async function initInterfaceAndDropdown() {
     if (!$scope.isEditMode) {
-      $scope.form.selectionMode = "PTM";
+      $scope.form.accessType = "PTM";
     }
     await loadEditModeData();
     $scope.dataReady = true;
@@ -1799,15 +1778,15 @@ myapp.controller("wan_wanconnectionsform", function(
 
   // Add this to the main controller, after $scope.form definition
   $scope.showDNSFields = function() {
-    if ($scope.form.selectionMode === "ATM") {
+    if ($scope.form.accessType === "ATM") {
       return (
         $scope.atmData.isUserDefinedDNS &&
         $scope.atmData.connectionType !== "Bridge" &&
         $scope.atmData.connectionType !== ""
       );
     } else if (
-      $scope.form.selectionMode === "PTM" ||
-      $scope.form.selectionMode === "ETH"
+      $scope.form.accessType === "PTM" ||
+      $scope.form.accessType === "ETH"
     ) {
       return (
         $scope.ptmData.isUserDefinedDNS &&
@@ -1818,7 +1797,7 @@ myapp.controller("wan_wanconnectionsform", function(
     return false;
   };
 
-  $scope.$watch("form.selectionMode", function(newMode, oldMode) {
+  $scope.$watch("form.accessType", function(newMode, oldMode) {
     if (newMode !== oldMode) {
       if (newMode === "PTM" || newMode === "ETH") {
         // Reset to PTM/ETH connection types

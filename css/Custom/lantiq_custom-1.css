@@ -26,6 +26,7 @@ button, button:focus, button:active,
     width: 600px;
 }
 
+label{margin-bottom: 0;}
 
 hr{background:#dedede; }
 /*Custom fonts ROBOTO ,Tahoma */
@@ -602,7 +603,7 @@ a.menuitem-highlight:before {
     overflow: hidden;
     width: 240px;
 }
-.dropdown-toggle.small{height: 2rem !important;}
+.dropdown-toggle.small,.form-control.small{height: 2rem !important;}
 .dropdown-toggle > i{font-size: 18px;}
 .language {margin-top:16px; }
 ul.notification_ul{padding-left:0px;}
@@ -763,6 +764,12 @@ a.menuitem-highlight .systemconfig{background:url("../../images/icons/syslog-1.p
     margin-bottom: 10px;
     padding: 0 10px 6px 8px;margin:0px 0px 8px 0px; 
 }
+
+.form-header{
+    padding: 7px 15px;
+    background: #5c2d91;
+    color: white;
+}
 /*.block-heading-two h3 span {
     border-color: #32c8de ! important;
     border-bottom: 3px solid;
@@ -863,7 +870,7 @@ connectstatus{
 /*.checkbox-listview label{line-height:15px;}*/
 .checkbox-scroll-vr{max-height:200px;height:auto;overflow-y: scroll;overflow: auto;border:1px solid #dedede;padding:5px;}
 .checkbox-scroll-vr p{margin-bottom:5px !important;}
-.editableselect{width:20px;left:-12px;z-index:3;background-color:#f6f6f6 !important;text-align:center;}
+.editableselect{width:20px;left:0px;z-index:3;background-color:#f6f6f6 !important;text-align:center;}
 .editableselect span.caret-icon{text-align:center;margin-left:-4px !important;color:#000000;}
 /*Media Queiries */
 @media (max-width: 480px){
@@ -1932,7 +1939,7 @@ ul.weekdayslist li.active a span{background:#5C2D91;color:#ffffff; }
     content:" *";
     color:red;
 }
-[type="checkbox"] + label.checkbox_left_align{min-width:215px; padding-left:0px;padding-right:35px; }
+[type="checkbox"] + label.checkbox_left_align{min-width:calc(33.33333333% + 28px); padding-left:0px;padding-right:35px; }
 [type="checkbox"] + label.checkbox_left_align::before{right:0;left:auto;padding-left:0px;margin-top: 1px; }
 [type="checkbox"]:checked + label.checkbox_left_align::before{right:12px;left:auto;}
 .formlalignment .div1{}
