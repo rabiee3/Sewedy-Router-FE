@@ -584,8 +584,11 @@ myapp.controller("wan_wanconnectionsform", function(
 
     // ==================== ATM-SPECIFIC OBJECTS ====================
     if (isATM) {
-      // Create ATM Link if not selected from existing
-      if (!$scope.form.selectedATMLink) {
+      // Check if we should create a new ATM link or modify existing
+      const isNewVpiVci = !$scope.isExistingVpiVci($scope.form.vpiVci);
+
+      if (isNewVpiVci || !$scope.form.selectedATMLink) {
+        // Create new ATM Link
         request += `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${encodeParam(
           atmAlias
         )}`;
@@ -594,14 +597,27 @@ myapp.controller("wan_wanconnectionsform", function(
         request += `&Encapsulation=${encodeParam($scope.form.encapsulation)}`;
         request += `&LinkType=${encodeParam($scope.form.linkType)}`;
         request += `&`;
+
+        // Set wanLayer to the new ATM link
+        wanLayer = `Device.ATM.Link.${atmAlias}`;
+
+        // Create QoS for new link
+        request += `Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Add`;
+      } else {
+        // Modify existing ATM Link
+        const atmLinkName = $scope.form.selectedATMLink.ObjName;
+        request += `Object=${encodeParam(atmLinkName)}&Operation=Modify`;
+        request += `&DestinationAddress=${encodeParam($scope.form.vpiVci)}`;
+        request += `&Encapsulation=${encodeParam($scope.form.encapsulation)}`;
+        request += `&LinkType=${encodeParam($scope.form.linkType)}`;
+        request += `&`;
+
+        // Modify existing QoS
+        const qosObjName = `${atmLinkName}.QoS`;
+        request += `Object=${encodeParam(qosObjName)}&Operation=Modify`;
       }
 
-      // ATM QoS Settings
-      const qosObjName = $scope.form.selectedATMLink
-        ? `${$scope.form.selectedATMLink.ObjName}.QoS`
-        : `Device.ATM.Link.${atmAlias}.QoS`;
-
-      request += `Object=${encodeParam(qosObjName)}&Operation=Modify`;
+      // Common QoS settings (for both new and existing)
       request += `&QoSClass=${encodeParam($scope.form.atmQosClass)}`;
       if ($scope.form.peakCellRate)
         request += `&PeakCellRate=${encodeParam($scope.form.peakCellRate)}`;
