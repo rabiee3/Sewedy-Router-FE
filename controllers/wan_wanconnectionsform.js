@@ -133,28 +133,7 @@ myapp.controller("wan_wanconnectionsform", function(
 
     if (linkObj) {
       // Existing link - load its QoS settings
-      let qosObj = null;
-      const linkNumMatch = linkObj.ObjName.match(/Device\.ATM\.Link\.(\d+)$/);
-      if (linkNumMatch) {
-        const qosObjName = `Device.ATM.Link.${linkNumMatch[1]}.QoS`;
-        qosObj = $scope.atmLinksQos.find((obj) => obj.ObjName === qosObjName);
-      }
-
-      if (qosObj) {
-        $scope.form.atmQosClass = getAtmParamValue(qosObj, "QoSClass");
-        $scope.form.peakCellRate =
-          parseInt(getAtmParamValue(qosObj, "PeakCellRate")) || "";
-        $scope.form.maximumBSize =
-          parseInt(getAtmParamValue(qosObj, "MaximumBurstSize")) || "";
-        $scope.form.sustainableCellRate =
-          parseInt(getAtmParamValue(qosObj, "SustainableCellRate")) || "";
-      } else {
-        // Default values for existing link without QoS
-        $scope.form.atmQosClass = "UBR";
-        $scope.form.peakCellRate = "";
-        $scope.form.maximumBSize = "";
-        $scope.form.sustainableCellRate = "";
-      }
+      loadQoSDataForLink(linkObj);
 
       // Load other ATM link properties
       $scope.form.encapsulation =
@@ -171,6 +150,35 @@ myapp.controller("wan_wanconnectionsform", function(
       $scope.form.linkType = "EoA";
     }
   };
+
+  // Helper function to load QoS data for a specific link
+  function loadQoSDataForLink(linkObj) {
+    if (!linkObj) return;
+
+    const linkNumMatch = linkObj.ObjName.match(/Device\.ATM\.Link\.(\d+)$/);
+    if (linkNumMatch) {
+      const qosObjName = `Device.ATM.Link.${linkNumMatch[1]}.QoS`;
+      const qosObj = $scope.atmLinksQos.find(
+        (obj) => obj.ObjName === qosObjName
+      );
+
+      if (qosObj) {
+        $scope.form.atmQosClass = getAtmParamValue(qosObj, "QoSClass") || "UBR";
+        $scope.form.peakCellRate =
+          parseInt(getAtmParamValue(qosObj, "PeakCellRate")) || "";
+        $scope.form.maximumBSize =
+          parseInt(getAtmParamValue(qosObj, "MaximumBurstSize")) || "";
+        $scope.form.sustainableCellRate =
+          parseInt(getAtmParamValue(qosObj, "SustainableCellRate")) || "";
+      } else {
+        // Default values for existing link without QoS
+        $scope.form.atmQosClass = "UBR";
+        $scope.form.peakCellRate = "";
+        $scope.form.maximumBSize = "";
+        $scope.form.sustainableCellRate = "";
+      }
+    }
+  }
 
   $scope.resetFormValidation = function() {
     if ($scope.customWanForm) {
@@ -348,7 +356,7 @@ myapp.controller("wan_wanconnectionsform", function(
   async function loadAtmLinksAndQos() {
     if ($scope.form.accessType !== "ATM") return;
 
-    $scope.dataReady = false; // Set to false while loading
+    $scope.dataReady = false;
 
     try {
       const response = await $http.get(URL + "cgi_get?Object=Device.ATM.Link");
@@ -366,8 +374,12 @@ myapp.controller("wan_wanconnectionsform", function(
         })
         .filter(Boolean);
 
-      // Select first VPI/VCI if available
-      if ($scope.vpiVciOptions.length > 0 && !$scope.form.vpiVci) {
+      // Don't auto-select first VPI/VCI in edit mode - let traceAndLoadATMLinkData handle it
+      if (
+        !$scope.isEditMode &&
+        $scope.vpiVciOptions.length > 0 &&
+        !$scope.form.vpiVci
+      ) {
         $scope.selectVpiVci($scope.vpiVciOptions[0]);
       }
 
@@ -379,7 +391,7 @@ myapp.controller("wan_wanconnectionsform", function(
       console.error("Failed to load ATM Link/QoS objects", err);
       $scope.vpiVciOptions = [];
     } finally {
-      $scope.dataReady = true; // Set to true when done (or failed)
+      $scope.dataReady = true;
     }
   }
 
@@ -505,6 +517,11 @@ myapp.controller("wan_wanconnectionsform", function(
 
         // Load NAT settings
         await loadNATSettings();
+
+        // If this is an ATM connection, trace and load the ATM link data
+        if ($scope.form.accessType === "ATM") {
+          await traceAndLoadATMLinkData($scope.editIPInterface);
+        }
       }
     } catch (error) {
       console.error("Error loading edit mode data:", error);
@@ -552,6 +569,88 @@ myapp.controller("wan_wanconnectionsform", function(
       }
     } catch (error) {
       console.error("Error loading NAT settings:", error);
+    }
+  }
+
+  async function traceAndLoadATMLinkData(ipInterface) {
+    try {
+      // Trace the connection chain to find the ATM link
+      const atmLinkObj = await traceToATMLink(ipInterface);
+
+      if (atmLinkObj) {
+        // Load the ATM link properties
+        const vpiVci = getAtmParamValue(atmLinkObj, "DestinationAddress");
+        const encapsulation = getAtmParamValue(atmLinkObj, "Encapsulation");
+        const linkType = getAtmParamValue(atmLinkObj, "LinkType");
+
+        // Set form values
+        $scope.form.vpiVci = vpiVci || "";
+        $scope.form.encapsulation = encapsulation || "LLC";
+        $scope.form.linkType = linkType || "EoA";
+
+        // Find this link in our loaded ATM links
+        const existingLink = $scope.atmLinks.find((link) => {
+          const addr = getAtmParamValue(link, "DestinationAddress");
+          return addr === vpiVci;
+        });
+
+        if (existingLink) {
+          $scope.form.selectedATMLink = existingLink;
+
+          // Load QoS data for this link
+          const linkNumMatch = existingLink.ObjName.match(
+            /Device\.ATM\.Link\.(\d+)$/
+          );
+          if (linkNumMatch) {
+            const qosObjName = `Device.ATM.Link.${linkNumMatch[1]}.QoS`;
+            const qosObj = $scope.atmLinksQos.find(
+              (obj) => obj.ObjName === qosObjName
+            );
+
+            if (qosObj) {
+              $scope.form.atmQosClass =
+                getAtmParamValue(qosObj, "QoSClass") || "UBR";
+              $scope.form.peakCellRate =
+                parseInt(getAtmParamValue(qosObj, "PeakCellRate")) || "";
+              $scope.form.maximumBSize =
+                parseInt(getAtmParamValue(qosObj, "MaximumBurstSize")) || "";
+              $scope.form.sustainableCellRate =
+                parseInt(getAtmParamValue(qosObj, "SustainableCellRate")) || "";
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error tracing ATM link data:", error);
+    }
+  }
+
+  async function traceToATMLink(objPath, visited = []) {
+    try {
+      if (!objPath || visited.includes(objPath)) return null;
+      visited.push(objPath);
+
+      const res = await $http.get(`${URL}cgi_get_nosubobj?Object=${objPath}`);
+      const obj = res.data.Objects?.[0];
+      if (!obj) return null;
+
+      // Check if this is an ATM link
+      if (
+        obj.ObjName.includes("Device.ATM.Link") &&
+        !obj.ObjName.includes(".QoS")
+      ) {
+        return obj;
+      }
+
+      // Check LowerLayers to trace down
+      const lowerParam = obj.Param.find((p) => p.ParamName === "LowerLayers");
+      if (!lowerParam || !lowerParam.ParamValue) return null;
+
+      const lower = lowerParam.ParamValue.replace(/\.$/, "");
+      return await traceToATMLink(lower, visited);
+    } catch (err) {
+      console.error("Error tracing to ATM link:", err);
+      return null;
     }
   }
 
@@ -951,14 +1050,16 @@ myapp.controller("wan_wanconnectionsform", function(
   // Initialize
   // ------------------------------------------------------------
   async function initialize() {
-    // Load initial data
-    await loadEditModeData();
-
-    // Load data based on access type
+    // Load ATM links first (for both new and edit modes)
     if ($scope.form.accessType === "ATM") {
       await loadAtmLinksAndQos();
+    }
+
+    // Load edit mode data if editing
+    if ($scope.isEditMode) {
+      await loadEditModeData();
     } else {
-      $scope.dataReady = true; // For PTM/ETH, we're ready immediately
+      $scope.dataReady = true; // For new connections, we're ready
     }
 
     // Load bridge connections if needed
