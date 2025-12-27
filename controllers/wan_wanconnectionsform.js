@@ -113,37 +113,76 @@ myapp.controller("wan_wanconnectionsform", function(
     return randomValue;
   }
 
+  $scope.isExistingVpiVci = function(vpiVci) {
+    if (!vpiVci || !$scope.vpiVciOptions.length) return false;
+    return $scope.vpiVciOptions.includes(vpiVci);
+  };
+
   $scope.selectVpiVci = function(vpiVci) {
     $scope.form.vpiVci = vpiVci;
+
+    // Check if this is an existing VPI/VCI
     const linkObj = $scope.atmLinks.find((obj) => {
       const addrParam = obj.Param.find(
         (p) => p.ParamName === "DestinationAddress"
       );
       return addrParam && addrParam.ParamValue === vpiVci;
     });
+
     $scope.form.selectedATMLink = linkObj;
 
-    let qosObj = null;
     if (linkObj) {
+      // Existing link - load its QoS settings
+      let qosObj = null;
       const linkNumMatch = linkObj.ObjName.match(/Device\.ATM\.Link\.(\d+)$/);
       if (linkNumMatch) {
         const qosObjName = `Device.ATM.Link.${linkNumMatch[1]}.QoS`;
         qosObj = $scope.atmLinksQos.find((obj) => obj.ObjName === qosObjName);
       }
-    }
-    if (qosObj) {
-      $scope.form.atmQosClass = getAtmParamValue(qosObj, "QoSClass");
-      $scope.form.peakCellRate =
-        parseInt(getAtmParamValue(qosObj, "PeakCellRate")) || "";
-      $scope.form.maximumBSize =
-        parseInt(getAtmParamValue(qosObj, "MaximumBurstSize")) || "";
-      $scope.form.sustainableCellRate =
-        parseInt(getAtmParamValue(qosObj, "SustainableCellRate")) || "";
+
+      if (qosObj) {
+        $scope.form.atmQosClass = getAtmParamValue(qosObj, "QoSClass");
+        $scope.form.peakCellRate =
+          parseInt(getAtmParamValue(qosObj, "PeakCellRate")) || "";
+        $scope.form.maximumBSize =
+          parseInt(getAtmParamValue(qosObj, "MaximumBurstSize")) || "";
+        $scope.form.sustainableCellRate =
+          parseInt(getAtmParamValue(qosObj, "SustainableCellRate")) || "";
+      } else {
+        // Default values for existing link without QoS
+        $scope.form.atmQosClass = "UBR";
+        $scope.form.peakCellRate = "";
+        $scope.form.maximumBSize = "";
+        $scope.form.sustainableCellRate = "";
+      }
+
+      // Load other ATM link properties
+      $scope.form.encapsulation =
+        getAtmParamValue(linkObj, "Encapsulation") || "LLC";
+      $scope.form.linkType = getAtmParamValue(linkObj, "LinkType") || "EoA";
     } else {
+      // New VPI/VCI - set default values
+      $scope.form.selectedATMLink = null;
       $scope.form.atmQosClass = "UBR";
       $scope.form.peakCellRate = "";
       $scope.form.maximumBSize = "";
       $scope.form.sustainableCellRate = "";
+      $scope.form.encapsulation = "LLC";
+      $scope.form.linkType = "EoA";
+    }
+  };
+
+  $scope.resetFormValidation = function() {
+    if ($scope.customWanForm) {
+      // Reset touched state
+      $scope.customWanForm.$setUntouched();
+      $scope.customWanForm.$setPristine();
+
+      // Reset ATM form if it exists
+      if ($scope.customWanForm.atmForm) {
+        $scope.customWanForm.atmForm.$setUntouched();
+        $scope.customWanForm.atmForm.$setPristine();
+      }
     }
   };
 
@@ -179,6 +218,34 @@ myapp.controller("wan_wanconnectionsform", function(
       $scope.form.ipAcqMode = "DHCP";
     }
   });
+
+  // ------------------------------------------------------------
+  // Watch for VPI/VCI Input
+  // ------------------------------------------------------------
+  $scope.$watch("form.vpiVci", function(newVal, oldVal) {
+    if (newVal && newVal !== oldVal && $scope.form.accessType === "ATM") {
+      // Check if this is a manual entry (not from dropdown selection)
+      if (!$scope.isExistingVpiVci(newVal)) {
+        // Manual entry of new VPI/VCI - treat as new link
+        $scope.form.selectedATMLink = null;
+        // Keep current form values for encapsulation, linkType, etc.
+        // or set defaults if empty
+        if (!$scope.form.encapsulation) $scope.form.encapsulation = "LLC";
+        if (!$scope.form.linkType) $scope.form.linkType = "EoA";
+        if (!$scope.form.atmQosClass) $scope.form.atmQosClass = "UBR";
+      }
+    }
+  });
+
+  // Add this function to handle manual VPI/VCI changes
+  $scope.onVpiVciChange = function() {
+    if ($scope.form.accessType === "ATM" && $scope.form.vpiVci) {
+      if (!$scope.isExistingVpiVci($scope.form.vpiVci)) {
+        // This is a new VPI/VCI, not in the dropdown
+        $scope.form.selectedATMLink = null;
+      }
+    }
+  };
 
   // ------------------------------------------------------------
   // Show/hide logic
@@ -281,6 +348,8 @@ myapp.controller("wan_wanconnectionsform", function(
   async function loadAtmLinksAndQos() {
     if ($scope.form.accessType !== "ATM") return;
 
+    $scope.dataReady = false; // Set to false while loading
+
     try {
       const response = await $http.get(URL + "cgi_get?Object=Device.ATM.Link");
       const objects = response.data.Objects || [];
@@ -301,9 +370,16 @@ myapp.controller("wan_wanconnectionsform", function(
       if ($scope.vpiVciOptions.length > 0 && !$scope.form.vpiVci) {
         $scope.selectVpiVci($scope.vpiVciOptions[0]);
       }
+
+      // Ensure form has default values for required ATM fields
+      if (!$scope.form.encapsulation) $scope.form.encapsulation = "LLC";
+      if (!$scope.form.linkType) $scope.form.linkType = "EoA";
+      if (!$scope.form.atmQosClass) $scope.form.atmQosClass = "UBR";
     } catch (err) {
       console.error("Failed to load ATM Link/QoS objects", err);
       $scope.vpiVciOptions = [];
+    } finally {
+      $scope.dataReady = true; // Set to true when done (or failed)
     }
   }
 
@@ -482,247 +558,108 @@ myapp.controller("wan_wanconnectionsform", function(
   // ------------------------------------------------------------
   // Request Building Functions
   // ------------------------------------------------------------
-  function buildRequestData() {
+
+  function buildRequest() {
     const randomValue = generateRandomValue();
     let request = "";
-
-    if ($scope.form.accessType === "ATM") {
-      request = buildATMRequest(randomValue);
-    } else if (
-      $scope.form.accessType === "PTM" ||
-      $scope.form.accessType === "ETH"
-    ) {
-      request = buildPTMRequest(randomValue);
-    }
-
-    return request;
-  }
-
-  function buildATMRequest(randomValue) {
-    let request = "";
-    const atmAlias = `cpe-WEB-ATMLink-${randomValue}`;
     const ethAlias = `cpe-WEB-EthernetLink-${randomValue}`;
-    const pppAlias = `cpe-WEB-PPPInterface-${randomValue}`;
     const ipAlias = `cpe-WEB-IPInterface-${randomValue}`;
+    const pppAlias = `cpe-WEB-PPPInterface-${randomValue}`;
 
-    // Create ATM Link if not selected from existing
-    if (!$scope.form.selectedATMLink) {
-      request += `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${encodeParam(
-        atmAlias
-      )}`;
-      request += `&LowerLayers=Device.DSL.Line.1.`;
-      request += `&DestinationAddress=${encodeParam($scope.form.vpiVci)}`;
-      request += `&Encapsulation=${encodeParam($scope.form.encapsulation)}`;
-      request += `&LinkType=${encodeParam($scope.form.linkType)}`;
-      request += `&`;
-    }
+    // Determine WAN layer and ATM-specific settings
+    let wanLayer = "";
+    let atmAlias = "";
+    let isATM = $scope.form.accessType === "ATM";
 
-    // ATM QoS Settings
-    const qosObjName = $scope.form.selectedATMLink
-      ? `${$scope.form.selectedATMLink.ObjName}.QoS`
-      : `Device.ATM.Link.${atmAlias}.QoS`;
-
-    request += `Object=${encodeParam(qosObjName)}&Operation=Modify`;
-    request += `&QoSClass=${encodeParam($scope.form.atmQosClass)}`;
-    if ($scope.form.peakCellRate)
-      request += `&PeakCellRate=${encodeParam($scope.form.peakCellRate)}`;
-    if ($scope.form.maximumBSize)
-      request += `&MaximumBurstSize=${encodeParam($scope.form.maximumBSize)}`;
-    if ($scope.form.sustainableCellRate)
-      request += `&SustainableCellRate=${encodeParam(
-        $scope.form.sustainableCellRate
-      )}`;
-    request += `&`;
-
-    // IP Interface
-    request += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(
-      ipAlias
-    )}`;
-
-    // Lower layers based on connection type
-    if ($scope.form.enableVlan == "1" && $scope.form.wanMode === "BridgedWan") {
-      request += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomValue}`;
-    } else if (
-      $scope.form.ipAcqMode === "DHCP" ||
-      $scope.form.ipAcqMode === "Static"
-    ) {
-      request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
-    } else if ($scope.form.ipAcqMode === "PPPoE") {
-      request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-    }
-
-    request += `&X_LANTIQ_COM_DefaultGateway=${
-      $scope.form.defaultGateway === "1" ? "true" : "false"
-    }`;
-    request += `&IPv6Enable=false`;
-    request += `&`;
-
-    // Ethernet Link
-    request += `Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${encodeParam(
-      ethAlias
-    )}`;
-    if ($scope.form.wanMode === "BridgedWan") {
-      request += `&LowerLayers=${encodeParam(
-        $scope.form.selectedBridge.objName
-      )}.Port.cpe-WEB-BridgingBridge${
-        $scope.form.selectedBridge.id
-      }Port-${randomValue}`;
-    } else {
-      const atmLayer = $scope.form.selectedATMLink
+    if (isATM) {
+      atmAlias = `cpe-WEB-ATMLink-${randomValue}`;
+      wanLayer = $scope.form.selectedATMLink
         ? $scope.form.selectedATMLink.ObjName
         : `Device.ATM.Link.${atmAlias}`;
-      request += `&LowerLayers=${encodeParam(atmLayer)}`;
-    }
-
-    if ($scope.form.macCloneEnabled && $scope.form.mac_address) {
-      request += `&X_INTEL_COM_MACCloning=true&MACAddress=${encodeParam(
-        $scope.form.mac_address
-      )}`;
-    }
-    request += `&`;
-
-    // VLAN if enabled
-    if ($scope.form.enableVlan == "1") {
-      const vlanAlias = `cpe-WEB-EthernetVLANTermination-${randomValue}`;
-      request += `Object=Device.Ethernet.VLANTermination&Operation=Add&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
-      request += `&Alias=${encodeParam(
-        vlanAlias
-      )}&Enable=1&VLANID=${encodeParam($scope.form.vlanId)}`;
-      request += `&`;
-    }
-
-    // PPPoE Configuration
-    if ($scope.form.ipAcqMode === "PPPoE") {
-      request += `Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(
-        pppAlias
-      )}`;
-      request += `&MaxMRUSize=${encodeParam($scope.form.mtu_mru_size)}`;
-      request += `&Username=${encodeParam(
-        $scope.form.username + "@tedata.net.eg"
-      )}`;
-      request += `&Password=${encodeParam($scope.form.password)}`;
-
-      if ($scope.form.enableVlan == "1") {
-        request += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomValue}`;
-      } else {
-        request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
-      }
-      request += `&`;
-    }
-
-    // Bridge Configuration
-    if ($scope.form.wanMode === "BridgedWan") {
-      if ($scope.form.selectedATMLink) {
-        request += `Object=${encodeParam(
-          $scope.form.selectedBridge.objName
-        )}.Port&Operation=Add`;
-        request += `&Enable=true&Alias=cpe-WEB-BridgingBridge${$scope.form.selectedBridge.id}Port-${randomValue}`;
-        const atmLayer = $scope.form.selectedATMLink.ObjName;
-        request += `&LowerLayers=${encodeParam(atmLayer)}`;
-        request += `&`;
-      }
-    }
-
-    // DHCP Configuration
-    if ($scope.form.ipAcqMode === "DHCP") {
-      request += `Object=Device.DHCPv4.Client&Operation=Add&Interface=Device.IP.Interface.${ipAlias}`;
-      request += `&`;
-    }
-
-    // Static IP Configuration
-    if ($scope.form.ipAcqMode === "Static") {
-      request += `Object=Device.IP.Interface.${ipAlias}.IPv4Address&Operation=Add`;
-      request += `&IPAddress=${encodeParam($scope.form.ipaddress)}`;
-      request += `&SubnetMask=${encodeParam($scope.form.subnetmask)}`;
-      request += `&`;
-
-      request += `Object=Device.Routing.Router.1.IPv4Forwarding&Operation=Add`;
-      request += `&Interface=Device.IP.Interface.${ipAlias}&Enable=true`;
-      request += `&GatewayIPAddress=${encodeParam($scope.form.gatewayaddress)}`;
-      request += `&`;
-
-      request += `Object=Device.Routing.Router.1.IPv6Forwarding&Operation=Add`;
-      request += `&Interface=Device.IP.Interface.${ipAlias}`;
-      request += `&`;
-
-      // Static DNS entries
-      if ($scope.staticDNSData.length > 0) {
-        $scope.staticDNSData.forEach((dns, idx) => {
-          request += `Object=Device.DNS.Client.Server&Operation=Add`;
-          request += `&DNSServer=${encodeParam(dns.ip)}&Enable=1`;
-          request += `&Interface=Device.IP.Interface.${ipAlias}`;
-          request += `&`;
-        });
-      }
-    }
-
-    // NAT Configuration
-    if ($scope.form.enableNAT === "1") {
-      request += `Object=Device.NAT.InterfaceSetting&Operation=Add`;
-      request += `&Interface=Device.IP.Interface.${ipAlias}`;
-      request += `&Enable=true`;
-      request += `&X_LANTIQ_COM_NATType=${encodeParam($scope.form.natType)}`;
-      request += `&`;
-    }
-
-    return request;
-  }
-
-  function buildPTMRequest(randomValue) {
-    let request = "";
-    const ipAlias = `cpe-WEB-IPInterface-${randomValue}`;
-    const ethAlias = `cpe-WEB-EthernetLink-${randomValue}`;
-    const pppAlias = `cpe-WEB-PPPInterface-${randomValue}`;
-
-    // Determine WAN layer
-    let wanLayer = "Device.PTM.Link.1.";
-    if ($scope.form.accessType === "ETH") {
+    } else if ($scope.form.accessType === "PTM") {
+      wanLayer = "Device.PTM.Link.1.";
+    } else if ($scope.form.accessType === "ETH") {
       wanLayer = "Device.Ethernet.Interface.5.";
     }
 
-    // IP Interface
-    request += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(
-      ipAlias
-    )}`;
+    // ==================== ATM-SPECIFIC OBJECTS ====================
+    if (isATM) {
+      // Create ATM Link if not selected from existing
+      if (!$scope.form.selectedATMLink) {
+        request += `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${encodeParam(
+          atmAlias
+        )}`;
+        request += `&LowerLayers=Device.DSL.Line.1.`;
+        request += `&DestinationAddress=${encodeParam($scope.form.vpiVci)}`;
+        request += `&Encapsulation=${encodeParam($scope.form.encapsulation)}`;
+        request += `&LinkType=${encodeParam($scope.form.linkType)}`;
+        request += `&`;
+      }
 
-    // Lower layers based on connection type
-    if ($scope.form.enableVlan == "1" && $scope.form.vlanId) {
-      const vlanAlias = `cpe-WEB-EthernetVLANTermination-${randomValue}`;
-      if ($scope.form.ipAcqMode === "PPPoE") {
-        request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-      } else if ($scope.form.wanMode === "BridgedWan") {
-        request += `&LowerLayers=Device.Ethernet.VLANTermination.${vlanAlias}`;
-      } else {
-        request += `&LowerLayers=Device.Ethernet.VLANTermination.${vlanAlias}`;
-      }
-    } else {
-      if ($scope.form.ipAcqMode === "PPPoE") {
-        request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-      } else if ($scope.form.ipAcqMode === "Bridge") {
-        request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
-      } else {
-        request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
-      }
+      // ATM QoS Settings
+      const qosObjName = $scope.form.selectedATMLink
+        ? `${$scope.form.selectedATMLink.ObjName}.QoS`
+        : `Device.ATM.Link.${atmAlias}.QoS`;
+
+      request += `Object=${encodeParam(qosObjName)}&Operation=Modify`;
+      request += `&QoSClass=${encodeParam($scope.form.atmQosClass)}`;
+      if ($scope.form.peakCellRate)
+        request += `&PeakCellRate=${encodeParam($scope.form.peakCellRate)}`;
+      if ($scope.form.maximumBSize)
+        request += `&MaximumBurstSize=${encodeParam($scope.form.maximumBSize)}`;
+      if ($scope.form.sustainableCellRate)
+        request += `&SustainableCellRate=${encodeParam(
+          $scope.form.sustainableCellRate
+        )}`;
+      request += `&`;
     }
 
-    request += `&X_LANTIQ_COM_DefaultGateway=${
-      $scope.form.defaultGateway === "1" ? "true" : "false"
-    }`;
-    request += `&IPv6Enable=false&MaxMTUSize=${encodeParam(
-      $scope.form.mtu_mru_size
-    )}`;
-    request += `&`;
+    // ==================== COMMON OBJECTS (IP Interface) ====================
+    if ($scope.form.wanMode !== "BridgedWan") {
+      request += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(
+        ipAlias
+      )}`;
 
-    // Ethernet Link
+      // Lower layers based on connection type
+      if ($scope.form.enableVlan == "1") {
+        const vlanAlias = `cpe-WEB-EthernetVLANTermination-${randomValue}`;
+        if ($scope.form.ipAcqMode === "PPPoE") {
+          request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
+        } else {
+          request += `&LowerLayers=Device.Ethernet.VLANTermination.${vlanAlias}`;
+        }
+      } else {
+        if ($scope.form.ipAcqMode === "PPPoE") {
+          request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
+        } else {
+          request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
+        }
+      }
+
+      request += `&X_LANTIQ_COM_DefaultGateway=${
+        $scope.form.defaultGateway === "1" ? "true" : "false"
+      }`;
+      request += `&IPv6Enable=false`;
+      if (!isATM) {
+        request += `&MaxMTUSize=${encodeParam($scope.form.mtu_mru_size)}`;
+      }
+      request += `&`;
+    }
+
+    // ==================== COMMON OBJECTS (Ethernet Link) ====================
     request += `Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${encodeParam(
       ethAlias
     )}`;
-    if ($scope.form.ipAcqMode === "Bridge") {
-      const bridgePortAlias = `cpe-WEB-BridgingBridge1Port-${randomValue}`;
+
+    if ($scope.form.wanMode === "BridgedWan") {
+      // For bridged mode, connect to bridge port
+      const bridgeId = $scope.form.selectedBridge?.id || 1;
+      const bridgePortAlias = `cpe-WEB-BridgingBridge${bridgeId}Port-${randomValue}`;
       request += `&LowerLayers=${encodeParam(
         $scope.form.selectedBridge.objName
       )}.Port.${bridgePortAlias}`;
     } else {
+      // For non-bridged modes, connect to WAN layer
       request += `&LowerLayers=${encodeParam(wanLayer)}`;
     }
 
@@ -733,7 +670,7 @@ myapp.controller("wan_wanconnectionsform", function(
     }
     request += `&`;
 
-    // VLAN if enabled
+    // ==================== COMMON OBJECTS (VLAN) ====================
     if ($scope.form.enableVlan == "1" && $scope.form.vlanId) {
       const vlanAlias = `cpe-WEB-EthernetVLANTermination-${randomValue}`;
       request += `Object=Device.Ethernet.VLANTermination&Operation=Add`;
@@ -744,8 +681,11 @@ myapp.controller("wan_wanconnectionsform", function(
       request += `&`;
     }
 
-    // PPPoE Configuration
-    if ($scope.form.ipAcqMode === "PPPoE") {
+    // ==================== COMMON OBJECTS (PPPoE) ====================
+    if (
+      $scope.form.ipAcqMode === "PPPoE" &&
+      $scope.form.wanMode !== "BridgedWan"
+    ) {
       request += `Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(
         pppAlias
       )}`;
@@ -763,9 +703,10 @@ myapp.controller("wan_wanconnectionsform", function(
       request += `&`;
     }
 
-    // Bridge Configuration
-    if ($scope.form.ipAcqMode === "Bridge") {
-      const bridgePortAlias = `cpe-WEB-BridgingBridge1Port-${randomValue}`;
+    // ==================== COMMON OBJECTS (Bridge Port) ====================
+    if ($scope.form.wanMode === "BridgedWan") {
+      const bridgeId = $scope.form.selectedBridge?.id || 1;
+      const bridgePortAlias = `cpe-WEB-BridgingBridge${bridgeId}Port-${randomValue}`;
       request += `Object=${encodeParam(
         $scope.form.selectedBridge.objName
       )}.Port&Operation=Add`;
@@ -774,15 +715,25 @@ myapp.controller("wan_wanconnectionsform", function(
       request += `&`;
     }
 
-    // DHCP Configuration
-    if ($scope.form.ipAcqMode === "DHCP") {
+    // ==================== COMMON OBJECTS (DHCP) ====================
+    if (
+      $scope.form.ipAcqMode === "DHCP" &&
+      $scope.form.wanMode !== "BridgedWan"
+    ) {
       request += `Object=Device.DHCPv4.Client&Operation=Add`;
-      request += `&Interface=Device.IP.Interface.${ipAlias}`;
+      if (isATM) {
+        request += `&Interface=Device.IP.Interface.${ipAlias}`;
+      } else {
+        request += `&Interface=Device.IP.Interface.${ipAlias}`;
+      }
       request += `&`;
     }
 
-    // Static IP Configuration
-    if ($scope.form.ipAcqMode === "Static") {
+    // ==================== COMMON OBJECTS (Static IP) ====================
+    if (
+      $scope.form.ipAcqMode === "Static" &&
+      $scope.form.wanMode !== "BridgedWan"
+    ) {
       request += `Object=Device.IP.Interface.${ipAlias}.IPv4Address&Operation=Add`;
       request += `&IPAddress=${encodeParam($scope.form.ipaddress)}`;
       request += `&SubnetMask=${encodeParam($scope.form.subnetmask)}`;
@@ -792,6 +743,12 @@ myapp.controller("wan_wanconnectionsform", function(
       request += `&Interface=Device.IP.Interface.${ipAlias}&Enable=true`;
       request += `&GatewayIPAddress=${encodeParam($scope.form.gatewayaddress)}`;
       request += `&`;
+
+      if (isATM) {
+        request += `Object=Device.Routing.Router.1.IPv6Forwarding&Operation=Add`;
+        request += `&Interface=Device.IP.Interface.${ipAlias}`;
+        request += `&`;
+      }
 
       // Static DNS entries
       if ($scope.staticDNSData.length > 0) {
@@ -804,8 +761,8 @@ myapp.controller("wan_wanconnectionsform", function(
       }
     }
 
-    // NAT Configuration
-    if ($scope.form.enableNAT === "1") {
+    // ==================== COMMON OBJECTS (NAT) ====================
+    if ($scope.form.enableNAT === "1" && $scope.form.wanMode !== "BridgedWan") {
       request += `Object=Device.NAT.InterfaceSetting&Operation=Add`;
       request += `&Interface=Device.IP.Interface.${ipAlias}`;
       request += `&Enable=true`;
@@ -937,7 +894,7 @@ myapp.controller("wan_wanconnectionsform", function(
       }
 
       // Build and send new connection request
-      const requestData = buildRequestData();
+      const requestData = buildRequest();
       const result = await $http.post(URL + "cgi_set", requestData);
 
       if (result.status === 200) {
@@ -984,19 +941,25 @@ myapp.controller("wan_wanconnectionsform", function(
     // Load data based on access type
     if ($scope.form.accessType === "ATM") {
       await loadAtmLinksAndQos();
+    } else {
+      $scope.dataReady = true; // For PTM/ETH, we're ready immediately
     }
 
     // Load bridge connections if needed
     if ($scope.form.wanMode === "BridgedWan") {
       await loadBridgeConnections();
     }
-
-    $scope.dataReady = true;
   }
 
   // Watch for access type changes
   $scope.$watch("form.accessType", async function(newVal, oldVal) {
     if (newVal !== oldVal) {
+      // Reset dataReady while loading new data
+      $scope.dataReady = false;
+
+      // Reset form validation state
+      $scope.resetFormValidation();
+
       if (newVal === "ATM") {
         await loadAtmLinksAndQos();
       } else {
@@ -1006,6 +969,9 @@ myapp.controller("wan_wanconnectionsform", function(
         $scope.vpiVciOptions = [];
         $scope.form.vpiVci = "";
         $scope.form.selectedATMLink = null;
+        $scope.form.encapsulation = "LLC"; // Reset to default
+        $scope.form.linkType = "EoA"; // Reset to default
+        $scope.form.atmQosClass = "UBR"; // Reset to default
       }
 
       // Reset form based on access type
@@ -1014,6 +980,9 @@ myapp.controller("wan_wanconnectionsform", function(
       } else if (newVal === "ATM") {
         $scope.form.mtu_mru_size = "1492"; // MRU for ATM
       }
+
+      // Mark data as ready after everything is loaded
+      $scope.dataReady = true;
     }
   });
 
