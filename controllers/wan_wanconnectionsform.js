@@ -79,6 +79,7 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.dataReady = false;
   $scope.Passwordfieldstatus = false;
   $scope.editIPInterface = "";
+  $scope.loadingBridgeConnections = false;
 
   // Validation patterns
   $scope.patterns = {
@@ -149,13 +150,20 @@ myapp.controller("wan_wanconnectionsform", function(
   // ------------------------------------------------------------
   // Watch for WAN Mode changes to handle Bridge mode
   // ------------------------------------------------------------
-  $scope.$watch("form.wanMode", function(newVal) {
+  $scope.$watch("form.wanMode", async function(newVal, oldVal) {
     if (newVal === "BridgedWan") {
       // When WAN mode is Bridged, clear IP Acquisition Mode
       $scope.form.ipAcqMode = "";
-    } else if (!$scope.form.ipAcqMode) {
+      // Load bridge connections
+      await loadBridgeConnections();
+    } else if (!$scope.form.ipAcqMode || newVal !== oldVal) {
       // If switching away from Bridge mode and no IP mode is set, default to DHCP
-      $scope.form.ipAcqMode = "DHCP";
+      // Also reset if we're changing modes
+      if ($scope.form.encapsulationMode === "PPPoE") {
+        $scope.form.ipAcqMode = "PPPoE";
+      } else {
+        $scope.form.ipAcqMode = "DHCP";
+      }
     }
   });
 
@@ -187,12 +195,28 @@ myapp.controller("wan_wanconnectionsform", function(
     return $scope.form.encapsulationMode === "PPPoE";
   };
 
+  $scope.shouldShowIPAcqMode = function() {
+    return (
+      $scope.form.encapsulationMode !== "PPPoE" &&
+      $scope.form.wanMode !== "BridgedWan"
+    );
+  };
+
   $scope.showStaticFields = function() {
-    return $scope.form.ipAcqMode === "Static";
+    return (
+      $scope.form.ipAcqMode === "Static" && $scope.form.wanMode !== "BridgedWan"
+    );
   };
 
   $scope.showBridgeFields = function() {
-    return $scope.form.wanMode === "BridgedWan";
+    if ($scope.form.wanMode === "BridgedWan") {
+      // Ensure bridge connections are loaded when showing bridge fields
+      if (!$scope.bridgeConnections.length) {
+        loadBridgeConnections();
+      }
+      return true;
+    }
+    return false;
   };
 
   $scope.showNATType = function() {
@@ -209,6 +233,10 @@ myapp.controller("wan_wanconnectionsform", function(
 
   $scope.showATMLinkInfo = function() {
     return $scope.form.accessType === "ATM";
+  };
+
+  $scope.isPPPoERequired = function() {
+    return $scope.form.encapsulationMode === "PPPoE";
   };
 
   // ------------------------------------------------------------
@@ -280,6 +308,15 @@ myapp.controller("wan_wanconnectionsform", function(
   }
 
   async function loadBridgeConnections() {
+    // Don't reload if already loading or loaded
+    if (
+      $scope.loadingBridgeConnections ||
+      $scope.bridgeConnections.length > 0
+    ) {
+      return;
+    }
+
+    $scope.loadingBridgeConnections = true;
     try {
       const response = await $http.get(
         URL +
@@ -312,6 +349,9 @@ myapp.controller("wan_wanconnectionsform", function(
     } catch (error) {
       console.error("Error loading bridge connections:", error);
       $scope.bridgeConnections = [];
+    } finally {
+      $scope.loadingBridgeConnections = false;
+      $scope.$applyAsync();
     }
   }
 
@@ -500,7 +540,7 @@ myapp.controller("wan_wanconnectionsform", function(
     )}`;
 
     // Lower layers based on connection type
-    if ($scope.form.enableVlan == "1" && $scope.form.ipAcqMode === "Bridge") {
+    if ($scope.form.enableVlan == "1" && $scope.form.wanMode === "BridgedWan") {
       request += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomValue}`;
     } else if (
       $scope.form.ipAcqMode === "DHCP" ||
@@ -521,7 +561,7 @@ myapp.controller("wan_wanconnectionsform", function(
     request += `Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${encodeParam(
       ethAlias
     )}`;
-    if ($scope.form.ipAcqMode === "Bridge") {
+    if ($scope.form.wanMode === "BridgedWan") {
       request += `&LowerLayers=${encodeParam(
         $scope.form.selectedBridge.objName
       )}.Port.cpe-WEB-BridgingBridge${
@@ -571,7 +611,7 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     // Bridge Configuration
-    if ($scope.form.ipAcqMode === "Bridge") {
+    if ($scope.form.wanMode === "BridgedWan") {
       if ($scope.form.selectedATMLink) {
         request += `Object=${encodeParam(
           $scope.form.selectedBridge.objName
@@ -650,7 +690,7 @@ myapp.controller("wan_wanconnectionsform", function(
       const vlanAlias = `cpe-WEB-EthernetVLANTermination-${randomValue}`;
       if ($scope.form.ipAcqMode === "PPPoE") {
         request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
-      } else if ($scope.form.ipAcqMode === "Bridge") {
+      } else if ($scope.form.wanMode === "BridgedWan") {
         request += `&LowerLayers=Device.Ethernet.VLANTermination.${vlanAlias}`;
       } else {
         request += `&LowerLayers=Device.Ethernet.VLANTermination.${vlanAlias}`;
@@ -947,7 +987,7 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     // Load bridge connections if needed
-    if ($scope.form.ipAcqMode === "Bridge") {
+    if ($scope.form.wanMode === "BridgedWan") {
       await loadBridgeConnections();
     }
 
@@ -974,13 +1014,6 @@ myapp.controller("wan_wanconnectionsform", function(
       } else if (newVal === "ATM") {
         $scope.form.mtu_mru_size = "1492"; // MRU for ATM
       }
-    }
-  });
-
-  // Watch for IP acquisition mode changes
-  $scope.$watch("form.ipAcqMode", async function(newVal) {
-    if (newVal === "Bridge") {
-      await loadBridgeConnections();
     }
   });
 

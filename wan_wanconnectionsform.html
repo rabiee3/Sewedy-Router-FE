@@ -1,54 +1,3 @@
-<!-- Breadcrumb Navigation -->
-<div class="row ltq_breadcrumbs">
-  <div class="row">
-    <div ng-repeat="breadcrumb in $root.breadcrumbs">
-      <ng-switch on="$first">
-        <div class="btn-group btn-breadcrumb1" ng-switch-when="true">
-          <div class="ltq_brd_home">
-            <a class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">
-              <i class="fa fa-home"></i>
-              {{breadcrumb.name}}
-            </a>
-          </div>
-        </div>
-
-        <div class="btn-group btn-breadcrumb" ng-switch-when="false">
-          <span
-            class="btn btn-default not-active"
-            ng-if="breadcrumb.path == 'nothing' || $last == true"
-          >
-            {{breadcrumb.name}}
-          </span>
-          <span ng-if="breadcrumb.path != 'nothing' && $last == false">
-            <a class="btn" ng-href="#/{{breadcrumb.path}}">
-              <i></i>
-              {{breadcrumb.name}}
-            </a>
-          </span>
-        </div>
-      </ng-switch>
-    </div>
-  </div>
-</div>
-
-<!-- Subheader -->
-<div class="subheader">
-  <div>
-    <img
-      src="images/icons/internet.png"
-      class="iconDetails"
-      alt="Internet Icon"
-    />
-  </div>
-  <div>
-    <h4>Internet Connections Configuration</h4>
-  </div>
-  <p>
-    This page allows you to view and configure various internet connections such
-    as Static/DHCP/PPPoE/PPPoA, etc.
-  </p>
-</div>
-
 <!-- Main Form -->
 <div class="panel p-1">
   <form name="customWanForm" novalidate>
@@ -470,7 +419,7 @@
 
         <!-- PPoE Fields -->
         <div class="pppoe" ng-if="showPPPoEFields()">
-          <!-- Username -->
+          <!-- Username Field -->
           <div class="row d-flex align-items-center mt-3">
             <div class="col-sm-4">
               <label class="active special" for="username">Username</label>
@@ -485,7 +434,7 @@
                   type="text"
                   class="form-control small"
                   ng-pattern="patterns.username"
-                  required
+                  ng-required="isPPPoERequired()"
                 />
 
                 <div class="input-suffix d-flex align-items-center">
@@ -494,19 +443,19 @@
               </div>
               <div
                 class="text-danger small"
-                ng-show="customWanForm.username.$error.pattern && customWanForm.username.$dirty"
+                ng-show="isPPPoERequired() && customWanForm.username.$error.pattern && customWanForm.username.$dirty"
               >
                 Username must contain only numbers
               </div>
               <div
                 class="text-danger small"
-                ng-show="customWanForm.username.$error.required && customWanForm.username.$touched"
+                ng-show="isPPPoERequired() && customWanForm.username.$error.required && customWanForm.username.$touched"
               >
-                Username is required
+                Username is required for PPPoE
               </div>
             </div>
           </div>
-          <!-- Password -->
+          <!-- Password Field -->
           <div class="row d-flex align-items-center mt-3">
             <div class="col-sm-4">
               <label class="active special" for="password">Password</label>
@@ -522,20 +471,20 @@
                     type="{{Passwordfieldstatus ? 'text' : 'password'}}"
                     class="form-control small"
                     ng-pattern="patterns.password"
-                    required
+                    ng-required="isPPPoERequired()"
                   />
 
                   <div
                     class="text-danger small"
-                    ng-show="customWanForm.password.$error.pattern && customWanForm.password.$dirty"
+                    ng-show="isPPPoERequired() && customWanForm.password.$error.pattern && customWanForm.password.$dirty"
                   >
                     Password must contain only numbers
                   </div>
                   <div
                     class="text-danger small"
-                    ng-show="customWanForm.password.$error.required && customWanForm.password.$touched"
+                    ng-show="isPPPoERequired() && customWanForm.password.$error.required && customWanForm.password.$touched"
                   >
-                    Password is required
+                    Password is required for PPPoE
                   </div>
                 </div>
                 <div class="form-group pwdtoggle_adv">
@@ -583,9 +532,7 @@
             <!--Create Select VPI/VCI-->
             <div class="row d-flex align-items-center">
               <div class="col-sm-4">
-                <label for="createVPIVCL" class="pt-2"
-                  >Create/Select VPI/VCI</label
-                >
+                <label for="createVPIVCL">Create/Select VPI/VCI</label>
               </div>
               <div class="col-sm-8">
                 <div class="input-group input-field mt-0">
@@ -595,7 +542,6 @@
                     id="createVPIVCL"
                     ng-model="form.vpiVci"
                     required
-                    readonly
                   />
                   <div class="input-group-btn">
                     <button
@@ -631,7 +577,7 @@
             </div>
 
             <!-- Encapsulation -->
-            <div class="row d-flex align-items-center mt-3">
+            <div class="row d-flex align-items-center mt-2">
               <div class="col-sm-4">
                 <label for="encapsulation">Encapsulation</label>
               </div>
@@ -662,7 +608,7 @@
             </div>
 
             <!-- LinkType -->
-            <div class="row d-flex align-items-center mt-3">
+            <div class="row d-flex align-items-center mt-2">
               <div class="col-sm-4">
                 <label for="linkType">Link Type</label>
               </div>
@@ -689,7 +635,7 @@
             </div>
 
             <!-- ATM QoS Class -->
-            <div class="row d-flex align-items-center mt-3">
+            <div class="row d-flex align-items-center mt-2">
               <div class="col-sm-4">
                 <label for="qosClass">QoS Class</label>
               </div>
@@ -718,7 +664,7 @@
             </div>
 
             <!-- Peak Cell Rate -->
-            <div class="row d-flex align-items-center mt-3">
+            <div class="row d-flex align-items-center mt-2">
               <div class="col-sm-4">
                 <label for="peakCellRate">Peak Cell Rate</label>
               </div>
@@ -744,7 +690,7 @@
             </div>
 
             <!-- Maximum Burst Size -->
-            <div class="row d-flex align-items-center mt-3">
+            <div class="row d-flex align-items-center mt-2">
               <div class="col-sm-4">
                 <label for="maximumBSize">Maximum Burst Size</label>
               </div>
@@ -770,7 +716,7 @@
             </div>
 
             <!-- Sustainable Cell Rate -->
-            <div class="row d-flex align-items-center mt-3">
+            <div class="row d-flex align-items-center mt-2">
               <div class="col-sm-4">
                 <label class="active special" for="sustainableCellRate"
                   >Sustainable Cell Rate</label
@@ -803,7 +749,10 @@
         <h3 class="form-header">IP Configuration</h3>
 
         <!-- IP Acquisition Mode -->
-        <div class="row mb-3" ng-if="form.encapsulationMode !== 'PPPoE'">
+        <div
+          class="row mb-3"
+          ng-if="shouldShowIPAcqMode()"
+        >
           <div class="col-sm-4">
             <label class="pt-2" for="ipAccMode">IP Acquisition Mode</label>
           </div>
@@ -816,9 +765,6 @@
               class="form-control small"
               ng-disabled="form.wanMode === 'BridgedWan'"
             >
-              <option value="" disabled selected
-                >Select IP Acquisition Mode</option
-              >
               <option ng-repeat="mode in ipAcqModes" value="{{mode}}"
                 >{{mode}}</option
               >
@@ -1043,11 +989,23 @@
           </div>
         </div>
 
-        <!-- Bridge Fields -->
+        <!-- Bridge Fields Section -->
         <div class="bridge" ng-if="showBridgeFields()">
           <hr />
           <h5>Bridge Configuration</h5>
-          <div class="row">
+
+          <!-- Loading indicator -->
+          <div class="row" ng-if="loadingBridgeConnections">
+            <div class="col-sm-12">
+              <div class="alert alert-info">
+                <i class="fa fa-spinner fa-spin"></i> Loading bridge
+                connections...
+              </div>
+            </div>
+          </div>
+
+          <!-- Bridge connections dropdown -->
+          <div class="row" ng-if="!loadingBridgeConnections">
             <div class="col-sm-12 mb-3 required">
               <label for="bridgeConnection">Bridge Connection</label>
               <select
@@ -1056,17 +1014,30 @@
                 class="form-control"
                 ng-model="form.selectedBridge"
                 ng-options="bridge as bridge.name for bridge in bridgeConnections track by bridge.objName"
-                required
+                ng-required="form.wanMode === 'BridgedWan'"
+                ng-disabled="bridgeConnections.length === 0"
               >
-                <option value="" disabled selected
-                  >Select Bridge Connection</option
-                >
+                <option value="" disabled selected>
+                  <span ng-if="bridgeConnections.length === 0"
+                    >No bridge connections available</span
+                  >
+                  <span ng-if="bridgeConnections.length > 0"
+                    >Select Bridge Connection</span
+                  >
+                </option>
               </select>
               <div
                 class="text-danger small"
                 ng-show="customWanForm.bridgeConnection.$error.required && customWanForm.bridgeConnection.$touched"
               >
                 Please select a bridge connection
+              </div>
+              <div
+                class="text-warning small"
+                ng-if="bridgeConnections.length === 0"
+              >
+                No bridge connections found. You may need to create a bridge
+                first.
               </div>
             </div>
           </div>
