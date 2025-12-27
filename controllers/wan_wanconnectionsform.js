@@ -62,7 +62,7 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.policies802 = ["Custom", "From IP", "DSCP"];
   $scope.encapsulationOptions = ["LLC", "VCMUX"];
   $scope.atmQosClassOptions = ["UBR", "CBR", "NRT-VBR", "RT-VBR", "UBR+"];
-  $scope.ipAcqModes = ["DHCP", "Static", "Bridge"];
+  $scope.ipAcqModes = ["DHCP", "Static"];
   $scope.values802 = [0, 1, 2, 3, 4, 5, 6, 7];
   $scope.linkTypeOptions = ["EoA", "PPPoA"];
 
@@ -151,10 +151,10 @@ myapp.controller("wan_wanconnectionsform", function(
   // ------------------------------------------------------------
   $scope.$watch("form.wanMode", function(newVal) {
     if (newVal === "BridgedWan") {
-      // When WAN mode is Bridged, force IP Acquisition Mode to Bridge
-      $scope.form.ipAcqMode = "Bridge";
-    } else if ($scope.form.ipAcqMode === "Bridge") {
-      // If switching from Bridge mode, reset to DHCP
+      // When WAN mode is Bridged, clear IP Acquisition Mode
+      $scope.form.ipAcqMode = "";
+    } else if (!$scope.form.ipAcqMode) {
+      // If switching away from Bridge mode and no IP mode is set, default to DHCP
       $scope.form.ipAcqMode = "DHCP";
     }
   });
@@ -178,7 +178,7 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.showDNSFields = function() {
     return (
       $scope.form.isUserDefinedDNS &&
-      $scope.form.ipAcqMode !== "Bridge" &&
+      $scope.form.wanMode !== "BridgedWan" &&
       $scope.form.encapsulationMode === "PPPoE"
     );
   };
@@ -192,7 +192,7 @@ myapp.controller("wan_wanconnectionsform", function(
   };
 
   $scope.showBridgeFields = function() {
-    return $scope.form.ipAcqMode === "Bridge";
+    return $scope.form.wanMode === "BridgedWan";
   };
 
   $scope.showNATType = function() {
@@ -844,7 +844,7 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     // Validate bridge selection when Bridge mode is selected
-    if ($scope.form.ipAcqMode === "Bridge") {
+    if ($scope.form.wanMode === "BridgedWan") {
       if (!$scope.form.selectedBridge || !$scope.form.selectedBridge.objName) {
         alert("Please select a bridge connection.");
         return;

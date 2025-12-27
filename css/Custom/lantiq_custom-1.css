@@ -2685,7 +2685,7 @@ ul#strength {
 .wrapperdiv{display:table;width:100%;}
 .wrapperdiv .panel-body{display:table;width:100%;height:100%; }
 .wrapperdiv .panel-body .form-group{ display: inline-block;float: none;vertical-align: top; }
-.table-button-group{vertical-align: middle;min-width:97px;max-width:120px;text-align:center; padding:0px; }
+.table-button-group{vertical-align: middle;min-width:97px;max-width:120px;text-align:center; padding:0px; white-space: nowrap; }
 .table-button-group a{float:none;margin:0px;}
 
 /*.table-button-group{vertical-align: middle;width:80px;text-align:center; }
