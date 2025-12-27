@@ -55,6 +55,7 @@
     <div class="row">
       <div class="col-sm-6">
         <h3 class="form-header">Basic Information</h3>
+
         <!-- Access Type -->
         <div class="row mb-3">
           <div class="col-sm-4">
@@ -64,9 +65,10 @@
             <select
               id="accessType"
               name="accessType"
-              ng-model="customWanForm.accessType"
+              ng-model="form.accessType"
               ng-required="true"
               class="form-control small"
+              ng-change="dataReady = false"
             >
               <option value="ATM">ATM Uplink</option>
               <option value="PTM">PTM Uplink</option>
@@ -92,7 +94,7 @@
             <select
               id="encapsulationMode"
               name="encapsulationMode"
-              ng-model="customWanForm.encapsulationMode"
+              ng-model="form.encapsulationMode"
               ng-required="true"
               class="form-control small"
             >
@@ -101,7 +103,7 @@
             </select>
             <div
               class="text-danger small"
-              ng-show="customWanForm.accessType.$error.required && customWanForm.accessType.$touched"
+              ng-show="customWanForm.encapsulationMode.$error.required && customWanForm.encapsulationMode.$touched"
             >
               Please select an encapsulation mode.
             </div>
@@ -117,7 +119,7 @@
             <select
               id="protocolType"
               name="protocolType"
-              ng-model="customWanForm.protocolType"
+              ng-model="form.protocolType"
               ng-required="true"
               class="form-control small"
             >
@@ -126,7 +128,7 @@
             </select>
             <div
               class="text-danger small"
-              ng-show="customWanForm.accessType.$error.required && customWanForm.accessType.$touched"
+              ng-show="customWanForm.protocolType.$error.required && customWanForm.protocolType.$touched"
             >
               Please select a protocol type.
             </div>
@@ -142,7 +144,7 @@
             <select
               id="wanMode"
               name="wanMode"
-              ng-model="customWanForm.wanMode"
+              ng-model="form.wanMode"
               ng-required="true"
               class="form-control small"
             >
@@ -151,7 +153,7 @@
             </select>
             <div
               class="text-danger small"
-              ng-show="customWanForm.accessType.$error.required && customWanForm.accessType.$touched"
+              ng-show="customWanForm.wanMode.$error.required && customWanForm.wanMode.$touched"
             >
               Please select a WAN mode.
             </div>
@@ -167,7 +169,7 @@
             <select
               id="serviceType"
               name="serviceType"
-              ng-model="customWanForm.serviceType"
+              ng-model="form.serviceType"
               ng-required="true"
               class="form-control small"
               ng-options="type for type in serviceTypes"
@@ -187,11 +189,11 @@
           <div class="col-sm-12 checkbox1 input-field1 mt-2">
             <input
               id="enableVlan"
-              name="Enable"
+              name="enableVlan"
               type="checkbox"
               ng-true-value="'1'"
               ng-false-value="'0'"
-              ng-model="customWanForm.enableVlan"
+              ng-model="form.enableVlan"
             />
             <label class="checkbox_left_align" for="enableVlan"
               >Enable VLAN</label
@@ -200,10 +202,7 @@
         </div>
 
         <!-- VLAN ID -->
-        <div
-          class="row d-flex align-items-center mt-3"
-          ng-if="customWanForm.enableVlan == '1'"
-        >
+        <div class="row d-flex align-items-center mt-3" ng-if="showVlanId()">
           <div class="col-sm-4">
             <label class="active special" for="vlanId">VLAN ID</label>
           </div>
@@ -212,12 +211,26 @@
               <input
                 id="vlanId"
                 name="vlanId"
-                ng-model="customWanForm.vlanId"
+                ng-model="form.vlanId"
                 placeholder="Enter VLAN ID"
                 type="number"
                 class="form-control small"
                 required
+                min="1"
+                max="4095"
               />
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.vlanId.$error.required && customWanForm.vlanId.$touched"
+              >
+                VLAN ID is required
+              </div>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.vlanId.$error.min || customWanForm.vlanId.$error.max"
+              >
+                VLAN ID must be between 1 and 4095
+              </div>
             </div>
           </div>
         </div>
@@ -226,8 +239,8 @@
         <div class="row d-flex align-items-center mt-3">
           <div class="col-sm-4">
             <label class="active special" for="mtumru_size">
-              <span ng-if="customWanForm.accessType != 'ATM'">MTU Size</span>
-              <span ng-if="customWanForm.accessType == 'ATM'">MRU Size</span>
+              <span ng-if="form.accessType != 'ATM'">MTU Size</span>
+              <span ng-if="form.accessType == 'ATM'">MRU Size</span>
             </label>
           </div>
           <div class="col-sm-8">
@@ -235,16 +248,23 @@
               <input
                 id="mtumru_size"
                 name="mtu_mru_size"
-                ng-model="customWanForm.mtu_mru_size"
+                ng-model="form.mtu_mru_size"
                 type="text"
                 class="form-control small"
                 required
+                ng-pattern="patterns.mtu_mru_size"
               />
               <div
                 class="text-danger small"
                 ng-show="customWanForm.mtu_mru_size.$error.pattern && customWanForm.mtu_mru_size.$dirty"
               >
                 Size must be a number
+              </div>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.mtu_mru_size.$error.required && customWanForm.mtu_mru_size.$touched"
+              >
+                {{form.accessType == 'ATM' ? 'MRU' : 'MTU'}} Size is required
               </div>
             </div>
           </div>
@@ -259,7 +279,7 @@
             <select
               id="policy802"
               name="policy802"
-              ng-model="customWanForm.policy802"
+              ng-model="form.policy802"
               ng-required="true"
               class="form-control small"
               ng-options="policy for policy in policies802"
@@ -269,7 +289,7 @@
               class="text-danger small"
               ng-show="customWanForm.policy802.$error.required && customWanForm.policy802.$touched"
             >
-              Please select a 802.1 Policy.
+              Please select a 802.1p Policy.
             </div>
           </div>
         </div>
@@ -283,7 +303,7 @@
             <select
               id="value802"
               name="value802"
-              ng-model="customWanForm.value802"
+              ng-model="form.value802"
               ng-required="true"
               class="form-control small"
               ng-options="type for type in values802"
@@ -291,9 +311,9 @@
             </select>
             <div
               class="text-danger small"
-              ng-show="customWanForm.policy802.$error.required && customWanForm.policy802.$touched"
+              ng-show="customWanForm.value802.$error.required && customWanForm.value802.$touched"
             >
-              Please select a Service Type.
+              Please select a 802.1p value.
             </div>
           </div>
         </div>
@@ -307,11 +327,11 @@
           </div>
           <div class="col-sm-8 d-flex align-items-center">
             <span
-              ng-click="customWanForm.macCloneEnabled = !customWanForm.macCloneEnabled;"
+              ng-click="form.macCloneEnabled = !form.macCloneEnabled;"
               class="switch"
               off="Off"
               on="On"
-              ng-class="{checked: customWanForm.macCloneEnabled}"
+              ng-class="{checked: form.macCloneEnabled}"
             >
               <small></small>
               <input
@@ -319,46 +339,59 @@
                 style="display:none"
                 name="macClone"
                 id="macClone"
-                ng-model="customWanForm.macCloneEnabled"
+                ng-model="form.macCloneEnabled"
               />
               <span class="switch-text">
                 <span class="on">On</span><span class="off">Off</span>
               </span>
             </span>
           </div>
+        </div>
 
-          <!-- MAC Address -->
-          <div class="mb-3 col-sm-6" ng-if="customWanForm.macCloneEnabled">
-            <div class="input-field required">
+        <!-- MAC Address -->
+        <div
+          class="row d-flex align-items-center mt-3"
+          ng-if="showMacAddress()"
+        >
+          <div class="col-sm-4">
+            <label class="active special" for="macAddress">MAC Address</label>
+          </div>
+          <div class="col-sm-8">
+            <div class="input-field mt-0 required">
               <input
                 id="macAddress"
                 name="macAddress"
-                ng-model="customWanForm.mac_address"
+                ng-model="form.mac_address"
                 placeholder="00:1A:2B:3C:4D:5E"
                 type="text"
-                class="form-control"
+                class="form-control small"
                 ng-pattern="patterns.macAddress"
                 required
               />
-              <label class="active special" for="macAddress">MAC Address</label>
               <div
                 class="text-danger small"
-                ng-show="ptmForm.macAddress.$error.pattern && ptmForm.macAddress.$dirty"
+                ng-show="customWanForm.macAddress.$error.pattern && customWanForm.macAddress.$dirty"
               >
                 Please enter a valid MAC address (format: 00:1A:2B:3C:4D:5E)
+              </div>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.macAddress.$error.required && customWanForm.macAddress.$touched"
+              >
+                MAC Address is required
               </div>
             </div>
           </div>
         </div>
 
         <!-- User Defined DNS Checkbox (PPPoE only) -->
-        <div class="row" ng-if="customWanForm.encapsulationMode === 'PPPoE'">
+        <div class="row" ng-if="form.encapsulationMode === 'PPPoE'">
           <div class="col-sm-12 checkbox1 input-field1 mt-3 mb-1">
             <input
               type="checkbox"
               id="isUserDefinedDNS"
               class="form-control"
-              ng-model="customWanForm.isUserDefinedDNS"
+              ng-model="form.isUserDefinedDNS"
             />
             <label class="checkbox_left_align" for="isUserDefinedDNS"
               >User Defined DNS</label
@@ -378,22 +411,23 @@
                   type="text"
                   id="primaryDNS"
                   name="primaryDNS"
-                  ng-model="customWanForm.primaryDNS"
+                  ng-model="form.primaryDNS"
                   ng-pattern="patterns.ipv4"
-                  ng-required="customWanForm.isUserDefinedDNS"
+                  ng-required="form.isUserDefinedDNS"
                   class="form-control small"
+                  placeholder="e.g., 8.8.8.8"
                 />
               </div>
 
               <div
                 class="text-danger small"
-                ng-show="ptmForm.primaryDNS.$error.pattern && ptmForm.primaryDNS.$dirty"
+                ng-show="customWanForm.primaryDNS.$error.pattern && customWanForm.primaryDNS.$dirty"
               >
                 Please enter a valid IPv4 address
               </div>
               <div
                 class="text-danger small"
-                ng-show="ptmForm.primaryDNS.$error.required && ptmForm.primaryDNS.$dirty"
+                ng-show="customWanForm.primaryDNS.$error.required && customWanForm.primaryDNS.$dirty"
               >
                 Primary DNS is required
               </div>
@@ -410,22 +444,23 @@
                   type="text"
                   id="secondaryDNS"
                   name="secondaryDNS"
-                  ng-model="customWanForm.secondaryDNS"
+                  ng-model="form.secondaryDNS"
                   ng-pattern="patterns.ipv4"
                   class="form-control small"
-                  ng-change="validateDNSForm();"
+                  placeholder="e.g., 8.8.4.4"
+                  ng-change="validateDNSForm()"
                 />
               </div>
 
               <div
                 class="text-danger small"
-                ng-show="ptmForm.secondaryDNS.$error.pattern && ptmForm.secondaryDNS.$dirty"
+                ng-show="customWanForm.secondaryDNS.$error.pattern && customWanForm.secondaryDNS.$dirty"
               >
                 Please enter a valid IPv4 address
               </div>
               <div
                 class="text-danger small"
-                ng-show="customWanForm.secondaryDNS === customWanForm.primaryDNS && ptmForm.secondaryDNS.$dirty"
+                ng-show="form.secondaryDNS === form.primaryDNS && customWanForm.secondaryDNS.$dirty"
               >
                 Secondary DNS must not be the same as Primary DNS
               </div>
@@ -434,7 +469,7 @@
         </div>
 
         <!-- PPoE Fields -->
-        <div class="pppoe" ng-if="customWanForm.encapsulationMode == 'PPPoE'">
+        <div class="pppoe" ng-if="showPPPoEFields()">
           <!-- Username -->
           <div class="row d-flex align-items-center mt-3">
             <div class="col-sm-4">
@@ -445,7 +480,7 @@
                 <input
                   id="username"
                   name="username"
-                  ng-model="customWanForm.username"
+                  ng-model="form.username"
                   placeholder="e.g. 1154897"
                   type="text"
                   class="form-control small"
@@ -459,9 +494,15 @@
               </div>
               <div
                 class="text-danger small"
-                ng-show="ptmForm.username.$error.pattern && ptmForm.username.$dirty"
+                ng-show="customWanForm.username.$error.pattern && customWanForm.username.$dirty"
               >
                 Username must contain only numbers
+              </div>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.username.$error.required && customWanForm.username.$touched"
+              >
+                Username is required
               </div>
             </div>
           </div>
@@ -476,7 +517,7 @@
                   <input
                     id="password"
                     name="password"
-                    ng-model="customWanForm.password"
+                    ng-model="form.password"
                     placeholder="Enter password"
                     type="{{Passwordfieldstatus ? 'text' : 'password'}}"
                     class="form-control small"
@@ -486,9 +527,15 @@
 
                   <div
                     class="text-danger small"
-                    ng-show="ptmForm.password.$error.pattern && ptmForm.password.$dirty"
+                    ng-show="customWanForm.password.$error.pattern && customWanForm.password.$dirty"
                   >
                     Password must contain only numbers
+                  </div>
+                  <div
+                    class="text-danger small"
+                    ng-show="customWanForm.password.$error.required && customWanForm.password.$touched"
+                  >
+                    Password is required
                   </div>
                 </div>
                 <div class="form-group pwdtoggle_adv">
@@ -518,7 +565,7 @@
               type="checkbox"
               ng-true-value="'1'"
               ng-false-value="'0'"
-              ng-model="customWanForm.defaultGateway"
+              ng-model="form.defaultGateway"
             />
             <label class="checkbox_left_align" for="defaultGateway"
               >Default Gateway</label
@@ -528,17 +575,17 @@
       </div>
 
       <div class="col-sm-6">
-
-        <!--Link Information-->
-        <div ng-if="customWanForm.accessType === 'ATM'">
+        <!-- Link Information (ATM Only) -->
+        <div ng-if="showATMLinkInfo()">
           <div ng-form="atmForm" novalidate>
             <h3 class="form-header">Link Information</h3>
-            <!--Create Select VPI/VCL-->
+
+            <!--Create Select VPI/VCI-->
             <div class="row d-flex align-items-center">
               <div class="col-sm-4">
-                <label for="createVPIVCL" class="pt-2">
-                  Create/Select VPI/VCI
-                </label>
+                <label for="createVPIVCL" class="pt-2"
+                  >Create/Select VPI/VCI</label
+                >
               </div>
               <div class="col-sm-8">
                 <div class="input-group input-field mt-0">
@@ -546,7 +593,9 @@
                     type="text"
                     class="form-control small"
                     id="createVPIVCL"
-                    ng-model="atmData.vpiVci"
+                    ng-model="form.vpiVci"
+                    required
+                    readonly
                   />
                   <div class="input-group-btn">
                     <button
@@ -572,73 +621,104 @@
                     </ul>
                   </div>
                 </div>
+                <div
+                  class="text-danger small"
+                  ng-show="atmForm.createVPIVCL.$error.required && atmForm.createVPIVCL.$touched"
+                >
+                  Please select a VPI/VCI
+                </div>
               </div>
             </div>
 
             <!-- Encapsulation -->
-            <div class="row d-flex align-items-center">
+            <div class="row d-flex align-items-center mt-3">
               <div class="col-sm-4">
                 <label for="encapsulation">Encapsulation</label>
               </div>
               <div class="col-sm-8 required">
                 <select
                   id="encapsulation"
-                  materal_select=""
-                  ng-required="true"
                   name="encapsulation"
-                  class="dropdown-toggle small"
-                  ng-options="type for type in encapsulationOptions"
-                  ng-model="atmData.encapsulation"
+                  ng-model="form.encapsulation"
+                  ng-required="true"
+                  class="form-control small"
                 >
                   <option value="" disabled selected
                     >Select Encapsulation</option
                   >
+                  <option
+                    ng-repeat="type in encapsulationOptions"
+                    value="{{type}}"
+                    >{{type}}</option
+                  >
                 </select>
+                <div
+                  class="text-danger small"
+                  ng-show="atmForm.encapsulation.$error.required && atmForm.encapsulation.$touched"
+                >
+                  Please select encapsulation mode
+                </div>
               </div>
             </div>
 
             <!-- LinkType -->
-            <div class="row d-flex align-items-center">
+            <div class="row d-flex align-items-center mt-3">
               <div class="col-sm-4">
                 <label for="linkType">Link Type</label>
               </div>
               <div class="col-sm-8 required">
                 <select
                   id="linkType"
-                  materal_select=""
-                  ng-required="true"
                   name="linkType"
-                  class="dropdown-toggle small"
-                  ng-options="type for type in linkTypeOptions"
-                  ng-model="atmData.linkType"
+                  ng-model="form.linkType"
+                  ng-required="true"
+                  class="form-control small"
                 >
-                  <option value="" selected>Select</option>
+                  <option value="" disabled selected>Select Link Type</option>
+                  <option ng-repeat="type in linkTypeOptions" value="{{type}}"
+                    >{{type}}</option
+                  >
                 </select>
+                <div
+                  class="text-danger small"
+                  ng-show="atmForm.linkType.$error.required && atmForm.linkType.$touched"
+                >
+                  Please select link type
+                </div>
               </div>
             </div>
 
             <!-- ATM QoS Class -->
-            <div class="row d-flex align-items-center">
+            <div class="row d-flex align-items-center mt-3">
               <div class="col-sm-4">
                 <label for="qosClass">QoS Class</label>
               </div>
               <div class="col-sm-8 required">
                 <select
                   id="qosClass"
-                  materal_select=""
+                  name="atmQosClass"
+                  ng-model="form.atmQosClass"
                   ng-required="true"
-                  name="qosClass"
-                  class="dropdown-toggle small"
-                  ng-options="type for type in atmQosClassOptions"
-                  ng-model="atmData.atmQosClass"
+                  class="form-control small"
                 >
-                  <option value="" disabled selected>Select</option>
+                  <option value="" disabled selected>Select QoS Class</option>
+                  <option
+                    ng-repeat="type in atmQosClassOptions"
+                    value="{{type}}"
+                    >{{type}}</option
+                  >
                 </select>
+                <div
+                  class="text-danger small"
+                  ng-show="atmForm.atmQosClass.$error.required && atmForm.atmQosClass.$touched"
+                >
+                  Please select QoS class
+                </div>
               </div>
             </div>
 
             <!-- Peak Cell Rate -->
-            <div class="row d-flex align-items-center">
+            <div class="row d-flex align-items-center mt-3">
               <div class="col-sm-4">
                 <label for="peakCellRate">Peak Cell Rate</label>
               </div>
@@ -647,23 +727,24 @@
                   <input
                     id="peakCellRate"
                     name="peakCellRate"
-                    ng-model="atmData.peakCellRate"
+                    ng-model="form.peakCellRate"
                     type="number"
                     class="form-control small"
+                    placeholder="Optional"
+                    min="0"
                   />
-
                   <div
                     class="text-danger small"
-                    ng-show="atmForm.peakCellRate.$error.pattern && atmForm.peakCellRate.$dirty"
+                    ng-show="atmForm.peakCellRate.$error.min && atmForm.peakCellRate.$dirty"
                   >
-                    Must be a number
+                    Must be a positive number
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Maximum Burst Size -->
-            <div class="row d-flex align-items-center">
+            <div class="row d-flex align-items-center mt-3">
               <div class="col-sm-4">
                 <label for="maximumBSize">Maximum Burst Size</label>
               </div>
@@ -672,22 +753,24 @@
                   <input
                     id="maximumBSize"
                     name="maximumBSize"
-                    ng-model="atmData.maximumBSize"
+                    ng-model="form.maximumBSize"
                     type="number"
                     class="form-control small"
+                    placeholder="Optional"
+                    min="0"
                   />
                   <div
                     class="text-danger small"
-                    ng-show="atmForm.maximumBSize.$error.pattern && atmForm.maximumBSize.$dirty"
+                    ng-show="atmForm.maximumBSize.$error.min && atmForm.maximumBSize.$dirty"
                   >
-                    Must be a number
+                    Must be a positive number
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Sustainable Cell Rate -->
-            <div class="row d-flex align-items-center">
+            <div class="row d-flex align-items-center mt-3">
               <div class="col-sm-4">
                 <label class="active special" for="sustainableCellRate"
                   >Sustainable Cell Rate</label
@@ -698,16 +781,17 @@
                   <input
                     id="sustainableCellRate"
                     name="sustainableCellRate"
-                    ng-model="atmData.sustainableCellRate"
+                    ng-model="form.sustainableCellRate"
                     type="number"
                     class="form-control small"
+                    placeholder="Optional"
+                    min="0"
                   />
-
                   <div
                     class="text-danger small"
-                    ng-show="atmForm.sustainableCellRate.$error.pattern && atmForm.sustainableCellRate.$dirty"
+                    ng-show="atmForm.sustainableCellRate.$error.min && atmForm.sustainableCellRate.$dirty"
                   >
-                    Must be a number
+                    Must be a positive number
                   </div>
                 </div>
               </div>
@@ -715,15 +799,11 @@
           </div>
         </div>
 
-
         <!-- IP Configuration-->
         <h3 class="form-header">IP Configuration</h3>
 
         <!-- IP Acquisition Mode -->
-        <div
-          class="row mb-3"
-          ng-if="customWanForm.encapsulationMode != 'PPPoE'"
-        >
+        <div class="row mb-3" ng-if="form.encapsulationMode !== 'PPPoE'">
           <div class="col-sm-4">
             <label class="pt-2" for="ipAccMode">IP Acquisition Mode</label>
           </div>
@@ -731,17 +811,43 @@
             <select
               id="ipAccMode"
               name="ipAccMode"
-              ng-model="customWanForm.ipAcqMode"
+              ng-model="form.ipAcqMode"
               ng-required="true"
               class="form-control small"
-              ng-options="mode for mode in ipAcqModes"
+              ng-disabled="form.wanMode === 'BridgedWan'"
             >
+              <option value="" disabled selected
+                >Select IP Acquisition Mode</option
+              >
+              <option ng-repeat="mode in ipAcqModes" value="{{mode}}"
+                >{{mode}}</option
+              >
             </select>
             <div
               class="text-danger small"
-              ng-show="customWanForm.ipAcqMode.$error.required && customWanForm.ipAcqMode.$touched"
+              ng-show="customWanForm.ipAccMode.$error.required && customWanForm.ipAccMode.$touched"
             >
-              Please select IP Acc Mode.
+              Please select IP Acquisition Mode.
+            </div>
+            <div class="text-info small" ng-if="form.wanMode === 'BridgedWan'">
+              IP Acquisition Mode is automatically set to Bridge for Bridged WAN
+              mode
+            </div>
+          </div>
+        </div>
+
+        <!-- IP Acquisition Mode for PPPoE -->
+        <div class="row mb-3" ng-if="form.encapsulationMode === 'PPPoE'">
+          <div class="col-sm-4">
+            <label class="pt-2">IP Acquisition Mode</label>
+          </div>
+          <div class="col-sm-8">
+            <div class="form-control small" style="background-color: #e9ecef;">
+              PPPoE
+            </div>
+            <div class="text-info small">
+              IP Acquisition Mode is automatically set to PPPoE for PPPoE
+              encapsulation
             </div>
           </div>
         </div>
@@ -751,23 +857,27 @@
           <div class="col-sm-12 checkbox1 input-field1">
             <input
               id="enableNAT"
-              name="Enable"
+              name="enableNAT"
               type="checkbox"
               ng-true-value="'1'"
               ng-false-value="'0'"
-              ng-model="customWanForm.enableNAT"
+              ng-model="form.enableNAT"
+              ng-disabled="form.ipAcqMode === 'Bridge' || form.wanMode === 'BridgedWan'"
             />
             <label class="checkbox_left_align" for="enableNAT"
               >Enable NAT</label
             >
+            <div
+              class="text-info small"
+              ng-if="form.ipAcqMode === 'Bridge' || form.wanMode === 'BridgedWan'"
+            >
+              NAT is disabled for Bridge mode
+            </div>
           </div>
         </div>
 
         <!-- NAT Type Dropdown -->
-        <div
-          class="row d-flex align-items-center mt-2"
-          ng-if="customWanForm.enableNAT == '1'"
-        >
+        <div class="row d-flex align-items-center mt-2" ng-if="showNATType()">
           <div class="col-sm-4">
             <label for="natType">NAT Type</label>
           </div>
@@ -775,24 +885,29 @@
             <select
               id="natType"
               name="natType"
-              class="dropdown-toggle small"
-              ng-model="customWanForm.natType"
+              class="form-control small"
+              ng-model="form.natType"
               required
             >
               <option value="" disabled selected>Select NAT Type</option>
-              <option
-                ng-repeat="type in ['Port Restricted Cone NAT', 'Full Cone NAT']"
-                value="{{type}}"
+              <option value="Port Restricted Cone NAT"
+                >Port Restricted Cone NAT</option
               >
-                {{type}}
-              </option>
+              <option value="Full Cone NAT">Full Cone NAT</option>
             </select>
+            <div
+              class="text-danger small"
+              ng-show="customWanForm.natType.$error.required && customWanForm.natType.$touched"
+            >
+              Please select NAT Type
+            </div>
           </div>
         </div>
 
-        <!--Static Fields-->
-        <div class="static mt-4" ng-if="customWanForm.ipAcqMode == 'Static'">
+        <!-- Static Fields -->
+        <div class="static mt-4" ng-if="showStaticFields()">
           <hr />
+          <h5>Static IP Configuration</h5>
           <div class="row">
             <div class="mb-3 col-sm-4">
               <label for="ipaddress">IP Address</label>
@@ -800,20 +915,21 @@
                 type="text"
                 id="ipaddress"
                 name="ipaddress"
-                ng-model="customWanForm.ipaddress"
+                ng-model="form.ipaddress"
                 ng-pattern="patterns.ipv4"
-                ng-required="customWanForm.ipAcqMode == 'Static'"
+                ng-required="form.ipAcqMode === 'Static'"
                 class="form-control"
+                placeholder="e.g., 192.168.1.10"
               />
               <div
                 class="text-danger small"
-                ng-show="ptmForm.ipaddress.$error.pattern && ptmForm.ipaddress.$dirty"
+                ng-show="customWanForm.ipaddress.$error.pattern && customWanForm.ipaddress.$dirty"
               >
                 Please enter a valid IPv4 address
               </div>
               <div
                 class="text-danger small"
-                ng-show="ptmForm.ipaddress.$error.required && ptmForm.ipaddress.$dirty"
+                ng-show="customWanForm.ipaddress.$error.required && customWanForm.ipaddress.$touched"
               >
                 IP Address is required
               </div>
@@ -824,20 +940,21 @@
                 type="text"
                 id="subnetmask"
                 name="subnetmask"
-                ng-model="customWanForm.subnetmask"
+                ng-model="form.subnetmask"
                 ng-pattern="patterns.ipv4"
-                ng-required="customWanForm.ipAcqMode == 'Static'"
+                ng-required="form.ipAcqMode === 'Static'"
                 class="form-control"
+                placeholder="e.g., 255.255.255.0"
               />
               <div
                 class="text-danger small"
-                ng-show="ptmForm.subnetmask.$error.pattern && ptmForm.subnetmask.$dirty"
+                ng-show="customWanForm.subnetmask.$error.pattern && customWanForm.subnetmask.$dirty"
               >
                 Please enter a valid IPv4 Subnetmask
               </div>
               <div
                 class="text-danger small"
-                ng-show="ptmForm.subnetmask.$error.required && ptmForm.subnetmask.$dirty"
+                ng-show="customWanForm.subnetmask.$error.required && customWanForm.subnetmask.$touched"
               >
                 Subnet Mask is required
               </div>
@@ -848,20 +965,21 @@
                 type="text"
                 id="gatewayaddress"
                 name="gatewayaddress"
-                ng-model="customWanForm.gatewayaddress"
+                ng-model="form.gatewayaddress"
                 ng-pattern="patterns.ipv4"
-                ng-required="customWanForm.ipAcqMode == 'Static'"
+                ng-required="form.ipAcqMode === 'Static'"
                 class="form-control"
+                placeholder="e.g., 192.168.1.1"
               />
               <div
                 class="text-danger small"
-                ng-show="ptmForm.gatewayaddress.$error.pattern && ptmForm.gatewayaddress.$dirty"
+                ng-show="customWanForm.gatewayaddress.$error.pattern && customWanForm.gatewayaddress.$dirty"
               >
                 Please enter a valid IPv4 Gateway Address
               </div>
               <div
                 class="text-danger small"
-                ng-show="ptmForm.gatewayaddress.$error.required && ptmForm.gatewayaddress.$dirty"
+                ng-show="customWanForm.gatewayaddress.$error.required && customWanForm.gatewayaddress.$touched"
               >
                 Gateway Address is required
               </div>
@@ -926,15 +1044,17 @@
         </div>
 
         <!-- Bridge Fields -->
-        <div class="bridge" ng-if="customWanForm.ipAcqMode == 'Bridge'">
+        <div class="bridge" ng-if="showBridgeFields()">
+          <hr />
+          <h5>Bridge Configuration</h5>
           <div class="row">
-            <div class="col-sm-6 mb-3 required">
+            <div class="col-sm-12 mb-3 required">
               <label for="bridgeConnection">Bridge Connection</label>
               <select
                 id="bridgeConnection"
                 name="bridgeConnection"
-                class="dropdown-toggle"
-                ng-model="customWanForm.selectedBridge"
+                class="form-control"
+                ng-model="form.selectedBridge"
                 ng-options="bridge as bridge.name for bridge in bridgeConnections track by bridge.objName"
                 required
               >
@@ -942,11 +1062,15 @@
                   >Select Bridge Connection</option
                 >
               </select>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.bridgeConnection.$error.required && customWanForm.bridgeConnection.$touched"
+              >
+                Please select a bridge connection
+              </div>
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   </form>
@@ -959,7 +1083,7 @@
       <button
         class="waves-effect waves-light btn btn-info col-sm-6"
         ng-click="submit()"
-        ng-disabled="!customWanForm.$valid"
+        ng-disabled="!customWanForm.$valid || !dataReady"
       >
         Apply
       </button>
