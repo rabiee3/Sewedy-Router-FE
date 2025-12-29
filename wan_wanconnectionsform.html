@@ -493,7 +493,8 @@
                     class="form-control small"
                     id="createVPIVCL"
                     ng-model="form.vpiVci"
-                    required
+                    ng-required="form.accessType === 'ATM'"
+                    ng-disabled="form.accessType !== 'ATM'"
                   />
                   <div class="input-group-btn">
                     <button
@@ -521,7 +522,7 @@
                 </div>
                 <div
                   class="text-danger small"
-                  ng-show="atmForm.createVPIVCL.$error.required && atmForm.createVPIVCL.$touched"
+                  ng-show="form.accessType === 'ATM' && atmForm.createVPIVCL.$error.required && atmForm.createVPIVCL.$touched"
                 >
                   Please select a VPI/VCI
                 </div>
