@@ -18,8 +18,6 @@ myapp.controller("wan_wanconnectionsform", function(
     enableVlan: "0",
     vlanId: "",
     mtu_mru_size: "1492",
-    policy802: "Custom",
-    value802: 0,
     macCloneEnabled: false,
     mac_address: "",
     defaultGateway: "1",
@@ -157,9 +155,11 @@ myapp.controller("wan_wanconnectionsform", function(
 
     const linkNumMatch = linkObj.ObjName.match(/Device\.ATM\.Link\.(\d+)$/);
     if (linkNumMatch) {
-      const qosObjName = `Device.ATM.Link.${linkNumMatch[1]}.QoS`;
+      const linkNum = linkNumMatch[1];
+
+      // Only look for the main QoS object (not .0, .1, etc.)
       const qosObj = $scope.atmLinksQos.find(
-        (obj) => obj.ObjName === qosObjName
+        (obj) => obj.ObjName === `Device.ATM.Link.${linkNum}.QoS`
       );
 
       if (qosObj) {
@@ -364,7 +364,9 @@ myapp.controller("wan_wanconnectionsform", function(
       $scope.atmLinks = objects.filter((obj) =>
         /^Device\.ATM\.Link\.\d+$/.test(obj.ObjName)
       );
-      $scope.atmLinksQos = objects.filter((obj) => /\.QoS$/.test(obj.ObjName));
+      $scope.atmLinksQos = objects.filter((obj) =>
+        /^Device\.ATM\.Link\.\d+\.QoS$/.test(obj.ObjName)
+      );
       $scope.vpiVciOptions = $scope.atmLinks
         .map((obj) => {
           const addrParam = obj.Param.find(
@@ -443,6 +445,12 @@ myapp.controller("wan_wanconnectionsform", function(
     }
   }
 
+  function getParamFromObject(obj, paramName) {
+    if (!obj || !obj.Param) return "";
+    const param = obj.Param.find((x) => x.ParamName === paramName);
+    return param ? param.ParamValue : "";
+  }
+
   async function loadEditModeData() {
     if (!$scope.isEditMode) return;
 
@@ -454,18 +462,21 @@ myapp.controller("wan_wanconnectionsform", function(
 
       if (response.data?.Objects?.length > 0) {
         const ipObj = response.data.Objects[0];
-        const getParam = (name) =>
-          ipObj.Param.find((x) => x.ParamName === name)?.ParamValue || "";
 
-        // Determine access type from description
+        // Determine access type from description and addressing type
         let description = "";
+        let addressingType = "";
+
+        // Look through ALL objects in the response
         for (let obj of response.data.Objects) {
-          const descParam = obj.Param.find(
-            (x) => x.ParamName === "X_LANTIQ_COM_Description"
-          );
-          if (descParam && descParam.ParamValue) {
-            description = descParam.ParamValue;
-            break;
+          const desc = getParamFromObject(obj, "X_LANTIQ_COM_Description");
+          if (desc && !description) {
+            description = desc;
+          }
+
+          const addrType = getParamFromObject(obj, "AddressingType");
+          if (addrType && !addressingType) {
+            addressingType = addrType;
           }
         }
 
@@ -478,26 +489,81 @@ myapp.controller("wan_wanconnectionsform", function(
           $scope.form.accessType = "ETH";
         }
 
-        // Load basic form fields
-        $scope.form.encapsulationMode =
-          getParam("X_LANTIQ_COM_EncapsulationMode") || "IPoE";
-        $scope.form.protocolType =
-          getParam("X_LANTIQ_COM_ProtocolType") || "IPv4";
-        $scope.form.wanMode =
-          getParam("X_LANTIQ_COM_WANMode") === "Bridged"
-            ? "BridgedWan"
-            : "RoutedWan";
-        $scope.form.serviceType =
-          getParam("X_LANTIQ_COM_ServiceType") || "TR069_Internet";
-        $scope.form.defaultGateway =
-          getParam("X_LANTIQ_COM_DefaultGateway") === "true" ? "1" : "0";
-        $scope.form.mtu_mru_size = getParam("MaxMTUSize") || "1492";
+        // DEBUG: Log what we found
+        console.log("Edit mode - Found:", {
+          description: description,
+          addressingType: addressingType,
+          ipInterface: $scope.editIPInterface,
+        });
 
-        // Load addressing type to determine IP acquisition mode
-        const addressingType = getParam("AddressingType");
-        if (addressingType === "DHCP") {
+        // Check for PPPoE in the addressing type
+        if (addressingType === "X_LANTIQ_COM_PPPoE") {
+          console.log("Setting encapsulation mode to PPPoE");
+          $scope.form.encapsulationMode = "PPPoE";
+          $scope.form.ipAcqMode = "PPPoE";
+
+          // Try to load PPP interface to get username/password
+          try {
+            // Get the IP interface name to find matching PPP interface
+            const ipInterfaceName = getParamFromObject(ipObj, "Name") || "";
+            console.log(
+              "Looking for PPP interface with name:",
+              ipInterfaceName
+            );
+
+            // Load all PPP interfaces
+            const pppResponse = await $http.get(
+              URL + "cgi_get?Object=Device.PPP.Interface"
+            );
+
+            if (pppResponse.data?.Objects?.length > 0) {
+              console.log(
+                "Found PPP interfaces:",
+                pppResponse.data.Objects.length
+              );
+
+              // Find the PPP interface by matching the name
+              const pppInterface = pppResponse.data.Objects.find((pppObj) => {
+                const pppName = getParamFromObject(pppObj, "Name");
+                return pppName === ipInterfaceName;
+              });
+
+              if (pppInterface) {
+                // Extract username without domain
+                let username =
+                  getParamFromObject(pppInterface, "Username") || "";
+                if (username.includes("@")) {
+                  username = username.split("@")[0];
+                }
+
+                $scope.form.username = username;
+                $scope.form.password =
+                  getParamFromObject(pppInterface, "Password") || "";
+                $scope.form.mtu_mru_size =
+                  getParamFromObject(pppInterface, "MaxMRUSize") || "1492";
+
+                console.log("Loaded PPPoE credentials:", {
+                  username: $scope.form.username,
+                  passwordLength: $scope.form.password
+                    ? $scope.form.password.length
+                    : 0,
+                  mru: $scope.form.mtu_mru_size,
+                });
+              } else {
+                console.log(
+                  "No matching PPP interface found for name:",
+                  ipInterfaceName
+                );
+              }
+            }
+          } catch (pppError) {
+            console.error("Error loading PPP interface:", pppError);
+          }
+        } else if (addressingType === "DHCP") {
+          $scope.form.encapsulationMode = "IPoE";
           $scope.form.ipAcqMode = "DHCP";
         } else if (addressingType === "Static") {
+          $scope.form.encapsulationMode = "IPoE";
           $scope.form.ipAcqMode = "Static";
           // Load static IP fields
           const ipv4Obj = response.data.Objects.find((obj) =>
@@ -510,9 +576,35 @@ myapp.controller("wan_wanconnectionsform", function(
               getAtmParamValue(ipv4Obj, "SubnetMask") || "";
           }
         } else if (addressingType === "X_LANTIQ_COM_Bridged") {
+          $scope.form.encapsulationMode = "IPoE";
+          $scope.form.wanMode = "BridgedWan";
           $scope.form.ipAcqMode = "Bridge";
-        } else if (addressingType === "X_LANTIQ_COM_PPPoE") {
-          $scope.form.ipAcqMode = "PPPoE";
+        } else {
+          // Default if addressing type not found
+          console.log("No addressing type found, defaulting to IPoE/DHCP");
+          $scope.form.encapsulationMode = "IPoE";
+          $scope.form.ipAcqMode = "DHCP";
+        }
+
+        // Load other basic form fields
+        $scope.form.protocolType =
+          getParamFromObject(ipObj, "X_LANTIQ_COM_ProtocolType") || "IPv4";
+        $scope.form.wanMode =
+          getParamFromObject(ipObj, "X_LANTIQ_COM_WANMode") === "Bridged"
+            ? "BridgedWan"
+            : "RoutedWan";
+        $scope.form.serviceType =
+          getParamFromObject(ipObj, "X_LANTIQ_COM_ServiceType") ||
+          "TR069_Internet";
+        $scope.form.defaultGateway =
+          getParamFromObject(ipObj, "X_LANTIQ_COM_DefaultGateway") === "true"
+            ? "1"
+            : "0";
+
+        // Only set MTU if not already set by PPPoE
+        if (!$scope.form.mtu_mru_size) {
+          $scope.form.mtu_mru_size =
+            getParamFromObject(ipObj, "MaxMTUSize") || "1492";
         }
 
         // Load NAT settings
@@ -687,7 +779,7 @@ myapp.controller("wan_wanconnectionsform", function(
       const isNewVpiVci = !$scope.isExistingVpiVci($scope.form.vpiVci);
 
       if (isNewVpiVci || !$scope.form.selectedATMLink) {
-        // Create new ATM Link
+        // CREATE NEW ATM LINK
         request += `Object=Device.ATM.Link&Operation=Add&Enable=true&Alias=${encodeParam(
           atmAlias
         )}`;
@@ -700,10 +792,10 @@ myapp.controller("wan_wanconnectionsform", function(
         // Set wanLayer to the new ATM link
         wanLayer = `Device.ATM.Link.${atmAlias}`;
 
-        // Create QoS for new link
-        request += `Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Add`;
+        // MODIFY the QoS of the newly created ATM link
+        request += `Object=Device.ATM.Link.${atmAlias}.QoS&Operation=Modify`;
       } else {
-        // Modify existing ATM Link
+        // MODIFY EXISTING ATM LINK
         const atmLinkName = $scope.form.selectedATMLink.ObjName;
         request += `Object=${encodeParam(atmLinkName)}&Operation=Modify`;
         request += `&DestinationAddress=${encodeParam($scope.form.vpiVci)}`;
@@ -711,12 +803,14 @@ myapp.controller("wan_wanconnectionsform", function(
         request += `&LinkType=${encodeParam($scope.form.linkType)}`;
         request += `&`;
 
-        // Modify existing QoS
-        const qosObjName = `${atmLinkName}.QoS`;
-        request += `Object=${encodeParam(qosObjName)}&Operation=Modify`;
+        // Set wanLayer to the existing ATM link
+        wanLayer = atmLinkName;
+
+        // MODIFY the QoS of the existing ATM link
+        request += `Object=${atmLinkName}.QoS&Operation=Modify`;
       }
 
-      // Common QoS settings (for both new and existing)
+      // Common QoS settings (ALWAYS Modify, never Add for QoS)
       request += `&QoSClass=${encodeParam($scope.form.atmQosClass)}`;
       if ($scope.form.peakCellRate)
         request += `&PeakCellRate=${encodeParam($scope.form.peakCellRate)}`;
@@ -893,7 +987,22 @@ myapp.controller("wan_wanconnectionsform", function(
 
     let deleteRequest = "";
 
-    // Traverse and delete old connection objects
+    // List of object types to delete (in reverse order of hierarchy)
+    const objectTypesToDelete = [
+      "Device.DHCPv4.Client",
+      "Device.NAT.InterfaceSetting",
+      "Device.DNS.Client.Server",
+      "Device.Routing.Router.1.IPv4Forwarding",
+      "Device.Routing.Router.1.IPv6Forwarding",
+      "Device.IP.Interface.*.IPv4Address",
+      "Device.IP.Interface",
+      "Device.PPP.Interface",
+      "Device.Ethernet.VLANTermination",
+      "Device.Ethernet.Link",
+      "Device.Bridging.Bridge.*.Port",
+    ];
+
+    // First, try to trace and delete the exact connection chain
     async function traceAndDelete(layer) {
       if (!layer) return;
       const cleanLayer = layer.replace(/\.$/, "");
@@ -904,8 +1013,9 @@ myapp.controller("wan_wanconnectionsform", function(
         );
         const obj = res.data.Objects?.[0];
 
-        // Add to delete request if it's not ATM/PTM/DSL physical layer
+        // Add this object to delete request
         if (
+          cleanLayer &&
           !cleanLayer.includes("ATM") &&
           !cleanLayer.includes("PTM") &&
           !cleanLayer.includes("DSL")
@@ -927,6 +1037,35 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     await traceAndDelete($scope.editIPInterface);
+
+    // Also try to delete by pattern matching (in case trace fails)
+    try {
+      // Get all IP interfaces to find the old one
+      const ipResponse = await $http.get(
+        URL + "cgi_get?Object=Device.IP.Interface"
+      );
+      const ipObjects = ipResponse.data.Objects || [];
+
+      // Find the old IP interface by alias or description
+      const oldIpInterface = ipObjects.find((obj) => {
+        const alias = getAtmParamValue(obj, "Alias");
+        const desc = getAtmParamValue(obj, "X_LANTIQ_COM_Description");
+        return (
+          alias === $scope.editIPInterface ||
+          desc === $scope.editIPInterface ||
+          obj.ObjName.includes($scope.editIPInterface)
+        );
+      });
+
+      if (oldIpInterface) {
+        deleteRequest += `Object=${encodeParam(
+          oldIpInterface.ObjName
+        )}&Operation=Del&`;
+      }
+    } catch (err) {
+      console.warn("Failed to find old IP interface:", err);
+    }
+
     return deleteRequest;
   }
 
