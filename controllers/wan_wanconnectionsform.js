@@ -821,26 +821,50 @@ myapp.controller("wan_wanconnectionsform", function(
     }
   }
 
-  async function loadDNSInformation(ipObj) {
+  async function loadDNSInformation() {
     try {
-      // Check for user-defined DNS
-      const dnsRes = await $http.get(URL + "cgi_getUserDefinedDNS");
+      // Get user-defined DNS settings using the correct endpoint
+      const response = await $http.get(URL + "cgi_get_dns");
 
-      if (dnsRes.data) {
-        // Assuming the API returns something like { UsrDefDNS1: "8.8.8.8", UsrDefDNS2: "8.8.4.4" }
-        if (dnsRes.data.UsrDefDNS1) {
+      console.log("DNS Response:", response.data);
+
+      if (response.data) {
+        const dnsData = response.data.split("\n");
+        let primaryDNS = "";
+        let secondaryDNS = "";
+
+        dnsData.forEach((line) => {
+          const [key, value] = line.split("=");
+          if (key === "UsrDefDNS1" && value && value.trim() !== "") {
+            primaryDNS = value.trim();
+          } else if (key === "UsrDefDNS2" && value && value.trim() !== "") {
+            secondaryDNS = value.trim();
+          }
+        });
+
+        // Check if DNS is configured
+        if (primaryDNS) {
           $scope.form.isUserDefinedDNS = true;
-          $scope.form.primaryDNS = dnsRes.data.UsrDefDNS1;
-          $scope.form.secondaryDNS = dnsRes.data.UsrDefDNS2 || "";
+          $scope.form.primaryDNS = primaryDNS;
+          $scope.form.secondaryDNS = secondaryDNS;
         } else {
           $scope.form.isUserDefinedDNS = false;
           $scope.form.primaryDNS = "";
           $scope.form.secondaryDNS = "";
         }
+
+        console.log("Loaded DNS settings:", {
+          isUserDefinedDNS: $scope.form.isUserDefinedDNS,
+          primaryDNS: $scope.form.primaryDNS,
+          secondaryDNS: $scope.form.secondaryDNS,
+        });
       }
     } catch (error) {
       console.error("Error loading DNS information:", error);
+      // Default to not using user-defined DNS on error
       $scope.form.isUserDefinedDNS = false;
+      $scope.form.primaryDNS = "";
+      $scope.form.secondaryDNS = "";
     }
   }
 
@@ -1319,35 +1343,50 @@ myapp.controller("wan_wanconnectionsform", function(
 
       if (result.status === 200) {
         // Handle user-defined DNS if needed (ONLY for PPPoE)
-        if (
-          $scope.form.isUserDefinedDNS &&
-          $scope.form.encapsulationMode === "PPPoE" &&
-          $scope.form.primaryDNS
-        ) {
-          const dnsRequest = `UsrDefDNS1=${encodeParam(
-            $scope.form.primaryDNS
-          )}`;
-
-          if ($scope.form.secondaryDNS) {
-            dnsRequest += `&UsrDefDNS2=${encodeParam(
-              $scope.form.secondaryDNS
+        if ($scope.form.encapsulationMode === "PPPoE") {
+          if ($scope.form.isUserDefinedDNS && $scope.form.primaryDNS) {
+            const dnsRequest = `UsrDefDNS1=${encodeParam(
+              $scope.form.primaryDNS
             )}`;
+
+            if (
+              $scope.form.secondaryDNS &&
+              $scope.form.secondaryDNS.trim() !== ""
+            ) {
+              dnsRequest += `&UsrDefDNS2=${encodeParam(
+                $scope.form.secondaryDNS
+              )}`;
+            }
+
+            console.log("Setting user-defined DNS:", dnsRequest);
+            try {
+              await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest, {
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+              });
+              console.log("User-defined DNS set successfully");
+            } catch (dnsError) {
+              console.error("Failed to set user-defined DNS:", dnsError);
+              // Don't fail the whole operation if DNS setting fails
+            }
+          } else {
+            // Clear user-defined DNS if checkbox is unchecked or no primary DNS
+            console.log("Clearing user-defined DNS");
+            try {
+              await $http.post(
+                URL + "cgi_setUserDefinedDNS",
+                "UsrDefDNS1=&UsrDefDNS2=",
+                {
+                  headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                  },
+                }
+              );
+            } catch (clearError) {
+              console.error("Failed to clear user-defined DNS:", clearError);
+            }
           }
-
-          console.log("Setting user-defined DNS:", dnsRequest);
-          await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
-        }
-
-        // Clear user-defined DNS if checkbox is unchecked
-        if (
-          !$scope.form.isUserDefinedDNS &&
-          $scope.form.encapsulationMode === "PPPoE"
-        ) {
-          console.log("Clearing user-defined DNS");
-          await $http.post(
-            URL + "cgi_setUserDefinedDNS",
-            "UsrDefDNS1=&UsrDefDNS2="
-          );
         }
 
         // Success - redirect
@@ -1399,42 +1438,40 @@ myapp.controller("wan_wanconnectionsform", function(
 
   // Watch for access type changes
   $scope.$watch("form.accessType", async function(newVal, oldVal) {
-    if (newVal !== oldVal) {
-      // Reset ATM validation when switching away from ATM
-      if (oldVal === "ATM" && newVal !== "ATM") {
-        $scope.resetATMValidation();
-      }
-
-      // Reset dataReady while loading new data
-      $scope.dataReady = false;
-
-      // Reset form validation state
-      $scope.resetFormValidation();
-
-      if (newVal === "ATM") {
-        await loadAtmLinksAndQos();
-      } else {
-        // Clear ATM-specific data when switching away from ATM
-        $scope.atmLinks = [];
-        $scope.atmLinksQos = [];
-        $scope.vpiVciOptions = [];
-        $scope.form.vpiVci = "";
-        $scope.form.selectedATMLink = null;
-        $scope.form.encapsulation = "LLC"; // Reset to default
-        $scope.form.linkType = "EoA"; // Reset to default
-        $scope.form.atmQosClass = "UBR"; // Reset to default
-      }
-
-      // Reset form based on access type
-      if (newVal === "PTM" || newVal === "ETH") {
-        $scope.form.mtu_mru_size = "1492"; // MTU for PTM/ETH
-      } else if (newVal === "ATM") {
-        $scope.form.mtu_mru_size = "1492"; // MRU for ATM
-      }
-
-      // Mark data as ready after everything is loaded
-      $scope.dataReady = true;
+    // Reset ATM validation when switching away from ATM
+    if (oldVal === "ATM" && newVal !== "ATM") {
+      $scope.resetATMValidation();
     }
+
+    // Reset dataReady while loading new data
+    $scope.dataReady = false;
+
+    // Reset form validation state
+    $scope.resetFormValidation();
+
+    if (newVal === "ATM") {
+      await loadAtmLinksAndQos();
+    } else {
+      // Clear ATM-specific data when switching away from ATM
+      $scope.atmLinks = [];
+      $scope.atmLinksQos = [];
+      $scope.vpiVciOptions = [];
+      $scope.form.vpiVci = "";
+      $scope.form.selectedATMLink = null;
+      $scope.form.encapsulation = "LLC"; // Reset to default
+      $scope.form.linkType = "EoA"; // Reset to default
+      $scope.form.atmQosClass = "UBR"; // Reset to default
+    }
+
+    // Reset form based on access type
+    if (newVal === "PTM" || newVal === "ETH") {
+      $scope.form.mtu_mru_size = "1492"; // MTU for PTM/ETH
+    } else if (newVal === "ATM") {
+      $scope.form.mtu_mru_size = "1492"; // MRU for ATM
+    }
+
+    // Mark data as ready after everything is loaded
+    $scope.dataReady = true;
   });
 
   // Initialize the controller

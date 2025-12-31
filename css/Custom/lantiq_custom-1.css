@@ -2567,8 +2567,8 @@ select > option {
 .lantiq-form-text input:-ms-input-placeholder {  color:#5C2D91;font-size:24px; }  ie 
 .lantiq-form-text input:-moz-placeholder {  color:#5C2D91;font-size:24px; }*/
 
-.theme-default .form-control[disabled]{background:#efefef;height:24px;margin-top:10px;color:#666666;}
-select:disabled{background: #efefef !important;color: #666666 !important;cursor: not-allowed;}
+.theme-default .form-control[disabled]{background:#efefef;height:24px;color:#666666;}
+select:disabled{background: #efefef !important;color: #a2a2a2 !important;cursor: not-allowed;}
 .table_plusicon{margin-right:5px; }
 .table-column-3 th{width:33.3333%;}
 /*.custom_formgroup label{display:inline; }*/
