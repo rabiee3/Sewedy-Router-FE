@@ -628,6 +628,12 @@ myapp.controller("wan_wanconnectionsform", function(
         if ($scope.form.accessType === "ATM") {
           await traceAndLoadATMLinkData($scope.editIPInterface);
         }
+
+        // Load VLAN information
+        await loadVLANInformation(ipObj);
+
+        // Load DNS information
+        await loadDNSInformation(ipObj);
       }
     } catch (error) {
       console.error("Error loading edit mode data:", error);
@@ -757,6 +763,84 @@ myapp.controller("wan_wanconnectionsform", function(
     } catch (err) {
       console.error("Error tracing to ATM link:", err);
       return null;
+    }
+  }
+
+  async function loadVLANInformation(ipObj) {
+    try {
+      // Trace down to find VLAN information
+      const vlanLayer = await traceToVLAN(ipObj.ObjName);
+
+      if (vlanLayer) {
+        $scope.form.enableVlan = "1";
+
+        // Get VLAN ID
+        const vlanRes = await $http.get(
+          `${URL}cgi_get_nosubobj?Object=${vlanLayer}`
+        );
+        const vlanObj = vlanRes.data.Objects?.[0];
+
+        if (vlanObj) {
+          const vlanId = getAtmParamValue(vlanObj, "VLANID");
+          if (vlanId) {
+            $scope.form.vlanId = vlanId;
+          }
+        }
+      } else {
+        $scope.form.enableVlan = "0";
+      }
+    } catch (error) {
+      console.error("Error loading VLAN information:", error);
+      $scope.form.enableVlan = "0";
+    }
+  }
+
+  async function traceToVLAN(objPath, visited = []) {
+    try {
+      if (!objPath || visited.includes(objPath)) return null;
+      visited.push(objPath);
+
+      const res = await $http.get(`${URL}cgi_get_nosubobj?Object=${objPath}`);
+      const obj = res.data.Objects?.[0];
+      if (!obj) return null;
+
+      // Check if this is a VLAN termination
+      if (obj.ObjName.includes("Device.Ethernet.VLANTermination")) {
+        return obj.ObjName;
+      }
+
+      // Check LowerLayers to trace down
+      const lowerParam = obj.Param.find((p) => p.ParamName === "LowerLayers");
+      if (!lowerParam || !lowerParam.ParamValue) return null;
+
+      const lower = lowerParam.ParamValue.replace(/\.$/, "");
+      return await traceToVLAN(lower, visited);
+    } catch (err) {
+      console.error("Error tracing to VLAN:", err);
+      return null;
+    }
+  }
+
+  async function loadDNSInformation(ipObj) {
+    try {
+      // Check for user-defined DNS
+      const dnsRes = await $http.get(URL + "cgi_getUserDefinedDNS");
+
+      if (dnsRes.data) {
+        // Assuming the API returns something like { UsrDefDNS1: "8.8.8.8", UsrDefDNS2: "8.8.4.4" }
+        if (dnsRes.data.UsrDefDNS1) {
+          $scope.form.isUserDefinedDNS = true;
+          $scope.form.primaryDNS = dnsRes.data.UsrDefDNS1;
+          $scope.form.secondaryDNS = dnsRes.data.UsrDefDNS2 || "";
+        } else {
+          $scope.form.isUserDefinedDNS = false;
+          $scope.form.primaryDNS = "";
+          $scope.form.secondaryDNS = "";
+        }
+      }
+    } catch (error) {
+      console.error("Error loading DNS information:", error);
+      $scope.form.isUserDefinedDNS = false;
     }
   }
 
@@ -1029,86 +1113,112 @@ myapp.controller("wan_wanconnectionsform", function(
 
     let deleteRequest = "";
 
-    // List of object types to delete (in reverse order of hierarchy)
-    const objectTypesToDelete = [
-      "Device.DHCPv4.Client",
-      "Device.NAT.InterfaceSetting",
-      "Device.DNS.Client.Server",
-      "Device.Routing.Router.1.IPv4Forwarding",
-      "Device.Routing.Router.1.IPv6Forwarding",
-      "Device.IP.Interface.*.IPv4Address",
-      "Device.IP.Interface",
-      "Device.PPP.Interface",
-      "Device.Ethernet.VLANTermination",
-      "Device.Ethernet.Link",
-      "Device.Bridging.Bridge.*.Port",
-    ];
+    try {
+      // Get the exact object to delete
+      const res = await $http.get(
+        `${URL}cgi_get_nosubobj?Object=${$scope.editIPInterface}`
+      );
+      const mainObj = res.data.Objects?.[0];
 
-    // First, try to trace and delete the exact connection chain
-    async function traceAndDelete(layer) {
-      if (!layer) return;
-      const cleanLayer = layer.replace(/\.$/, "");
+      if (mainObj) {
+        // Get all lower layers recursively
+        const layersToDelete = [];
+        async function collectLowerLayers(obj) {
+          if (!obj || !obj.ObjName) return;
 
-      try {
-        const res = await $http.get(
-          `${URL}cgi_get_nosubobj?Object=${cleanLayer}`
-        );
-        const obj = res.data.Objects?.[0];
+          // Skip system/interface objects
+          if (
+            obj.ObjName.includes("Device.ATM.Link") ||
+            obj.ObjName.includes("Device.PTM.Link") ||
+            obj.ObjName.includes("Device.DSL.Line") ||
+            obj.ObjName.includes("Device.Ethernet.Interface")
+          ) {
+            return;
+          }
 
-        // Add this object to delete request
-        if (
-          cleanLayer &&
-          !cleanLayer.includes("ATM") &&
-          !cleanLayer.includes("PTM") &&
-          !cleanLayer.includes("DSL")
-        ) {
-          deleteRequest += `Object=${encodeParam(cleanLayer)}&Operation=Del&`;
-        }
+          layersToDelete.push(obj.ObjName);
 
-        // Recursively trace lower layers
-        if (obj?.Param) {
-          const nextLayer = obj.Param.find((p) => p.ParamName === "LowerLayers")
-            ?.ParamValue;
-          if (nextLayer) {
-            await traceAndDelete(nextLayer);
+          // Check for LowerLayers
+          const lowerParam = obj.Param?.find(
+            (p) => p.ParamName === "LowerLayers"
+          );
+          if (lowerParam?.ParamValue) {
+            const cleanLower = lowerParam.ParamValue.replace(/\.$/, "");
+            try {
+              const lowerRes = await $http.get(
+                `${URL}cgi_get_nosubobj?Object=${cleanLower}`
+              );
+              const lowerObj = lowerRes.data.Objects?.[0];
+              if (lowerObj) {
+                await collectLowerLayers(lowerObj);
+              }
+            } catch (err) {
+              console.warn("Failed to get lower layer:", cleanLower, err);
+            }
           }
         }
-      } catch (err) {
-        console.warn("Failed to fetch layer for deletion:", layer, err);
+
+        await collectLowerLayers(mainObj);
+
+        // Also look for associated objects
+        const associatedObjects = await findAssociatedObjects(mainObj);
+        layersToDelete.push(...associatedObjects);
+
+        // Remove duplicates
+        const uniqueLayers = [...new Set(layersToDelete)];
+
+        // Build delete request (delete in reverse order)
+        for (let i = uniqueLayers.length - 1; i >= 0; i--) {
+          deleteRequest += `Object=${encodeParam(
+            uniqueLayers[i]
+          )}&Operation=Del&`;
+        }
       }
-    }
-
-    await traceAndDelete($scope.editIPInterface);
-
-    // Also try to delete by pattern matching (in case trace fails)
-    try {
-      // Get all IP interfaces to find the old one
-      const ipResponse = await $http.get(
-        URL + "cgi_get?Object=Device.IP.Interface"
-      );
-      const ipObjects = ipResponse.data.Objects || [];
-
-      // Find the old IP interface by alias or description
-      const oldIpInterface = ipObjects.find((obj) => {
-        const alias = getAtmParamValue(obj, "Alias");
-        const desc = getAtmParamValue(obj, "X_LANTIQ_COM_Description");
-        return (
-          alias === $scope.editIPInterface ||
-          desc === $scope.editIPInterface ||
-          obj.ObjName.includes($scope.editIPInterface)
-        );
-      });
-
-      if (oldIpInterface) {
-        deleteRequest += `Object=${encodeParam(
-          oldIpInterface.ObjName
-        )}&Operation=Del&`;
-      }
-    } catch (err) {
-      console.warn("Failed to find old IP interface:", err);
+    } catch (error) {
+      console.error("Error in deleteOldConnection:", error);
     }
 
     return deleteRequest;
+  }
+
+  async function findAssociatedObjects(mainObj) {
+    const associated = [];
+    const mainName = getAtmParamValue(mainObj, "Name");
+    const mainAlias = getAtmParamValue(mainObj, "Alias");
+
+    try {
+      // Find PPP interface with same name
+      const pppRes = await $http.get(
+        URL + "cgi_get?Object=Device.PPP.Interface"
+      );
+      const pppObjects = pppRes.data.Objects || [];
+
+      for (const pppObj of pppObjects) {
+        const pppName = getAtmParamValue(pppObj, "Name");
+        if (pppName === mainName) {
+          associated.push(pppObj.ObjName);
+          break;
+        }
+      }
+
+      // Find Ethernet Link
+      const ethRes = await $http.get(
+        URL + "cgi_get?Object=Device.Ethernet.Link"
+      );
+      const ethObjects = ethRes.data.Objects || [];
+
+      for (const ethObj of ethObjects) {
+        const ethAlias = getAtmParamValue(ethObj, "Alias");
+        if (ethAlias === mainAlias) {
+          associated.push(ethObj.ObjName);
+          break;
+        }
+      }
+    } catch (error) {
+      console.error("Error finding associated objects:", error);
+    }
+
+    return associated;
   }
 
   // ------------------------------------------------------------
@@ -1208,12 +1318,36 @@ myapp.controller("wan_wanconnectionsform", function(
       const result = await $http.post(URL + "cgi_set", requestData);
 
       if (result.status === 200) {
-        // Handle user-defined DNS if needed
-        if ($scope.form.isUserDefinedDNS && $scope.form.primaryDNS) {
+        // Handle user-defined DNS if needed (ONLY for PPPoE)
+        if (
+          $scope.form.isUserDefinedDNS &&
+          $scope.form.encapsulationMode === "PPPoE" &&
+          $scope.form.primaryDNS
+        ) {
           const dnsRequest = `UsrDefDNS1=${encodeParam(
             $scope.form.primaryDNS
-          )}&UsrDefDNS2=${encodeParam($scope.form.secondaryDNS || "")}`;
+          )}`;
+
+          if ($scope.form.secondaryDNS) {
+            dnsRequest += `&UsrDefDNS2=${encodeParam(
+              $scope.form.secondaryDNS
+            )}`;
+          }
+
+          console.log("Setting user-defined DNS:", dnsRequest);
           await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest);
+        }
+
+        // Clear user-defined DNS if checkbox is unchecked
+        if (
+          !$scope.form.isUserDefinedDNS &&
+          $scope.form.encapsulationMode === "PPPoE"
+        ) {
+          console.log("Clearing user-defined DNS");
+          await $http.post(
+            URL + "cgi_setUserDefinedDNS",
+            "UsrDefDNS1=&UsrDefDNS2="
+          );
         }
 
         // Success - redirect
