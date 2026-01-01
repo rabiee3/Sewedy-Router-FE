@@ -18,7 +18,7 @@ myapp.controller("wan_wanconnectionsform", function(
     enableVlan: "0",
     vlanId: "",
     mtu_mru_size: "1492",
-    macCloneEnabled: false,
+    macCloneEnabled: "0",
     mac_address: "",
     defaultGateway: "1",
 
@@ -56,7 +56,7 @@ myapp.controller("wan_wanconnectionsform", function(
   };
 
   // Options for dropdowns
-  $scope.serviceTypes = ["TR069_Internet", "IPTV"];
+  $scope.serviceTypes = ["TR069_Internet"];
   $scope.policies802 = ["Custom", "From IP", "DSCP"];
   $scope.encapsulationOptions = ["LLC", "VCMUX"];
   $scope.atmQosClassOptions = ["UBR", "CBR", "NRT-VBR", "RT-VBR", "UBR+"];
@@ -78,6 +78,7 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.Passwordfieldstatus = false;
   $scope.editIPInterface = "";
   $scope.loadingBridgeConnections = false;
+  $scope.macAddressLoading = false;
 
   // Validation patterns
   $scope.patterns = {
@@ -183,6 +184,77 @@ myapp.controller("wan_wanconnectionsform", function(
         $scope.form.maximumBSize = "";
         $scope.form.sustainableCellRate = "";
       }
+    }
+  }
+
+  async function loadStaticGatewayAddress(ipInterface) {
+    try {
+      // Normalize the interface name (remove trailing dot if present)
+      const normalizedInterface = ipInterface.replace(/\.$/, "");
+
+      // Get all IPv4Forwarding entries
+      const response = await $http.get(
+        URL + "cgi_get?Object=Device.Routing.Router.1.IPv4Forwarding"
+      );
+
+      console.log(
+        "Loading IPv4Forwarding entries for interface:",
+        normalizedInterface
+      );
+      console.log("Original interface:", ipInterface);
+
+      if (response.data?.Objects?.length > 0) {
+        // Find the forwarding entry for this IP interface
+        const forwardingEntry = response.data.Objects.find((obj) => {
+          const interfaceParam = getAtmParamValue(obj, "Interface");
+          if (!interfaceParam) return false;
+
+          // Normalize the interface parameter too (remove trailing dot)
+          const normalizedParam = interfaceParam.replace(/\.$/, "");
+
+          console.log("Checking forwarding entry:", {
+            objName: obj.ObjName,
+            interfaceParam: interfaceParam,
+            normalizedParam: normalizedParam,
+            normalizedInterface: normalizedInterface,
+            matches: normalizedParam === normalizedInterface,
+          });
+
+          return normalizedParam === normalizedInterface;
+        });
+
+        if (forwardingEntry) {
+          const gateway = getAtmParamValue(forwardingEntry, "GatewayIPAddress");
+          console.log("Found forwarding entry:", {
+            objName: forwardingEntry.ObjName,
+            gateway: gateway,
+          });
+
+          if (gateway) {
+            $scope.form.gatewayaddress = gateway;
+            console.log("Loaded static gateway address:", gateway);
+
+            // Also check if this forwarding rule is enabled
+            const enabled = getAtmParamValue(forwardingEntry, "Enable");
+            console.log("Forwarding rule enabled:", enabled);
+          } else {
+            console.log("No gateway found in forwarding entry");
+            $scope.form.gatewayaddress = "";
+          }
+        } else {
+          console.log(
+            "No IPv4Forwarding entry found for interface:",
+            normalizedInterface
+          );
+          $scope.form.gatewayaddress = "";
+        }
+      } else {
+        console.log("No IPv4Forwarding objects found");
+        $scope.form.gatewayaddress = "";
+      }
+    } catch (error) {
+      console.error("Error loading static gateway address:", error);
+      $scope.form.gatewayaddress = "";
     }
   }
 
@@ -317,7 +389,7 @@ myapp.controller("wan_wanconnectionsform", function(
   };
 
   $scope.showMacAddress = function() {
-    return $scope.form.macCloneEnabled;
+    return $scope.form.macCloneEnabled == "1" ? true : false;
   };
 
   $scope.showATMLinkInfo = function() {
@@ -465,6 +537,73 @@ myapp.controller("wan_wanconnectionsform", function(
     return param ? param.ParamValue : "";
   }
 
+  async function loadMACAddressFromEthernetLink(ipInterface) {
+    $scope.macAddressLoading = true;
+    try {
+      // Trace down to find the Ethernet Link
+      const ethLinkObj = await traceToEthernetLink(ipInterface);
+
+      if (ethLinkObj) {
+        // Check if MAC cloning is enabled
+        const macCloningEnabled = getAtmParamValue(
+          ethLinkObj,
+          "X_INTEL_COM_MACCloning"
+        );
+
+        if (macCloningEnabled === "true" || macCloningEnabled === true) {
+          $scope.form.macCloneEnabled = "1";
+
+          // Load the MAC address
+          const macAddress = getAtmParamValue(ethLinkObj, "MACAddress");
+
+          if (macAddress) {
+            $scope.form.mac_address = macAddress;
+          } else {
+            $scope.form.mac_address = "";
+          }
+        } else {
+          $scope.form.macCloneEnabled = "0";
+          $scope.form.mac_address = "";
+        }
+      } else {
+        $scope.form.macCloneEnabled = "0";
+        $scope.form.mac_address = "";
+      }
+    } catch (error) {
+      $scope.form.macCloneEnabled = "0";
+      $scope.form.mac_address = "";
+    } finally {
+      $scope.macAddressLoading = false;
+      $scope.$applyAsync();
+    }
+  }
+
+  async function traceToEthernetLink(objPath, visited = []) {
+    try {
+      if (!objPath || visited.includes(objPath)) return null;
+      visited.push(objPath);
+
+      const res = await $http.get(`${URL}cgi_get_nosubobj?Object=${objPath}`);
+      const obj = res.data.Objects?.[0];
+      if (!obj) return null;
+
+      // Check if this is an Ethernet Link
+      if (obj.ObjName.includes("Device.Ethernet.Link")) {
+        return obj;
+      }
+
+      // Check LowerLayers to trace down
+      const lowerParam = obj.Param.find((p) => p.ParamName === "LowerLayers");
+      if (!lowerParam || !lowerParam.ParamValue) return null;
+
+      const lower = lowerParam.ParamValue.replace(/\.$/, "");
+      return await traceToEthernetLink(lower, visited);
+    } catch (err) {
+      console.error("Error tracing to Ethernet Link:", err);
+      return null;
+    }
+  }
+
   async function loadEditModeData() {
     if (!$scope.isEditMode) return;
 
@@ -502,13 +641,6 @@ myapp.controller("wan_wanconnectionsform", function(
         } else if (description.includes("ETH")) {
           $scope.form.accessType = "ETH";
         }
-
-        // DEBUG: Log what we found
-        console.log("Edit mode - Found:", {
-          description: description,
-          addressingType: addressingType,
-          ipInterface: $scope.editIPInterface,
-        });
 
         // Check for PPPoE in the addressing type
         if (addressingType === "X_LANTIQ_COM_PPPoE") {
@@ -589,6 +721,8 @@ myapp.controller("wan_wanconnectionsform", function(
             $scope.form.subnetmask =
               getAtmParamValue(ipv4Obj, "SubnetMask") || "";
           }
+          // Load gateway address from IPv4Forwarding
+          await loadStaticGatewayAddress($scope.editIPInterface);
         } else if (addressingType === "X_LANTIQ_COM_Bridged") {
           $scope.form.encapsulationMode = "IPoE";
           $scope.form.wanMode = "BridgedWan";
@@ -634,6 +768,14 @@ myapp.controller("wan_wanconnectionsform", function(
 
         // Load DNS information
         await loadDNSInformation(ipObj);
+
+        // Load MAC address from Ethernet Link
+        await loadMACAddressFromEthernetLink($scope.editIPInterface);
+
+        // Load static gateway address if static IP
+        if ($scope.form.ipAcqMode === "Static") {
+          await loadStaticGatewayAddress($scope.editIPInterface);
+        }
       }
     } catch (error) {
       console.error("Error loading edit mode data:", error);
@@ -960,12 +1102,16 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     // ==================== IP Interface ====================
-    if ($scope.form.wanMode !== "BridgedWan") {
-      request += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(
-        ipAlias
-      )}`;
+    // Always create IP Interface, even for BridgedWan mode
+    request += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(
+      ipAlias
+    )}`;
 
-      // Lower layers based on connection type
+    if ($scope.form.wanMode === "BridgedWan") {
+      // For bridged mode, IP Interface connects to Ethernet Link
+      request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
+    } else {
+      // For routed mode, handle based on connection type
       if ($scope.form.enableVlan == "1") {
         const vlanAlias = `cpe-WEB-EthernetVLANTermination-${randomValue}`;
         if ($scope.form.ipAcqMode === "PPPoE") {
@@ -980,18 +1126,32 @@ myapp.controller("wan_wanconnectionsform", function(
           request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
         }
       }
+    }
 
+    // Handle IPv6 based on protocolType
+    if ($scope.form.protocolType === "IPv4/IPv6") {
+      request += `&IPv6Enable=1`; // Use "1" instead of "true"
+      console.log("Setting IPv6 enabled for IPv4/IPv6 protocol type");
+    } else {
+      request += `&IPv6Enable=false`;
+    }
+
+    // Add routing parameters only for RoutedWan mode
+    if ($scope.form.wanMode !== "BridgedWan") {
       request += `&X_LANTIQ_COM_DefaultGateway=${
         $scope.form.defaultGateway === "1" ? "true" : "false"
       }`;
-      request += `&IPv6Enable=false`;
 
       // Add MTU size for non-ATM connections, MRU for ATM is in PPP section
       if (!isATM) {
         request += `&MaxMTUSize=${encodeParam($scope.form.mtu_mru_size)}`;
       }
-      request += `&`;
+    } else {
+      // For bridged mode, disable routing features
+      request += `&X_LANTIQ_COM_DefaultGateway=false`;
+      // Don't set MTU for bridged mode - it's handled at lower layers
     }
+    request += `&`;
 
     // ==================== Ethernet Link ====================
     request += `Object=Device.Ethernet.Link&Operation=Add&Enable=true&Alias=${encodeParam(
@@ -1014,6 +1174,8 @@ myapp.controller("wan_wanconnectionsform", function(
       request += `&X_INTEL_COM_MACCloning=true&MACAddress=${encodeParam(
         $scope.form.mac_address
       )}`;
+    } else {
+      request += `&X_INTEL_COM_MACCloning=false&MACAddress=`;
     }
     request += `&`;
 
@@ -1067,9 +1229,17 @@ myapp.controller("wan_wanconnectionsform", function(
       $scope.form.ipAcqMode === "DHCP" &&
       $scope.form.wanMode !== "BridgedWan"
     ) {
+      // DHCPv4 Client
       request += `Object=Device.DHCPv4.Client&Operation=Add`;
       request += `&Interface=Device.IP.Interface.${ipAlias}`;
       request += `&`;
+
+      // DHCPv6 Client if IPv6 is enabled
+      if ($scope.form.protocolType === "IPv4/IPv6") {
+        request += `Object=Device.DHCPv6.Client&Operation=Add`;
+        request += `&Interface=Device.IP.Interface.${ipAlias}`;
+        request += `&`;
+      }
     }
 
     // ==================== Static IP ====================
@@ -1089,8 +1259,8 @@ myapp.controller("wan_wanconnectionsform", function(
       request += `&GatewayIPAddress=${encodeParam($scope.form.gatewayaddress)}`;
       request += `&`;
 
-      // IPv6 Forwarding (for ATM)
-      if (isATM) {
+      // IPv6 Forwarding (for ATM or when IPv6 is enabled)
+      if (isATM || $scope.form.protocolType === "IPv4/IPv6") {
         request += `Object=Device.Routing.Router.1.IPv6Forwarding&Operation=Add`;
         request += `&Interface=Device.IP.Interface.${ipAlias}`;
         request += `&`;
@@ -1209,6 +1379,9 @@ myapp.controller("wan_wanconnectionsform", function(
     const associated = [];
     const mainName = getAtmParamValue(mainObj, "Name");
     const mainAlias = getAtmParamValue(mainObj, "Alias");
+    const mainObjName = mainObj.ObjName;
+    // Normalize the object name (remove trailing dot)
+    const normalizedMainObjName = mainObjName.replace(/\.$/, "");
 
     try {
       // Find PPP interface with same name
@@ -1236,6 +1409,55 @@ myapp.controller("wan_wanconnectionsform", function(
         if (ethAlias === mainAlias) {
           associated.push(ethObj.ObjName);
           break;
+        }
+      }
+
+      // Find IPv4Forwarding entries
+      const forwardingRes = await $http.get(
+        URL + "cgi_get?Object=Device.Routing.Router.1.IPv4Forwarding"
+      );
+      const forwardingObjects = forwardingRes.data.Objects || [];
+
+      for (const fwdObj of forwardingObjects) {
+        const interfaceParam = getAtmParamValue(fwdObj, "Interface");
+        if (interfaceParam) {
+          // Normalize both for comparison
+          const normalizedParam = interfaceParam.replace(/\.$/, "");
+          if (normalizedParam === normalizedMainObjName) {
+            associated.push(fwdObj.ObjName);
+          }
+        }
+      }
+
+      // Find NAT settings
+      const natRes = await $http.get(
+        URL + "cgi_get?Object=Device.NAT.InterfaceSetting"
+      );
+      const natObjects = natRes.data.Objects || [];
+
+      for (const natObj of natObjects) {
+        const interfaceParam = getAtmParamValue(natObj, "Interface");
+        if (interfaceParam) {
+          const normalizedParam = interfaceParam.replace(/\.$/, "");
+          if (normalizedParam === normalizedMainObjName) {
+            associated.push(natObj.ObjName);
+          }
+        }
+      }
+
+      // Find DHCP client
+      const dhcpRes = await $http.get(
+        URL + "cgi_get?Object=Device.DHCPv4.Client"
+      );
+      const dhcpObjects = dhcpRes.data.Objects || [];
+
+      for (const dhcpObj of dhcpObjects) {
+        const interfaceParam = getAtmParamValue(dhcpObj, "Interface");
+        if (interfaceParam) {
+          const normalizedParam = interfaceParam.replace(/\.$/, "");
+          if (normalizedParam === normalizedMainObjName) {
+            associated.push(dhcpObj.ObjName);
+          }
         }
       }
     } catch (error) {
@@ -1316,6 +1538,14 @@ myapp.controller("wan_wanconnectionsform", function(
     if ($scope.form.ipAcqMode === "PPPoE") {
       if (!$scope.form.username || !$scope.form.password) {
         alert("Please enter PPPoE username and password.");
+        return;
+      }
+    }
+
+    // In the submit() function, update the MAC cloning validation:
+    if ($scope.form.macCloneEnabled === "1" && $scope.form.mac_address) {
+      if (!$scope.validateMACAddress($scope.form.mac_address)) {
+        alert("Invalid MAC address. Please enter a valid unicast MAC address.");
         return;
       }
     }

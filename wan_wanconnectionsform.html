@@ -47,6 +47,7 @@
               ng-model="form.encapsulationMode"
               ng-required="true"
               class="form-control small"
+              ng-disabled="isEditMode"
             >
               <option value="IPoE">IPoE</option>
               <option value="PPPoE">PPPoE</option>
@@ -72,6 +73,7 @@
               ng-model="form.protocolType"
               ng-required="true"
               class="form-control small"
+              ng-disabled="isEditMode"
             >
               <option value="IPv4">IPv4</option>
               <option value="IPv4/IPv6">IPv4/IPv6</option>
@@ -123,6 +125,7 @@
               ng-required="true"
               class="form-control small"
               ng-options="type for type in serviceTypes"
+              ng-disabled="isEditMode"
             >
             </select>
             <div
@@ -221,32 +224,19 @@
         </div>
 
         <!-- MAC Cloning -->
-        <div class="row mt-3">
-          <div class="col-sm-4">
-            <label for="macClone" class="control-label mr-3"
+        <div class="row d-flex align-items-center mt-2">
+          <div class="col-sm-12 checkbox1 input-field1 mt-2">
+            <input
+              id="macClone"
+              name="macClone"
+              type="checkbox"
+              ng-true-value="'1'"
+              ng-false-value="'0'"
+              ng-model="form.macCloneEnabled"
+            />
+            <label class="checkbox_left_align" for="macClone"
               >Mac Cloning Enable</label
             >
-          </div>
-          <div class="col-sm-8 d-flex align-items-center">
-            <span
-              ng-click="form.macCloneEnabled = !form.macCloneEnabled;"
-              class="switch"
-              off="Off"
-              on="On"
-              ng-class="{checked: form.macCloneEnabled}"
-            >
-              <small></small>
-              <input
-                type="checkbox"
-                style="display:none"
-                name="macClone"
-                id="macClone"
-                ng-model="form.macCloneEnabled"
-              />
-              <span class="switch-text">
-                <span class="on">On</span><span class="off">Off</span>
-              </span>
-            </span>
           </div>
         </div>
 
@@ -703,10 +693,7 @@
         <h3 class="form-header">IP Configuration</h3>
 
         <!-- IP Acquisition Mode -->
-        <div
-          class="row mb-3"
-          ng-if="shouldShowIPAcqMode()"
-        >
+        <div class="row mb-3" ng-if="shouldShowIPAcqMode()">
           <div class="col-sm-4">
             <label class="pt-2" for="ipAccMode">IP Acquisition Mode</label>
           </div>
@@ -717,7 +704,7 @@
               ng-model="form.ipAcqMode"
               ng-required="true"
               class="form-control small"
-              ng-disabled="form.wanMode === 'BridgedWan'"
+              ng-disabled="form.wanMode === 'BridgedWan' || isEditMode"
             >
               <option ng-repeat="mode in ipAcqModes" value="{{mode}}"
                 >{{mode}}</option
