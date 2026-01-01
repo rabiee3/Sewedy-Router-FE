@@ -614,13 +614,23 @@ myapp.controller("wan_wanconnectionsform", function(
       );
 
       if (response.data?.Objects?.length > 0) {
-        const ipObj = response.data.Objects[0];
+        // Find the main IP Interface object
+        const ipObj = response.data.Objects.find(
+          (obj) =>
+            obj.ObjName === $scope.editIPInterface ||
+            obj.ObjName.startsWith($scope.editIPInterface.replace(/\.$/, "")) ||
+            /^Device\.IP\.Interface\.\d+\.?$/.test(obj.ObjName)
+        );
 
-        // Determine access type from description and addressing type
+        if (!ipObj) {
+          console.error("Could not find main IP Interface object in response");
+          return;
+        }
+
+        // Look through ALL objects in the response for description and addressing type
         let description = "";
         let addressingType = "";
 
-        // Look through ALL objects in the response
         for (let obj of response.data.Objects) {
           const desc = getParamFromObject(obj, "X_LANTIQ_COM_Description");
           if (desc && !description) {
@@ -640,6 +650,30 @@ myapp.controller("wan_wanconnectionsform", function(
           $scope.form.accessType = "PTM";
         } else if (description.includes("ETH")) {
           $scope.form.accessType = "ETH";
+        }
+
+        // Load IPv6 setting from the IP Interface object
+        const ipv6Enable = getParamFromObject(ipObj, "IPv6Enable");
+
+        // Set protocol type based on IPv6Enable
+        if (ipv6Enable === "1" || ipv6Enable === "true") {
+          $scope.form.protocolType = "IPv4/IPv6";
+        } else {
+          $scope.form.protocolType = "IPv4";
+        }
+
+        // Also check if there's an X_LANTIQ_COM_ProtocolType parameter
+        const protocolTypeParam = getParamFromObject(
+          ipObj,
+          "X_LANTIQ_COM_ProtocolType"
+        );
+        if (protocolTypeParam) {
+          if (
+            protocolTypeParam === "IPv4/IPv6" ||
+            protocolTypeParam === "IPv6"
+          ) {
+            $scope.form.protocolType = "IPv4/IPv6";
+          }
         }
 
         // Check for PPPoE in the addressing type
@@ -721,8 +755,6 @@ myapp.controller("wan_wanconnectionsform", function(
             $scope.form.subnetmask =
               getAtmParamValue(ipv4Obj, "SubnetMask") || "";
           }
-          // Load gateway address from IPv4Forwarding
-          await loadStaticGatewayAddress($scope.editIPInterface);
         } else if (addressingType === "X_LANTIQ_COM_Bridged") {
           $scope.form.encapsulationMode = "IPoE";
           $scope.form.wanMode = "BridgedWan";
@@ -734,9 +766,7 @@ myapp.controller("wan_wanconnectionsform", function(
           $scope.form.ipAcqMode = "DHCP";
         }
 
-        // Load other basic form fields
-        $scope.form.protocolType =
-          getParamFromObject(ipObj, "X_LANTIQ_COM_ProtocolType") || "IPv4";
+        // Load other basic form fields from the main IP Interface object
         $scope.form.wanMode =
           getParamFromObject(ipObj, "X_LANTIQ_COM_WANMode") === "Bridged"
             ? "BridgedWan"
@@ -744,10 +774,19 @@ myapp.controller("wan_wanconnectionsform", function(
         $scope.form.serviceType =
           getParamFromObject(ipObj, "X_LANTIQ_COM_ServiceType") ||
           "TR069_Internet";
-        $scope.form.defaultGateway =
-          getParamFromObject(ipObj, "X_LANTIQ_COM_DefaultGateway") === "true"
-            ? "1"
-            : "0";
+
+        // Load Default Gateway checkbox setting
+        const defaultGatewayParam = getParamFromObject(
+          ipObj,
+          "X_LANTIQ_COM_DefaultGateway"
+        );
+
+        if (defaultGatewayParam === "true") {
+          $scope.form.defaultGateway = "1";
+        } else {
+          $scope.form.defaultGateway = "0";
+        }
+
 
         // Only set MTU if not already set by PPPoE
         if (!$scope.form.mtu_mru_size) {
@@ -1203,6 +1242,10 @@ myapp.controller("wan_wanconnectionsform", function(
         $scope.form.username + "@tedata.net.eg"
       )}`;
       request += `&Password=${encodeParam($scope.form.password)}`;
+
+      if ($scope.form.protocolType === "IPv4/IPv6") {
+        request += `&IPv6CPEnable=true`;
+      }
 
       if ($scope.form.enableVlan == "1" && $scope.form.vlanId) {
         request += `&LowerLayers=Device.Ethernet.VLANTermination.cpe-WEB-EthernetVLANTermination-${randomValue}`;
