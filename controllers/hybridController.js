@@ -8288,11 +8288,6 @@ myapp.controller("hybridController", function(
   /*Internet edit */
   $scope.editInternet = function(event, formToopen) {
     localStorage.setItem("randomvalue", $scope.randomNumber(10, 99));
-    localStorage.setItem("internetEdit", true);
-    localStorage.setItem(
-      "internetObject",
-      event.currentTarget.attributes["id"].value
-    );
     if (formToopen === "wan_wanconnectionsform") {
       $location.path(
         "/wan_connections_views/" + event.currentTarget.attributes["id"].value
@@ -8793,7 +8788,7 @@ myapp.controller("hybridController", function(
                     if ($scope.ddobject["Device.Bridging.Bridge"] == undefined)
                       $scope.ddobject["Device.Bridging.Bridge"] = rest;
                   }
-                  $scope["temp"]["Mode"] = $scope["Modes"][index];
+                    $scope["temp"]["Mode"] = $scope["Modes"][index];
                   var regExp = /\(([^)]+)\)/;
                   var matches = regExp.exec($("#Mode").attr("ng-change"));
                   //                                var parameters = matches[1].split(',');

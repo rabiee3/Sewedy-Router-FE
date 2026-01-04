@@ -94,7 +94,7 @@
         <label for="username">Internet Account</label>
 
         <input
-          type="number"
+          type="text"
           id="username"
           ng-model="credentials.username"
           required
@@ -102,7 +102,7 @@
         <span class="username-suffix">@tedata.net.eg</span>
       </div>
       <p class="error" ng-show="!isUsernameValid()">
-        Internet account is required.
+        Internet account is required and must contain numbers only.
       </p>
 
       <div class="field-container">

@@ -16,7 +16,7 @@ myapp.controller("quicksetupController", function(
 
   // Default values
   $scope.credentials = {
-    username: 111111,
+    username: "00000",
     password: "00000000",
   };
 
@@ -45,7 +45,9 @@ myapp.controller("quicksetupController", function(
     "WPA-WPA2-Personal": "TKIP/AES",
   };
 
-  loadExistingCredentials();
+  if ($routeParams.id) {
+    loadExistingCredentials();
+  }
 
   // Watch for 2.4G security mode changes
   $scope.$watch("wifiSettings.selected_security_2_4G", function(newVal) {
@@ -212,14 +214,16 @@ myapp.controller("quicksetupController", function(
 
       const user_pass = await loadUserPassData(DeviceIpInterface);
 
-      setTimeout(() => {
-        $scope.$apply(() => {
-          $scope.credentials.username = Number(user_pass.Username);
-          if (user_pass.Password) {
-            $scope.credentials.password = user_pass.Password;
-          }
-        });
-      }, 200);
+      if (user_pass) {
+        setTimeout(() => {
+          $scope.$apply(() => {
+            $scope.credentials.username = Number(user_pass.Username);
+            if (user_pass.Password) {
+              $scope.credentials.password = user_pass.Password;
+            }
+          });
+        }, 200);
+      }
 
       // Get WiFi 2_4G SSID data
       const ssidResponse = await $http.get(
@@ -252,7 +256,8 @@ myapp.controller("quicksetupController", function(
           (x) => x.ParamName === "ModeEnabled"
         );
         if (securityMode24G && securityMode24G.ParamValue != "") {
-          $scope.wifiSettings.selected_security_2_4G = securityMode24G.ParamValue;
+          $scope.wifiSettings.selected_security_2_4G =
+            securityMode24G.ParamValue;
         }
       }
 
