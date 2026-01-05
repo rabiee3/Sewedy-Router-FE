@@ -85,9 +85,10 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.ipAcqModes = ["DHCP", "Static"];
   $scope.values802 = [0, 1, 2, 3, 4, 5, 6, 7];
   $scope.linkTypeOptions = ["EoA", "PPPoA"];
+  $scope.ipAlias = "";
 
   // IPv6 Options
-  $scope.protocolTypeOptions = ["IPv4", "IPv4/IPv6"];
+  $scope.protocolTypeOptions = ["IPv4", "IPv4/IPv6", "IPv6"];
   $scope.ipv6PrefixAcqModes = ["DHCPv6-PD", "Static", "None"];
   $scope.ipv6IPAcqModes = ["DHCPv6", "Automatic", "Static", "None"];
   $scope.dsLiteModes = ["Off", "Automatic", "Static"];
@@ -248,7 +249,6 @@ myapp.controller("wan_wanconnectionsform", function(
           if (gateway) {
             $scope.form.gatewayaddress = gateway;
           } else {
-
             $scope.form.gatewayaddress = "";
           }
         } else {
@@ -368,7 +368,6 @@ myapp.controller("wan_wanconnectionsform", function(
             $scope.form.ipv6PrefixAcqMode = "Static";
             $scope.form.ipv6StaticPrefix = prefixAddress || "";
             $scope.form.ipv6StaticPrefixMask = prefixMask || "64";
-
           } else if (origin === "RouterAdvertisement" || origin === "DHCPv6") {
             // Check if there's an active DHCPv6 client for prefix delegation
             $scope.form.ipv6PrefixAcqMode = "DHCPv6-PD";
@@ -568,14 +567,6 @@ myapp.controller("wan_wanconnectionsform", function(
     );
   };
 
-  $scope.showIPv4OnlyOptions = function() {
-    return $scope.form.protocolType === "IPv4";
-  };
-
-  $scope.showIPv6OnlyOptions = function() {
-    return $scope.form.protocolType === "IPv6";
-  };
-
   // ------------------------------------------------------------
   // Watch for Protocol Type changes to handle IPv6 options
   // ------------------------------------------------------------
@@ -583,9 +574,8 @@ myapp.controller("wan_wanconnectionsform", function(
     $scope.form.showIPv6Options = newVal === "IPv4/IPv6" || newVal === "IPv6";
     $scope.form.showIPv4Options = newVal === "IPv4/IPv6" || newVal === "IPv4";
 
-    // If switching to IPv6-only, disable IPv4-specific options
+    // If switching to IPv6, disable IPv4-specific options
     if (newVal === "IPv6") {
-      $scope.form.ipAcqMode = "";
       $scope.form.enableNAT = "0"; // NAT is IPv4-only
     } else if (newVal === "IPv4") {
       // If switching to IPv4-only, disable IPv6-specific options
@@ -1013,7 +1003,6 @@ myapp.controller("wan_wanconnectionsform", function(
 
         // Check for PPPoE in the addressing type
         if (addressingType === "X_LANTIQ_COM_PPPoE") {
-
           $scope.form.encapsulationMode = "PPPoE";
           $scope.form.ipAcqMode = "PPPoE";
 
@@ -1028,7 +1017,6 @@ myapp.controller("wan_wanconnectionsform", function(
             );
 
             if (pppResponse.data?.Objects?.length > 0) {
-
               // Find the PPP interface by matching the name
               const pppInterface = pppResponse.data.Objects.find((pppObj) => {
                 const pppName = getParamFromObject(pppObj, "Name");
@@ -1048,7 +1036,6 @@ myapp.controller("wan_wanconnectionsform", function(
                   getParamFromObject(pppInterface, "Password") || "";
                 $scope.form.mtu_mru_size =
                   getParamFromObject(pppInterface, "MaxMRUSize") || "1492";
-
               } else {
                 console.log(
                   "No matching PPP interface found for name:",
@@ -1352,7 +1339,6 @@ myapp.controller("wan_wanconnectionsform", function(
           $scope.form.primaryDNS = "";
           $scope.form.secondaryDNS = "";
         }
-
       }
     } catch (error) {
       console.error("Error loading DNS information:", error);
@@ -1372,6 +1358,7 @@ myapp.controller("wan_wanconnectionsform", function(
     let request = "";
     const ethAlias = `cpe-WEB-EthernetLink-${randomValue}`;
     const ipAlias = `cpe-WEB-IPInterface-${randomValue}`;
+    $scope.ipAlias = ipAlias;
     const pppAlias = `cpe-WEB-PPPInterface-${randomValue}`;
 
     // Determine WAN layer and ATM-specific settings
@@ -1474,7 +1461,7 @@ myapp.controller("wan_wanconnectionsform", function(
           // PPPoE for IPv4/IPv6 mode
           request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
         } else {
-          // For IPv6-only or IPoE
+          // For IPv6 or IPoE
           request += `&LowerLayers=Device.Ethernet.VLANTermination.${vlanAlias}`;
         }
       } else {
@@ -1485,17 +1472,14 @@ myapp.controller("wan_wanconnectionsform", function(
           // PPPoE for IPv4/IPv6 mode
           request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
         } else {
-          // For IPv6-only or IPoE
+          // For IPv6 or IPoE
           request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
         }
       }
     }
 
     // Handle IPv6 based on protocolType
-    if (
-      $scope.form.protocolType === "IPv4/IPv6" ||
-      $scope.form.protocolType === "IPv6"
-    ) {
+    if ($scope.form.protocolType === "IPv4/IPv6" || $scope.form.protocolType === "IPv6") {
       request += `&IPv6Enable=1`;
     } else {
       request += `&IPv6Enable=false`;
@@ -1555,11 +1539,9 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     // ==================== PPPoE ====================
-    // PPPoE is only for IPv4, not for IPv6-only mode
     if (
       $scope.form.ipAcqMode === "PPPoE" &&
-      $scope.form.wanMode !== "BridgedWan" &&
-      $scope.form.protocolType !== "IPv6"
+      $scope.form.wanMode !== "BridgedWan"
     ) {
       request += `Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(
         pppAlias
@@ -1596,11 +1578,10 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     // ==================== DHCPv4 ====================
-    // DHCPv4 is only for IPv4, not for IPv6-only mode
+    // DHCPv4 is only for IPv4, not for IPv6 mode
     if (
       $scope.form.ipAcqMode === "DHCP" &&
-      $scope.form.wanMode !== "BridgedWan" &&
-      $scope.form.protocolType !== "IPv6"
+      $scope.form.wanMode !== "BridgedWan"
     ) {
       // DHCPv4 Client
       request += `Object=Device.DHCPv4.Client&Operation=Add`;
@@ -1613,7 +1594,7 @@ myapp.controller("wan_wanconnectionsform", function(
       $scope.form.protocolType === "IPv4/IPv6" ||
       $scope.form.protocolType === "IPv6"
     ) {
-      // For IPv6-only mode, we need to configure IPv6 addressing
+      // For IPv6 mode, we need to configure IPv6 addressing
       if ($scope.form.ipv6IPAcqMode === "DHCPv6") {
         // Add DHCPv6 client
         const dhcpv6Alias = `cpe-WEB-DHCPv6Client-${randomValue}`;
@@ -1730,8 +1711,7 @@ myapp.controller("wan_wanconnectionsform", function(
     // ==================== Static IPv4 ====================
     if (
       $scope.form.ipAcqMode === "Static" &&
-      $scope.form.wanMode !== "BridgedWan" &&
-      $scope.form.protocolType !== "IPv6"
+      $scope.form.wanMode !== "BridgedWan"
     ) {
       // IPv4 Address
       request += `Object=Device.IP.Interface.${ipAlias}.IPv4Address&Operation=Add`;
@@ -1761,11 +1741,7 @@ myapp.controller("wan_wanconnectionsform", function(
 
     // ==================== NAT ====================
     // NAT is IPv4-only
-    if (
-      $scope.form.enableNAT === "1" &&
-      $scope.form.wanMode !== "BridgedWan" &&
-      $scope.form.protocolType !== "IPv6"
-    ) {
+    if ($scope.form.enableNAT === "1" && $scope.form.wanMode !== "BridgedWan") {
       request += `Object=Device.NAT.InterfaceSetting&Operation=Add`;
       request += `&Interface=Device.IP.Interface.${ipAlias}`;
       request += `&Enable=true`;
@@ -2136,6 +2112,114 @@ myapp.controller("wan_wanconnectionsform", function(
             } catch (clearError) {
               console.error("Failed to clear user-defined DNS:", clearError);
             }
+          }
+        }
+
+        // Success - modify IPv4 if IPv6 only is selected
+        if ($scope.form.protocolType === "IPv6") {
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+
+          try {
+            // Get all IP interfaces to find the one we just created by alias
+            const ipResponse = await $http.get(
+              URL + "cgi_get?Object=Device.IP.Interface"
+            );
+
+            if (ipResponse.data?.Objects?.length > 0) {
+              let targetInterface = null;
+
+              const exactAliasMatch = ipResponse.data.Objects.find((obj) => {
+                const aliasParam = obj.Param?.find(
+                  (p) => p.ParamName === "Alias"
+                );
+                return aliasParam?.ParamValue === $scope.ipAlias;
+              });
+
+              if (exactAliasMatch) {
+                targetInterface = exactAliasMatch.ObjName;
+                console.log(
+                  "Found interface by exact alias match:",
+                  targetInterface
+                );
+              } else {
+                const aliasPatternMatch = ipResponse.data.Objects.find(
+                  (obj) => {
+                    const aliasParam = obj.Param?.find(
+                      (p) => p.ParamName === "Alias"
+                    );
+                    return aliasParam?.ParamValue?.includes(
+                      "cpe-WEB-IPInterface-"
+                    );
+                  }
+                );
+
+                if (aliasPatternMatch) {
+                  targetInterface = aliasPatternMatch.ObjName;
+                  console.log(
+                    "Found interface by alias pattern:",
+                    targetInterface
+                  );
+                } else {
+                  let highestNumber = -1;
+                  let latestInterface = null;
+
+                  ipResponse.data.Objects.forEach((obj) => {
+                    const match = obj.ObjName.match(
+                      /Device\.IP\.Interface\.(\d+)/
+                    );
+                    if (match) {
+                      const interfaceNum = parseInt(match[1], 10);
+                      if (interfaceNum > highestNumber) {
+                        highestNumber = interfaceNum;
+                        latestInterface = obj.ObjName;
+                      }
+                    }
+                  });
+
+                  if (latestInterface) {
+                    targetInterface = latestInterface;
+                    console.log(
+                      "Found latest interface by number:",
+                      targetInterface
+                    );
+                  }
+                }
+              }
+
+              if (targetInterface) {
+                // Modify the interface to disable IPv4
+                const disableIPv4Request = `Object=${encodeParam(
+                  targetInterface
+                )}&Operation=Modify&IPv4Enable=false&Object=${encodeParam(
+                  targetInterface
+                )}.IPv4Address.1&Operation=Modify&Enable=false`;
+
+                const disableResult = await $http.post(
+                  URL + "cgi_set",
+                  disableIPv4Request
+                );
+
+                if (disableResult.status === 200) {
+                  console.log(
+                    "Successfully disabled IPv4 on interface:",
+                    targetInterface
+                  );
+                } else {
+                  console.warn(
+                    "Failed to disable IPv4 on interface:",
+                    disableResult.data
+                  );
+                }
+              } else {
+                console.warn(
+                  "Could not find the created IP interface to disable IPv4"
+                );
+              }
+            } else {
+              console.warn("No IP interfaces found in response");
+            }
+          } catch (error) {
+            console.error("Error disabling IPv4 on interface:", error);
           }
         }
 
