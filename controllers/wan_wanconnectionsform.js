@@ -230,12 +230,6 @@ myapp.controller("wan_wanconnectionsform", function(
         URL + "cgi_get?Object=Device.Routing.Router.1.IPv4Forwarding"
       );
 
-      console.log(
-        "Loading IPv4Forwarding entries for interface:",
-        normalizedInterface
-      );
-      console.log("Original interface:", ipInterface);
-
       if (response.data?.Objects?.length > 0) {
         // Find the forwarding entry for this IP interface
         const forwardingEntry = response.data.Objects.find((obj) => {
@@ -245,33 +239,16 @@ myapp.controller("wan_wanconnectionsform", function(
           // Normalize the interface parameter too (remove trailing dot)
           const normalizedParam = interfaceParam.replace(/\.$/, "");
 
-          console.log("Checking forwarding entry:", {
-            objName: obj.ObjName,
-            interfaceParam: interfaceParam,
-            normalizedParam: normalizedParam,
-            normalizedInterface: normalizedInterface,
-            matches: normalizedParam === normalizedInterface,
-          });
-
           return normalizedParam === normalizedInterface;
         });
 
         if (forwardingEntry) {
           const gateway = getAtmParamValue(forwardingEntry, "GatewayIPAddress");
-          console.log("Found forwarding entry:", {
-            objName: forwardingEntry.ObjName,
-            gateway: gateway,
-          });
 
           if (gateway) {
             $scope.form.gatewayaddress = gateway;
-            console.log("Loaded static gateway address:", gateway);
-
-            // Also check if this forwarding rule is enabled
-            const enabled = getAtmParamValue(forwardingEntry, "Enable");
-            console.log("Forwarding rule enabled:", enabled);
           } else {
-            console.log("No gateway found in forwarding entry");
+
             $scope.form.gatewayaddress = "";
           }
         } else {
@@ -385,12 +362,6 @@ myapp.controller("wan_wanconnectionsform", function(
           const prefixValue = getAtmParamValue(ipv6Prefix, "Prefix");
           const origin = getAtmParamValue(ipv6Prefix, "Origin");
 
-          console.log("Found IPv6 Prefix:", {
-            prefix: prefixValue,
-            origin: origin,
-            enable: getAtmParamValue(ipv6Prefix, "Enable"),
-          });
-
           if (prefixValue && origin === "Static") {
             // Extract prefix and mask
             const [prefixAddress, prefixMask] = prefixValue.split("/");
@@ -398,10 +369,6 @@ myapp.controller("wan_wanconnectionsform", function(
             $scope.form.ipv6StaticPrefix = prefixAddress || "";
             $scope.form.ipv6StaticPrefixMask = prefixMask || "64";
 
-            console.log("Set IPv6 prefix to Static:", {
-              address: $scope.form.ipv6StaticPrefix,
-              mask: $scope.form.ipv6StaticPrefixMask,
-            });
           } else if (origin === "RouterAdvertisement" || origin === "DHCPv6") {
             // Check if there's an active DHCPv6 client for prefix delegation
             $scope.form.ipv6PrefixAcqMode = "DHCPv6-PD";
@@ -418,12 +385,6 @@ myapp.controller("wan_wanconnectionsform", function(
           const address = getAtmParamValue(ipv6Addr, "IPAddress");
           const origin = getAtmParamValue(ipv6Addr, "Origin");
           const enable = getAtmParamValue(ipv6Addr, "Enable");
-
-          console.log("Found IPv6 Address:", {
-            address: address,
-            origin: origin,
-            enable: enable,
-          });
 
           if (address && origin === "Static") {
             $scope.form.ipv6IPAcqMode = "Static";
@@ -484,13 +445,6 @@ myapp.controller("wan_wanconnectionsform", function(
             $scope.form.ipv6IPAcqMode = "Automatic";
           }
         }
-
-        console.log("Final IPv6 settings:", {
-          prefixAcqMode: $scope.form.ipv6PrefixAcqMode,
-          ipAcqMode: $scope.form.ipv6IPAcqMode,
-          staticPrefix: $scope.form.ipv6StaticPrefix,
-          staticAddress: $scope.form.ipv6StaticAddress,
-        });
       }
     } catch (error) {
       console.error("Error loading IPv6 settings:", error);
@@ -516,8 +470,6 @@ myapp.controller("wan_wanconnectionsform", function(
         });
 
         if (dhcpClient) {
-          console.log("Found enabled DHCPv6 client:", dhcpClient.ObjName);
-
           // Check for prefix delegation (IANA/IAPD)
           const ianaId = parseInt(
             getAtmParamValue(dhcpClient, "X_LANTIQ_COM_IANAID") || "0",
@@ -1061,7 +1013,7 @@ myapp.controller("wan_wanconnectionsform", function(
 
         // Check for PPPoE in the addressing type
         if (addressingType === "X_LANTIQ_COM_PPPoE") {
-          console.log("Setting encapsulation mode to PPPoE");
+
           $scope.form.encapsulationMode = "PPPoE";
           $scope.form.ipAcqMode = "PPPoE";
 
@@ -1069,10 +1021,6 @@ myapp.controller("wan_wanconnectionsform", function(
           try {
             // Get the IP interface name to find matching PPP interface
             const ipInterfaceName = getParamFromObject(ipObj, "Name") || "";
-            console.log(
-              "Looking for PPP interface with name:",
-              ipInterfaceName
-            );
 
             // Load all PPP interfaces
             const pppResponse = await $http.get(
@@ -1080,10 +1028,6 @@ myapp.controller("wan_wanconnectionsform", function(
             );
 
             if (pppResponse.data?.Objects?.length > 0) {
-              console.log(
-                "Found PPP interfaces:",
-                pppResponse.data.Objects.length
-              );
 
               // Find the PPP interface by matching the name
               const pppInterface = pppResponse.data.Objects.find((pppObj) => {
@@ -1105,13 +1049,6 @@ myapp.controller("wan_wanconnectionsform", function(
                 $scope.form.mtu_mru_size =
                   getParamFromObject(pppInterface, "MaxMRUSize") || "1492";
 
-                console.log("Loaded PPPoE credentials:", {
-                  username: $scope.form.username,
-                  passwordLength: $scope.form.password
-                    ? $scope.form.password.length
-                    : 0,
-                  mru: $scope.form.mtu_mru_size,
-                });
               } else {
                 console.log(
                   "No matching PPP interface found for name:",
@@ -1199,18 +1136,6 @@ myapp.controller("wan_wanconnectionsform", function(
         }
 
         await loadIPv6Settings();
-
-        console.log("Loaded IPv6 settings:", {
-          prefixAcqMode: $scope.form.ipv6PrefixAcqMode,
-          ipAcqMode: $scope.form.ipv6IPAcqMode,
-          staticPrefix: $scope.form.ipv6StaticPrefix,
-          staticPrefixMask: $scope.form.ipv6StaticPrefixMask,
-          staticAddress: $scope.form.ipv6StaticAddress,
-          staticGateway: $scope.form.ipv6StaticGateway,
-          primaryDNS: $scope.form.ipv6PrimaryDNS,
-          secondaryDNS: $scope.form.ipv6SecondaryDNS,
-          domainName: $scope.form.ipv6DomainName
-        });
       }
     } catch (error) {
       console.error("Error loading edit mode data:", error);
@@ -1403,8 +1328,6 @@ myapp.controller("wan_wanconnectionsform", function(
       // Get user-defined DNS settings using the correct endpoint
       const response = await $http.get(URL + "cgi_get_dns");
 
-      console.log("DNS Response:", response.data);
-
       if (response.data) {
         const dnsData = response.data.split("\n");
         let primaryDNS = "";
@@ -1430,11 +1353,6 @@ myapp.controller("wan_wanconnectionsform", function(
           $scope.form.secondaryDNS = "";
         }
 
-        console.log("Loaded DNS settings:", {
-          isUserDefinedDNS: $scope.form.isUserDefinedDNS,
-          primaryDNS: $scope.form.primaryDNS,
-          secondaryDNS: $scope.form.secondaryDNS,
-        });
       }
     } catch (error) {
       console.error("Error loading DNS information:", error);
@@ -1856,12 +1774,6 @@ myapp.controller("wan_wanconnectionsform", function(
       request += `&`;
     }
 
-    console.log("Built request:", {
-      protocolType: $scope.form.protocolType,
-      ipv6IPAcqMode: $scope.form.ipv6IPAcqMode,
-      requestPreview: request.substring(0, 500) + "...",
-    });
-
     return request;
   }
 
@@ -2120,18 +2032,6 @@ myapp.controller("wan_wanconnectionsform", function(
               $scope.form.ipv6StaticPrefixMask
           )
         ) {
-          console.log(
-            $scope.form.ipv6StaticPrefix +
-              "/" +
-              $scope.form.ipv6StaticPrefixMask
-          );
-          console.log(
-            $scope.patterns.ipv6Prefix.test(
-              $scope.form.ipv6StaticPrefix +
-                "/" +
-                $scope.form.ipv6StaticPrefixMask
-            )
-          );
           alert("Please enter a valid IPv6 prefix (e.g., 2001:db8::/48).");
           return;
         }
@@ -2212,7 +2112,6 @@ myapp.controller("wan_wanconnectionsform", function(
               )}`;
             }
 
-            console.log("Setting user-defined DNS:", dnsRequest);
             try {
               await $http.post(URL + "cgi_setUserDefinedDNS", dnsRequest, {
                 headers: {
@@ -2222,11 +2121,8 @@ myapp.controller("wan_wanconnectionsform", function(
               console.log("User-defined DNS set successfully");
             } catch (dnsError) {
               console.error("Failed to set user-defined DNS:", dnsError);
-              // Don't fail the whole operation if DNS setting fails
             }
           } else {
-            // Clear user-defined DNS if checkbox is unchecked or no primary DNS
-            console.log("Clearing user-defined DNS");
             try {
               await $http.post(
                 URL + "cgi_setUserDefinedDNS",
