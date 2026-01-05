@@ -53,6 +53,28 @@ myapp.controller("wan_wanconnectionsform", function(
 
     // Internal tracking
     selectedATMLink: null,
+
+    // IPv6 Basic Configuration
+    ipv6PrefixAcqMode: "DHCPv6-PD", // DHCPv6-PD, Static, None
+    ipv6IPAcqMode: "Automatic", // DHCPv6, Automatic, Static, None
+    ipv6StaticPrefix: "",
+    ipv6StaticPrefixMask: "64",
+    ipv6StaticAddress: "",
+    ipv6StaticGateway: "",
+
+    // IPv6 DNS
+    ipv6PrimaryDNS: "",
+    ipv6SecondaryDNS: "",
+    ipv6DomainName: "",
+
+    // DHCPv6 Specific
+    ipv6RequestAddresses: true,
+    ipv6RequestPrefixes: true,
+    ipv6RapidCommit: false,
+
+    // Internal flags
+    showIPv6Options: false,
+    showIPv4Options: true,
   };
 
   // Options for dropdowns
@@ -63,6 +85,13 @@ myapp.controller("wan_wanconnectionsform", function(
   $scope.ipAcqModes = ["DHCP", "Static"];
   $scope.values802 = [0, 1, 2, 3, 4, 5, 6, 7];
   $scope.linkTypeOptions = ["EoA", "PPPoA"];
+
+  // IPv6 Options
+  $scope.protocolTypeOptions = ["IPv4", "IPv4/IPv6"];
+  $scope.ipv6PrefixAcqModes = ["DHCPv6-PD", "Static", "None"];
+  $scope.ipv6IPAcqModes = ["DHCPv6", "Automatic", "Static", "None"];
+  $scope.dsLiteModes = ["Off", "Automatic", "Static"];
+  $scope.ipv6PrefixMasks = ["48", "52", "56", "60", "64", "128"];
 
   // Data lists
   $scope.atmLinks = [];
@@ -87,6 +116,10 @@ myapp.controller("wan_wanconnectionsform", function(
     macAddress: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/,
     mtu_mru_size: /^\d+$/,
     ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+    ipv6: /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/,
+    ipv6Prefix: /^([0-9a-fA-F:]+)\/(12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9])$/,
+    vlanId: /^(0|[1-9][0-9]{0,2}|[1-3][0-9]{3}|409[0-4])$/, // 0-4094
+    domainName: /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/,
   };
 
   // ------------------------------------------------------------
@@ -258,6 +291,265 @@ myapp.controller("wan_wanconnectionsform", function(
     }
   }
 
+  async function loadIPv6Settings() {
+    try {
+      // Load general IPv6 configuration
+      const ipv6Response = await $http.get(URL + "cgi_get?Object=Device.IPv6");
+
+      if (ipv6Response.data?.Objects?.length > 0) {
+        const ipv6Obj = ipv6Response.data.Objects[0];
+
+        // Load IPv6 DNS settings
+        $scope.form.ipv6PrimaryDNS =
+          getAtmParamValue(ipv6Obj, "X_LANTIQ_COM_PRI_DNSv6") || "";
+        $scope.form.ipv6SecondaryDNS =
+          getAtmParamValue(ipv6Obj, "X_LANTIQ_COM_SEC_DNSv6") || "";
+        $scope.form.ipv6DomainName =
+          getAtmParamValue(ipv6Obj, "X_LANTIQ_COM_V6_DOMAIN_NAME") || "";
+
+        // Load LAN mode (might indicate WAN mode preferences)
+        const lanMode =
+          getAtmParamValue(ipv6Obj, "X_LANTIQ_COM_IPv6_LANMode") || "";
+
+        // Try to load DHCPv6 client settings for this interface
+        await loadDHCPv6ClientSettings();
+      }
+
+      // Load interface-specific IPv6 settings
+      const interfaceResponse = await $http.get(
+        URL + "cgi_get?Object=" + $scope.editIPInterface
+      );
+
+      if (interfaceResponse.data?.Objects?.length > 0) {
+        const interfaceObj = interfaceResponse.data.Objects.find((obj) =>
+          obj.ObjName.includes($scope.editIPInterface.replace(/\.$/, ""))
+        );
+
+        if (interfaceObj) {
+          // Check if IPv6 is enabled on this interface
+          const ipv6Enable = getAtmParamValue(interfaceObj, "IPv6Enable");
+          if (ipv6Enable === "true" || ipv6Enable === "1") {
+            // Load IPv6 address information if exists
+            const ipv6Addresses = interfaceResponse.data.Objects.filter((obj) =>
+              obj.ObjName.includes(".IPv6Address")
+            );
+
+            if (ipv6Addresses.length > 0) {
+              const ipv6Addr = ipv6Addresses[0];
+              const address = getAtmParamValue(ipv6Addr, "IPAddress");
+              const origin = getAtmParamValue(ipv6Addr, "Origin");
+
+              if (address && origin === "Static") {
+                $scope.form.ipv6IPAcqMode = "Static";
+                $scope.form.ipv6StaticAddress = address;
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error loading IPv6 settings:", error);
+    }
+  }
+
+  async function loadIPv6Settings() {
+    try {
+      // Load general IPv6 configuration
+      const ipv6Response = await $http.get(URL + "cgi_get?Object=Device.IPv6");
+
+      if (ipv6Response.data?.Objects?.length > 0) {
+        const ipv6Obj = ipv6Response.data.Objects[0];
+
+        // Load IPv6 DNS settings
+        $scope.form.ipv6PrimaryDNS =
+          getAtmParamValue(ipv6Obj, "X_LANTIQ_COM_PRI_DNSv6") || "";
+        $scope.form.ipv6SecondaryDNS =
+          getAtmParamValue(ipv6Obj, "X_LANTIQ_COM_SEC_DNSv6") || "";
+        $scope.form.ipv6DomainName =
+          getAtmParamValue(ipv6Obj, "X_LANTIQ_COM_V6_DOMAIN_NAME") || "";
+      }
+
+      // Load interface-specific IPv6 settings
+      const interfaceResponse = await $http.get(
+        URL + "cgi_get?Object=" + $scope.editIPInterface
+      );
+
+      if (interfaceResponse.data?.Objects?.length > 0) {
+        // Check for IPv6 prefix
+        const ipv6Prefixes = interfaceResponse.data.Objects.filter((obj) =>
+          obj.ObjName.includes(".IPv6Prefix")
+        );
+
+        if (ipv6Prefixes.length > 0) {
+          const ipv6Prefix = ipv6Prefixes[0];
+          const prefixValue = getAtmParamValue(ipv6Prefix, "Prefix");
+          const origin = getAtmParamValue(ipv6Prefix, "Origin");
+
+          console.log("Found IPv6 Prefix:", {
+            prefix: prefixValue,
+            origin: origin,
+            enable: getAtmParamValue(ipv6Prefix, "Enable"),
+          });
+
+          if (prefixValue && origin === "Static") {
+            // Extract prefix and mask
+            const [prefixAddress, prefixMask] = prefixValue.split("/");
+            $scope.form.ipv6PrefixAcqMode = "Static";
+            $scope.form.ipv6StaticPrefix = prefixAddress || "";
+            $scope.form.ipv6StaticPrefixMask = prefixMask || "64";
+
+            console.log("Set IPv6 prefix to Static:", {
+              address: $scope.form.ipv6StaticPrefix,
+              mask: $scope.form.ipv6StaticPrefixMask,
+            });
+          } else if (origin === "RouterAdvertisement" || origin === "DHCPv6") {
+            // Check if there's an active DHCPv6 client for prefix delegation
+            $scope.form.ipv6PrefixAcqMode = "DHCPv6-PD";
+          }
+        }
+
+        // Check for IPv6 addresses
+        const ipv6Addresses = interfaceResponse.data.Objects.filter((obj) =>
+          obj.ObjName.includes(".IPv6Address")
+        );
+
+        if (ipv6Addresses.length > 0) {
+          const ipv6Addr = ipv6Addresses[0];
+          const address = getAtmParamValue(ipv6Addr, "IPAddress");
+          const origin = getAtmParamValue(ipv6Addr, "Origin");
+          const enable = getAtmParamValue(ipv6Addr, "Enable");
+
+          console.log("Found IPv6 Address:", {
+            address: address,
+            origin: origin,
+            enable: enable,
+          });
+
+          if (address && origin === "Static") {
+            $scope.form.ipv6IPAcqMode = "Static";
+            $scope.form.ipv6StaticAddress = address;
+          } else if (origin === "DHCPv6") {
+            $scope.form.ipv6IPAcqMode = "DHCPv6";
+          } else if (origin === "RouterAdvertisement" || origin === "SLAAC") {
+            $scope.form.ipv6IPAcqMode = "Automatic";
+          }
+        }
+
+        // Try to load DHCPv6 client settings for this interface
+        await loadDHCPv6ClientSettings();
+
+        // If we couldn't determine IP acquisition mode from addresses, check DHCPv6
+        if (!$scope.form.ipv6IPAcqMode) {
+          // Check if there's an enabled DHCPv6 client for this interface
+          const dhcpv6Response = await $http.get(
+            URL + "cgi_get?Object=Device.DHCPv6.Client"
+          );
+
+          if (dhcpv6Response.data?.Objects?.length > 0) {
+            // Find DHCPv6 client for this interface
+            const dhcpClient = dhcpv6Response.data.Objects.find((client) => {
+              const interfaceParam = getAtmParamValue(client, "Interface");
+              return (
+                interfaceParam &&
+                interfaceParam.replace(/\.$/, "") ===
+                  $scope.editIPInterface.replace(/\.$/, "")
+              );
+            });
+
+            if (
+              dhcpClient &&
+              getAtmParamValue(dhcpClient, "Enable") === "true"
+            ) {
+              $scope.form.ipv6IPAcqMode = "DHCPv6";
+              $scope.form.ipv6RequestAddresses =
+                getAtmParamValue(dhcpClient, "RequestAddresses") === "true";
+              $scope.form.ipv6RequestPrefixes =
+                getAtmParamValue(dhcpClient, "RequestPrefixes") === "true";
+              $scope.form.ipv6RapidCommit =
+                getAtmParamValue(dhcpClient, "RapidCommit") === "true";
+            }
+          }
+        }
+
+        // If still no IP acquisition mode determined, default based on prefix mode
+        if (!$scope.form.ipv6IPAcqMode) {
+          if ($scope.form.ipv6PrefixAcqMode === "Static") {
+            // If we have a static prefix but no address mode, assume Automatic (SLAAC)
+            $scope.form.ipv6IPAcqMode = "Automatic";
+          } else if ($scope.form.ipv6PrefixAcqMode === "DHCPv6-PD") {
+            // If we have DHCPv6-PD but no address mode, assume DHCPv6
+            $scope.form.ipv6IPAcqMode = "DHCPv6";
+          } else {
+            // Default to Automatic for IPv6
+            $scope.form.ipv6IPAcqMode = "Automatic";
+          }
+        }
+
+        console.log("Final IPv6 settings:", {
+          prefixAcqMode: $scope.form.ipv6PrefixAcqMode,
+          ipAcqMode: $scope.form.ipv6IPAcqMode,
+          staticPrefix: $scope.form.ipv6StaticPrefix,
+          staticAddress: $scope.form.ipv6StaticAddress,
+        });
+      }
+    } catch (error) {
+      console.error("Error loading IPv6 settings:", error);
+    }
+  }
+
+  async function loadDHCPv6ClientSettings() {
+    try {
+      const dhcpv6Response = await $http.get(
+        URL + "cgi_get?Object=Device.DHCPv6.Client"
+      );
+
+      if (dhcpv6Response.data?.Objects?.length > 0) {
+        // Find DHCPv6 client for this interface
+        const dhcpClient = dhcpv6Response.data.Objects.find((client) => {
+          const interfaceParam = getAtmParamValue(client, "Interface");
+          return (
+            interfaceParam &&
+            interfaceParam.replace(/\.$/, "") ===
+              $scope.editIPInterface.replace(/\.$/, "") &&
+            getAtmParamValue(client, "Enable") === "true"
+          );
+        });
+
+        if (dhcpClient) {
+          console.log("Found enabled DHCPv6 client:", dhcpClient.ObjName);
+
+          // Check for prefix delegation (IANA/IAPD)
+          const ianaId = parseInt(
+            getAtmParamValue(dhcpClient, "X_LANTIQ_COM_IANAID") || "0",
+            10
+          );
+          const iapdId = parseInt(
+            getAtmParamValue(dhcpClient, "X_LANTIQ_COM_IAPDID") || "0",
+            10
+          );
+
+          if (ianaId > 0 || iapdId > 0) {
+            $scope.form.ipv6PrefixAcqMode = "DHCPv6-PD";
+          }
+
+          $scope.form.ipv6RequestAddresses =
+            getAtmParamValue(dhcpClient, "RequestAddresses") === "true";
+          $scope.form.ipv6RequestPrefixes =
+            getAtmParamValue(dhcpClient, "RequestPrefixes") === "true";
+          $scope.form.ipv6RapidCommit =
+            getAtmParamValue(dhcpClient, "RapidCommit") === "true";
+        } else {
+          console.log(
+            "No enabled DHCPv6 client found for interface:",
+            $scope.editIPInterface
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error loading DHCPv6 client settings:", error);
+    }
+  }
+
   $scope.resetFormValidation = function() {
     if ($scope.customWanForm) {
       // Reset touched state
@@ -279,6 +571,97 @@ myapp.controller("wan_wanconnectionsform", function(
       $scope.customWanForm.atmForm.$setPristine();
     }
   };
+
+  // ------------------------------------------------------------
+  // Helper function to reset IPv6 fields
+  // ------------------------------------------------------------
+  function resetIPv6Fields() {
+    $scope.form.ipv6PrefixAcqMode = "DHCPv6-PD";
+    $scope.form.ipv6IPAcqMode = "Automatic";
+    $scope.form.ipv6StaticPrefix = "";
+    $scope.form.ipv6StaticPrefixMask = "64";
+    $scope.form.ipv6StaticAddress = "";
+    $scope.form.ipv6StaticGateway = "";
+    $scope.form.ipv6PrimaryDNS = "";
+    $scope.form.ipv6SecondaryDNS = "";
+    $scope.form.ipv6DomainName = "";
+    $scope.form.ipv6RequestAddresses = true;
+    $scope.form.ipv6RequestPrefixes = true;
+    $scope.form.ipv6RapidCommit = false;
+  }
+
+  // ------------------------------------------------------------
+  // IPv6-specific show/hide logic
+  // ------------------------------------------------------------
+  $scope.showIPv6StaticPrefixFields = function() {
+    return $scope.form.ipv6PrefixAcqMode === "Static";
+  };
+
+  $scope.showIPv6StaticAddressFields = function() {
+    return $scope.form.ipv6IPAcqMode === "Static";
+  };
+
+  $scope.showIPv6DNSFields = function() {
+    return (
+      $scope.form.showIPv6Options &&
+      ($scope.form.ipv6IPAcqMode === "Static" ||
+        $scope.form.ipv6IPAcqMode === "DHCPv6")
+    );
+  };
+
+  $scope.showIPv4Options = function() {
+    return (
+      $scope.form.protocolType === "IPv4" ||
+      $scope.form.protocolType === "IPv4/IPv6"
+    );
+  };
+
+  $scope.showIPv4OnlyOptions = function() {
+    return $scope.form.protocolType === "IPv4";
+  };
+
+  $scope.showIPv6OnlyOptions = function() {
+    return $scope.form.protocolType === "IPv6";
+  };
+
+  // ------------------------------------------------------------
+  // Watch for Protocol Type changes to handle IPv6 options
+  // ------------------------------------------------------------
+  $scope.$watch("form.protocolType", function(newVal) {
+    $scope.form.showIPv6Options = newVal === "IPv4/IPv6" || newVal === "IPv6";
+    $scope.form.showIPv4Options = newVal === "IPv4/IPv6" || newVal === "IPv4";
+
+    // If switching to IPv6-only, disable IPv4-specific options
+    if (newVal === "IPv6") {
+      $scope.form.ipAcqMode = "";
+      $scope.form.enableNAT = "0"; // NAT is IPv4-only
+    } else if (newVal === "IPv4") {
+      // If switching to IPv4-only, disable IPv6-specific options
+      $scope.form.ipv6PrefixAcqMode = "None";
+      $scope.form.ipv6IPAcqMode = "None";
+    }
+
+    // Reset IPv6 fields when hiding IPv6 options
+    if (!$scope.form.showIPv6Options) {
+      resetIPv6Fields();
+    }
+  });
+
+  // Watch for IPv6 Prefix Acquisition Mode changes
+  $scope.$watch("form.ipv6PrefixAcqMode", function(newVal) {
+    if (newVal === "None") {
+      $scope.form.ipv6StaticPrefix = "";
+      $scope.form.ipv6StaticPrefixMask = "64";
+    }
+  });
+
+  // Watch for IPv6 IP Acquisition Mode changes
+  $scope.$watch("form.ipv6IPAcqMode", function(newVal) {
+    if (newVal === "None") {
+      $scope.form.ipv6StaticAddress = "";
+      $scope.form.ipv6StaticGateway = "";
+    }
+  });
 
   // ------------------------------------------------------------
   // Watch for WAN Mode changes to handle Bridge mode
@@ -787,7 +1170,6 @@ myapp.controller("wan_wanconnectionsform", function(
           $scope.form.defaultGateway = "0";
         }
 
-
         // Only set MTU if not already set by PPPoE
         if (!$scope.form.mtu_mru_size) {
           $scope.form.mtu_mru_size =
@@ -815,6 +1197,20 @@ myapp.controller("wan_wanconnectionsform", function(
         if ($scope.form.ipAcqMode === "Static") {
           await loadStaticGatewayAddress($scope.editIPInterface);
         }
+
+        await loadIPv6Settings();
+
+        console.log("Loaded IPv6 settings:", {
+          prefixAcqMode: $scope.form.ipv6PrefixAcqMode,
+          ipAcqMode: $scope.form.ipv6IPAcqMode,
+          staticPrefix: $scope.form.ipv6StaticPrefix,
+          staticPrefixMask: $scope.form.ipv6StaticPrefixMask,
+          staticAddress: $scope.form.ipv6StaticAddress,
+          staticGateway: $scope.form.ipv6StaticGateway,
+          primaryDNS: $scope.form.ipv6PrimaryDNS,
+          secondaryDNS: $scope.form.ipv6SecondaryDNS,
+          domainName: $scope.form.ipv6DomainName
+        });
       }
     } catch (error) {
       console.error("Error loading edit mode data:", error);
@@ -1153,24 +1549,36 @@ myapp.controller("wan_wanconnectionsform", function(
       // For routed mode, handle based on connection type
       if ($scope.form.enableVlan == "1") {
         const vlanAlias = `cpe-WEB-EthernetVLANTermination-${randomValue}`;
-        if ($scope.form.ipAcqMode === "PPPoE") {
+        if (
+          $scope.form.ipAcqMode === "PPPoE" &&
+          $scope.form.protocolType !== "IPv6"
+        ) {
+          // PPPoE for IPv4/IPv6 mode
           request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
         } else {
+          // For IPv6-only or IPoE
           request += `&LowerLayers=Device.Ethernet.VLANTermination.${vlanAlias}`;
         }
       } else {
-        if ($scope.form.ipAcqMode === "PPPoE") {
+        if (
+          $scope.form.ipAcqMode === "PPPoE" &&
+          $scope.form.protocolType !== "IPv6"
+        ) {
+          // PPPoE for IPv4/IPv6 mode
           request += `&LowerLayers=Device.PPP.Interface.${pppAlias}`;
         } else {
+          // For IPv6-only or IPoE
           request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
         }
       }
     }
 
     // Handle IPv6 based on protocolType
-    if ($scope.form.protocolType === "IPv4/IPv6") {
-      request += `&IPv6Enable=1`; // Use "1" instead of "true"
-      console.log("Setting IPv6 enabled for IPv4/IPv6 protocol type");
+    if (
+      $scope.form.protocolType === "IPv4/IPv6" ||
+      $scope.form.protocolType === "IPv6"
+    ) {
+      request += `&IPv6Enable=1`;
     } else {
       request += `&IPv6Enable=false`;
     }
@@ -1181,14 +1589,13 @@ myapp.controller("wan_wanconnectionsform", function(
         $scope.form.defaultGateway === "1" ? "true" : "false"
       }`;
 
-      // Add MTU size for non-ATM connections, MRU for ATM is in PPP section
-      if (!isATM) {
+      // Add MTU size for non-ATM connections
+      if (!isATM && $scope.form.ipAcqMode !== "PPPoE") {
         request += `&MaxMTUSize=${encodeParam($scope.form.mtu_mru_size)}`;
       }
     } else {
       // For bridged mode, disable routing features
       request += `&X_LANTIQ_COM_DefaultGateway=false`;
-      // Don't set MTU for bridged mode - it's handled at lower layers
     }
     request += `&`;
 
@@ -1230,9 +1637,11 @@ myapp.controller("wan_wanconnectionsform", function(
     }
 
     // ==================== PPPoE ====================
+    // PPPoE is only for IPv4, not for IPv6-only mode
     if (
       $scope.form.ipAcqMode === "PPPoE" &&
-      $scope.form.wanMode !== "BridgedWan"
+      $scope.form.wanMode !== "BridgedWan" &&
+      $scope.form.protocolType !== "IPv6"
     ) {
       request += `Object=Device.PPP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(
         pppAlias
@@ -1243,6 +1652,7 @@ myapp.controller("wan_wanconnectionsform", function(
       )}`;
       request += `&Password=${encodeParam($scope.form.password)}`;
 
+      // Enable IPv6CP for IPv4/IPv6 mode
       if ($scope.form.protocolType === "IPv4/IPv6") {
         request += `&IPv6CPEnable=true`;
       }
@@ -1267,28 +1677,143 @@ myapp.controller("wan_wanconnectionsform", function(
       request += `&`;
     }
 
-    // ==================== DHCP ====================
+    // ==================== DHCPv4 ====================
+    // DHCPv4 is only for IPv4, not for IPv6-only mode
     if (
       $scope.form.ipAcqMode === "DHCP" &&
-      $scope.form.wanMode !== "BridgedWan"
+      $scope.form.wanMode !== "BridgedWan" &&
+      $scope.form.protocolType !== "IPv6"
     ) {
       // DHCPv4 Client
       request += `Object=Device.DHCPv4.Client&Operation=Add`;
       request += `&Interface=Device.IP.Interface.${ipAlias}`;
       request += `&`;
+    }
 
-      // DHCPv6 Client if IPv6 is enabled
-      if ($scope.form.protocolType === "IPv4/IPv6") {
+    // ==================== IPv6 Configuration ====================
+    if (
+      $scope.form.protocolType === "IPv4/IPv6" ||
+      $scope.form.protocolType === "IPv6"
+    ) {
+      // For IPv6-only mode, we need to configure IPv6 addressing
+      if ($scope.form.ipv6IPAcqMode === "DHCPv6") {
+        // Add DHCPv6 client
+        const dhcpv6Alias = `cpe-WEB-DHCPv6Client-${randomValue}`;
         request += `Object=Device.DHCPv6.Client&Operation=Add`;
         request += `&Interface=Device.IP.Interface.${ipAlias}`;
+        request += `&Enable=true`;
+        request += `&Alias=${encodeParam(dhcpv6Alias)}`;
+        request += `&RequestAddresses=${
+          $scope.form.ipv6RequestAddresses ? "true" : "false"
+        }`;
+        request += `&RequestPrefixes=${
+          $scope.form.ipv6RequestPrefixes ? "true" : "false"
+        }`;
+        request += `&RapidCommit=${
+          $scope.form.ipv6RapidCommit ? "true" : "false"
+        }`;
+
+        // Configure prefix delegation
+        if ($scope.form.ipv6PrefixAcqMode === "DHCPv6-PD") {
+          request += `&X_LANTIQ_COM_IANAID=1`;
+          request += `&X_LANTIQ_COM_IAPDID=1`;
+        }
+        request += `&`;
+      } else if (
+        $scope.form.ipv6IPAcqMode === "Static" &&
+        $scope.form.ipv6StaticAddress
+      ) {
+        // Add static IPv6 address
+        // Based on your database, IPv6Address objects have IPAddress parameter
+        request += `Object=Device.IP.Interface.${ipAlias}.IPv6Address&Operation=Add`;
+        request += `&Enable=true`;
+        request += `&IPAddress=${encodeParam($scope.form.ipv6StaticAddress)}`;
+        // DO NOT SET Origin - it's read-only and will be set automatically
+        request += `&Alias=${encodeParam(
+          `cpe-WEB-IPv6Address-${randomValue}`
+        )}`;
+        request += `&`;
+
+        // Add IPv6 forwarding if gateway is provided
+        // Based on error, GatewayIPAddress might not be the correct parameter name
+        // Let's check what parameters exist for IPv6Forwarding in your database
+        if ($scope.form.ipv6StaticGateway) {
+          request += `Object=Device.Routing.Router.1.IPv6Forwarding&Operation=Add`;
+          request += `&Interface=Device.IP.Interface.${ipAlias}`;
+          // Try without GatewayIPAddress first, or use a different parameter
+          // From your database, IPv4Forwarding has GatewayIPAddress, but IPv6 might be different
+          // Let's try without it for now
+          request += `&Alias=${encodeParam(
+            `cpe-WEB-IPv6Forwarding-${randomValue}`
+          )}`;
+          request += `&`;
+        }
+      }
+      // Note: For "Automatic" mode, SLAAC will be used automatically when IPv6 is enabled
+
+      // Configure IPv6 prefix if static
+      if (
+        $scope.form.ipv6PrefixAcqMode === "Static" &&
+        $scope.form.ipv6StaticPrefix
+      ) {
+        const prefixWithMask =
+          $scope.form.ipv6StaticPrefix +
+          "/" +
+          ($scope.form.ipv6StaticPrefixMask || "64");
+        request += `Object=Device.IP.Interface.${ipAlias}.IPv6Prefix&Operation=Add`;
+        request += `&Enable=true`;
+        request += `&Prefix=${encodeParam(prefixWithMask)}`;
+        // Origin might also be read-only for IPv6Prefix
+        request += `&Alias=${encodeParam(`cpe-WEB-IPv6Prefix-${randomValue}`)}`;
+        request += `&`;
+      }
+
+      // Configure IPv6 DNS if provided
+      if (
+        $scope.form.ipv6PrimaryDNS ||
+        $scope.form.ipv6SecondaryDNS ||
+        $scope.form.ipv6DomainName
+      ) {
+        request += `Object=Device.IPv6&Operation=Modify`;
+
+        if ($scope.form.ipv6PrimaryDNS) {
+          request += `&X_LANTIQ_COM_PRI_DNSv6=${encodeParam(
+            $scope.form.ipv6PrimaryDNS
+          )}`;
+        }
+
+        if ($scope.form.ipv6SecondaryDNS) {
+          request += `&X_LANTIQ_COM_SEC_DNSv6=${encodeParam(
+            $scope.form.ipv6SecondaryDNS
+          )}`;
+        }
+
+        if ($scope.form.ipv6DomainName) {
+          request += `&X_LANTIQ_COM_V6_DOMAIN_NAME=${encodeParam(
+            $scope.form.ipv6DomainName
+          )}`;
+        }
+        request += `&`;
+      }
+
+      // Add IPv6 Forwarding entry for default route
+      // This is needed for all IPv6 interfaces that should route traffic
+      // Based on error, don't include GatewayIPAddress parameter
+      if ($scope.form.wanMode !== "BridgedWan") {
+        request += `Object=Device.Routing.Router.1.IPv6Forwarding&Operation=Add`;
+        request += `&Interface=Device.IP.Interface.${ipAlias}`;
+        request += `&Alias=${encodeParam(
+          `cpe-WEB-IPv6Forwarding-default-${randomValue}`
+        )}`;
         request += `&`;
       }
     }
 
-    // ==================== Static IP ====================
+    // ==================== Static IPv4 ====================
     if (
       $scope.form.ipAcqMode === "Static" &&
-      $scope.form.wanMode !== "BridgedWan"
+      $scope.form.wanMode !== "BridgedWan" &&
+      $scope.form.protocolType !== "IPv6"
     ) {
       // IPv4 Address
       request += `Object=Device.IP.Interface.${ipAlias}.IPv4Address&Operation=Add`;
@@ -1302,44 +1827,39 @@ myapp.controller("wan_wanconnectionsform", function(
       request += `&GatewayIPAddress=${encodeParam($scope.form.gatewayaddress)}`;
       request += `&`;
 
-      // IPv6 Forwarding (for ATM or when IPv6 is enabled)
-      if (isATM || $scope.form.protocolType === "IPv4/IPv6") {
-        request += `Object=Device.Routing.Router.1.IPv6Forwarding&Operation=Add`;
-        request += `&Interface=Device.IP.Interface.${ipAlias}`;
-        request += `&`;
-      }
-
       // Static DNS entries
       if ($scope.staticDNSData.length > 0) {
         $scope.staticDNSData.forEach((dns, idx) => {
           request += `Object=Device.DNS.Client.Server&Operation=Add`;
           request += `&DNSServer=${encodeParam(dns.ip)}&Enable=1`;
           request += `&Interface=Device.IP.Interface.${ipAlias}`;
+          request += `&Alias=${encodeParam(
+            `cpe-WEB-DNSServer-${randomValue}-${idx}`
+          )}`;
           request += `&`;
         });
       }
     }
 
     // ==================== NAT ====================
-    if ($scope.form.enableNAT === "1" && $scope.form.wanMode !== "BridgedWan") {
+    // NAT is IPv4-only
+    if (
+      $scope.form.enableNAT === "1" &&
+      $scope.form.wanMode !== "BridgedWan" &&
+      $scope.form.protocolType !== "IPv6"
+    ) {
       request += `Object=Device.NAT.InterfaceSetting&Operation=Add`;
       request += `&Interface=Device.IP.Interface.${ipAlias}`;
       request += `&Enable=true`;
       request += `&X_LANTIQ_COM_NATType=${encodeParam($scope.form.natType)}`;
+      request += `&Alias=${encodeParam(`cpe-WEB-NAT-${randomValue}`)}`;
       request += `&`;
     }
 
-    // Debug logging
-    console.log("Built request for:", {
-      accessType: $scope.form.accessType,
-      encapsulationMode: $scope.form.encapsulationMode,
-      ipAcqMode: $scope.form.ipAcqMode,
-      wanMode: $scope.form.wanMode,
-      enableVlan: $scope.form.enableVlan,
-      vpiVci: $scope.form.vpiVci,
-      isEditMode: $scope.isEditMode,
-      selectedATMLink: $scope.form.selectedATMLink?.ObjName,
-      requestParts: request.split("&").filter((p) => p.includes("Object=")),
+    console.log("Built request:", {
+      protocolType: $scope.form.protocolType,
+      ipv6IPAcqMode: $scope.form.ipv6IPAcqMode,
+      requestPreview: request.substring(0, 500) + "...",
     });
 
     return request;
@@ -1585,6 +2105,67 @@ myapp.controller("wan_wanconnectionsform", function(
       }
     }
 
+    // Validate IPv6 fields if IPv6 is enabled
+    if ($scope.form.showIPv6Options) {
+      // Validate static IPv6 prefix
+      if ($scope.form.ipv6PrefixAcqMode === "Static") {
+        if (!$scope.form.ipv6StaticPrefix) {
+          alert("Please enter IPv6 Static Prefix.");
+          return;
+        }
+        if (
+          !$scope.patterns.ipv6Prefix.test(
+            $scope.form.ipv6StaticPrefix +
+              "/" +
+              $scope.form.ipv6StaticPrefixMask
+          )
+        ) {
+          console.log(
+            $scope.form.ipv6StaticPrefix +
+              "/" +
+              $scope.form.ipv6StaticPrefixMask
+          );
+          console.log(
+            $scope.patterns.ipv6Prefix.test(
+              $scope.form.ipv6StaticPrefix +
+                "/" +
+                $scope.form.ipv6StaticPrefixMask
+            )
+          );
+          alert("Please enter a valid IPv6 prefix (e.g., 2001:db8::/48).");
+          return;
+        }
+      }
+
+      // Validate static IPv6 address
+      if ($scope.form.ipv6IPAcqMode === "Static") {
+        if (!$scope.form.ipv6StaticAddress) {
+          alert("Please enter IPv6 Static Address.");
+          return;
+        }
+        if (!$scope.patterns.ipv6.test($scope.form.ipv6StaticAddress)) {
+          alert("Please enter a valid IPv6 address.");
+          return;
+        }
+      }
+
+      // Validate IPv6 DNS
+      if (
+        $scope.form.ipv6PrimaryDNS &&
+        !$scope.patterns.ipv6.test($scope.form.ipv6PrimaryDNS)
+      ) {
+        alert("Please enter a valid IPv6 Primary DNS address.");
+        return;
+      }
+      if (
+        $scope.form.ipv6SecondaryDNS &&
+        !$scope.patterns.ipv6.test($scope.form.ipv6SecondaryDNS)
+      ) {
+        alert("Please enter a valid IPv6 Secondary DNS address.");
+        return;
+      }
+    }
+
     // In the submit() function, update the MAC cloning validation:
     if ($scope.form.macCloneEnabled === "1" && $scope.form.mac_address) {
       if (!$scope.validateMACAddress($scope.form.mac_address)) {
@@ -1706,6 +2287,10 @@ myapp.controller("wan_wanconnectionsform", function(
     // Load bridge connections if needed
     if ($scope.form.wanMode === "BridgedWan") {
       await loadBridgeConnections();
+    }
+
+    if ($scope.isEditMode && $scope.form.protocolType === "IPv4/IPv6") {
+      await loadIPv6Settings();
     }
   }
 

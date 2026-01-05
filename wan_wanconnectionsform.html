@@ -74,9 +74,8 @@
               ng-required="true"
               class="form-control small"
               ng-disabled="isEditMode"
+              ng-options="type for type in protocolTypeOptions"
             >
-              <option value="IPv4">IPv4</option>
-              <option value="IPv4/IPv6">IPv4/IPv6</option>
             </select>
             <div
               class="text-danger small"
@@ -689,296 +688,569 @@
           </div>
         </div>
 
-        <!-- IP Configuration-->
-        <h3 class="form-header">IP Configuration</h3>
+        <!-- IP V4 Configuration-->
+        <div class="ipv6-configuration" ng-if="form.showIPv4Options">
+          <h3 class="form-header">IPv4 Configuration</h3>
 
-        <!-- IP Acquisition Mode -->
-        <div class="row mb-3" ng-if="shouldShowIPAcqMode()">
-          <div class="col-sm-4">
-            <label class="pt-2" for="ipAccMode">IP Acquisition Mode</label>
-          </div>
-          <div class="col-sm-8 required">
-            <select
-              id="ipAccMode"
-              name="ipAccMode"
-              ng-model="form.ipAcqMode"
-              ng-required="true"
-              class="form-control small"
-              ng-disabled="form.wanMode === 'BridgedWan' || isEditMode"
-            >
-              <option ng-repeat="mode in ipAcqModes" value="{{mode}}"
-                >{{mode}}</option
-              >
-            </select>
-            <div
-              class="text-danger small"
-              ng-show="customWanForm.ipAccMode.$error.required && customWanForm.ipAccMode.$touched"
-            >
-              Please select IP Acquisition Mode.
+          <!-- IP Acquisition Mode -->
+          <div class="row mb-3" ng-if="shouldShowIPAcqMode()">
+            <div class="col-sm-4">
+              <label class="pt-2" for="ipAccMode">IP Acquisition Mode</label>
             </div>
-            <div class="text-info small" ng-if="form.wanMode === 'BridgedWan'">
-              IP Acquisition Mode is automatically set to Bridge for Bridged WAN
-              mode
-            </div>
-          </div>
-        </div>
-
-        <!-- IP Acquisition Mode for PPPoE -->
-        <div class="row mb-3" ng-if="form.encapsulationMode === 'PPPoE'">
-          <div class="col-sm-4">
-            <label class="pt-2">IP Acquisition Mode</label>
-          </div>
-          <div class="col-sm-8">
-            <div class="form-control small" style="background-color: #e9ecef;">
-              PPPoE
-            </div>
-            <div class="text-info small">
-              IP Acquisition Mode is automatically set to PPPoE for PPPoE
-              encapsulation
-            </div>
-          </div>
-        </div>
-
-        <!-- Enable NAT -->
-        <div class="row d-flex align-items-center mt-3">
-          <div class="col-sm-12 checkbox1 input-field1">
-            <input
-              id="enableNAT"
-              name="enableNAT"
-              type="checkbox"
-              ng-true-value="'1'"
-              ng-false-value="'0'"
-              ng-model="form.enableNAT"
-              ng-disabled="form.ipAcqMode === 'Bridge' || form.wanMode === 'BridgedWan'"
-            />
-            <label class="checkbox_left_align" for="enableNAT"
-              >Enable NAT</label
-            >
-            <div
-              class="text-info small"
-              ng-if="form.ipAcqMode === 'Bridge' || form.wanMode === 'BridgedWan'"
-            >
-              NAT is disabled for Bridge mode
-            </div>
-          </div>
-        </div>
-
-        <!-- NAT Type Dropdown -->
-        <div class="row d-flex align-items-center mt-2" ng-if="showNATType()">
-          <div class="col-sm-4">
-            <label for="natType">NAT Type</label>
-          </div>
-          <div class="col-sm-8 required">
-            <select
-              id="natType"
-              name="natType"
-              class="form-control small"
-              ng-model="form.natType"
-              required
-            >
-              <option value="" disabled selected>Select NAT Type</option>
-              <option value="Port Restricted Cone NAT"
-                >Port Restricted Cone NAT</option
-              >
-              <option value="Full Cone NAT">Full Cone NAT</option>
-            </select>
-            <div
-              class="text-danger small"
-              ng-show="customWanForm.natType.$error.required && customWanForm.natType.$touched"
-            >
-              Please select NAT Type
-            </div>
-          </div>
-        </div>
-
-        <!-- Static Fields -->
-        <div class="static mt-4" ng-if="showStaticFields()">
-          <hr />
-          <h5>Static IP Configuration</h5>
-          <div class="row">
-            <div class="mb-3 col-sm-4">
-              <label for="ipaddress">IP Address</label>
-              <input
-                type="text"
-                id="ipaddress"
-                name="ipaddress"
-                ng-model="form.ipaddress"
-                ng-pattern="patterns.ipv4"
-                ng-required="form.ipAcqMode === 'Static'"
-                class="form-control"
-                placeholder="e.g., 192.168.1.10"
-              />
-              <div
-                class="text-danger small"
-                ng-show="customWanForm.ipaddress.$error.pattern && customWanForm.ipaddress.$dirty"
-              >
-                Please enter a valid IPv4 address
-              </div>
-              <div
-                class="text-danger small"
-                ng-show="customWanForm.ipaddress.$error.required && customWanForm.ipaddress.$touched"
-              >
-                IP Address is required
-              </div>
-            </div>
-            <div class="mb-3 col-sm-4">
-              <label for="subnetmask">Subnet Mask</label>
-              <input
-                type="text"
-                id="subnetmask"
-                name="subnetmask"
-                ng-model="form.subnetmask"
-                ng-pattern="patterns.ipv4"
-                ng-required="form.ipAcqMode === 'Static'"
-                class="form-control"
-                placeholder="e.g., 255.255.255.0"
-              />
-              <div
-                class="text-danger small"
-                ng-show="customWanForm.subnetmask.$error.pattern && customWanForm.subnetmask.$dirty"
-              >
-                Please enter a valid IPv4 Subnetmask
-              </div>
-              <div
-                class="text-danger small"
-                ng-show="customWanForm.subnetmask.$error.required && customWanForm.subnetmask.$touched"
-              >
-                Subnet Mask is required
-              </div>
-            </div>
-            <div class="mb-3 col-sm-4">
-              <label for="gatewayaddress">Gateway Address</label>
-              <input
-                type="text"
-                id="gatewayaddress"
-                name="gatewayaddress"
-                ng-model="form.gatewayaddress"
-                ng-pattern="patterns.ipv4"
-                ng-required="form.ipAcqMode === 'Static'"
-                class="form-control"
-                placeholder="e.g., 192.168.1.1"
-              />
-              <div
-                class="text-danger small"
-                ng-show="customWanForm.gatewayaddress.$error.pattern && customWanForm.gatewayaddress.$dirty"
-              >
-                Please enter a valid IPv4 Gateway Address
-              </div>
-              <div
-                class="text-danger small"
-                ng-show="customWanForm.gatewayaddress.$error.required && customWanForm.gatewayaddress.$touched"
-              >
-                Gateway Address is required
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <table
-              class="table static_dns_table table-bordered tableCount theme_intel"
-            >
-              <thead>
-                <tr>
-                  <th>DNS Server</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat="dns in staticDNSData">
-                  <td>
-                    <input
-                      type="text"
-                      class="form-control"
-                      ng-model="dns.ip"
-                      placeholder="Enter DNS IP"
-                      ng-pattern="patterns.ipv4"
-                      ng-disabled="!dns.editable"
-                      required
-                    />
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      class="btn btn-success btn-sm"
-                      ng-if="dns.editable"
-                      ng-click="confirmStaticDNSRow($index)"
-                    >
-                      ✓
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-danger btn-sm"
-                      ng-click="removeStaticDNSRow($index)"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td colspan="2">
-                    <button
-                      type="button"
-                      class="btn btn-primary btn-sm"
-                      ng-click="addStaticDNSRow()"
-                    >
-                      Add DNS Server
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Bridge Fields Section -->
-        <div class="bridge" ng-if="showBridgeFields()">
-          <hr />
-          <h5>Bridge Configuration</h5>
-
-          <!-- Loading indicator -->
-          <div class="row" ng-if="loadingBridgeConnections">
-            <div class="col-sm-12">
-              <div class="alert alert-info">
-                <i class="fa fa-spinner fa-spin"></i> Loading bridge
-                connections...
-              </div>
-            </div>
-          </div>
-
-          <!-- Bridge connections dropdown -->
-          <div class="row" ng-if="!loadingBridgeConnections">
-            <div class="col-sm-12 mb-3 required">
-              <label for="bridgeConnection">Bridge Connection</label>
+            <div class="col-sm-8 required">
               <select
-                id="bridgeConnection"
-                name="bridgeConnection"
-                class="form-control"
-                ng-model="form.selectedBridge"
-                ng-options="bridge as bridge.name for bridge in bridgeConnections track by bridge.objName"
-                ng-required="form.wanMode === 'BridgedWan'"
-                ng-disabled="bridgeConnections.length === 0"
+                id="ipAccMode"
+                name="ipAccMode"
+                ng-model="form.ipAcqMode"
+                ng-required="true"
+                class="form-control small"
+                ng-disabled="form.wanMode === 'BridgedWan' || isEditMode"
               >
-                <option value="" disabled selected>
-                  <span ng-if="bridgeConnections.length === 0"
-                    >No bridge connections available</span
-                  >
-                  <span ng-if="bridgeConnections.length > 0"
-                    >Select Bridge Connection</span
-                  >
-                </option>
+                <option ng-repeat="mode in ipAcqModes" value="{{mode}}"
+                  >{{mode}}</option
+                >
               </select>
               <div
                 class="text-danger small"
-                ng-show="customWanForm.bridgeConnection.$error.required && customWanForm.bridgeConnection.$touched"
+                ng-show="customWanForm.ipAccMode.$error.required && customWanForm.ipAccMode.$touched"
               >
-                Please select a bridge connection
+                Please select IP Acquisition Mode.
               </div>
               <div
-                class="text-warning small"
-                ng-if="bridgeConnections.length === 0"
+                class="text-info small"
+                ng-if="form.wanMode === 'BridgedWan'"
               >
-                No bridge connections found. You may need to create a bridge
-                first.
+                IP Acquisition Mode is automatically set to Bridge for Bridged
+                WAN mode
+              </div>
+            </div>
+          </div>
+
+          <!-- IP Acquisition Mode for PPPoE -->
+          <div class="row mb-3" ng-if="form.encapsulationMode === 'PPPoE'">
+            <div class="col-sm-4">
+              <label class="pt-2">IP Acquisition Mode</label>
+            </div>
+            <div class="col-sm-8">
+              <div
+                class="form-control small"
+                style="background-color: #e9ecef;"
+              >
+                PPPoE
+              </div>
+              <div class="text-info small">
+                IP Acquisition Mode is automatically set to PPPoE for PPPoE
+                encapsulation
+              </div>
+            </div>
+          </div>
+
+          <!-- Enable NAT -->
+          <div class="row d-flex align-items-center mt-3">
+            <div class="col-sm-12 checkbox1 input-field1">
+              <input
+                id="enableNAT"
+                name="enableNAT"
+                type="checkbox"
+                ng-true-value="'1'"
+                ng-false-value="'0'"
+                ng-model="form.enableNAT"
+                ng-disabled="form.ipAcqMode === 'Bridge' || form.wanMode === 'BridgedWan'"
+              />
+              <label class="checkbox_left_align" for="enableNAT"
+                >Enable NAT</label
+              >
+              <div
+                class="text-info small"
+                ng-if="form.ipAcqMode === 'Bridge' || form.wanMode === 'BridgedWan'"
+              >
+                NAT is disabled for Bridge mode
+              </div>
+            </div>
+          </div>
+
+          <!-- NAT Type Dropdown -->
+          <div class="row d-flex align-items-center mt-2" ng-if="showNATType()">
+            <div class="col-sm-4">
+              <label for="natType">NAT Type</label>
+            </div>
+            <div class="col-sm-8 required">
+              <select
+                id="natType"
+                name="natType"
+                class="form-control small"
+                ng-model="form.natType"
+                required
+              >
+                <option value="" disabled selected>Select NAT Type</option>
+                <option value="Port Restricted Cone NAT"
+                  >Port Restricted Cone NAT</option
+                >
+                <option value="Full Cone NAT">Full Cone NAT</option>
+              </select>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.natType.$error.required && customWanForm.natType.$touched"
+              >
+                Please select NAT Type
+              </div>
+            </div>
+          </div>
+
+          <!-- Static Fields -->
+          <div class="static mt-4" ng-if="showStaticFields()">
+            <hr />
+            <h5>Static IP Configuration</h5>
+            <div class="row">
+              <div class="mb-3 col-sm-4">
+                <label for="ipaddress">IP Address</label>
+                <input
+                  type="text"
+                  id="ipaddress"
+                  name="ipaddress"
+                  ng-model="form.ipaddress"
+                  ng-pattern="patterns.ipv4"
+                  ng-required="form.ipAcqMode === 'Static'"
+                  class="form-control"
+                  placeholder="e.g., 192.168.1.10"
+                />
+                <div
+                  class="text-danger small"
+                  ng-show="customWanForm.ipaddress.$error.pattern && customWanForm.ipaddress.$dirty"
+                >
+                  Please enter a valid IPv4 address
+                </div>
+                <div
+                  class="text-danger small"
+                  ng-show="customWanForm.ipaddress.$error.required && customWanForm.ipaddress.$touched"
+                >
+                  IP Address is required
+                </div>
+              </div>
+              <div class="mb-3 col-sm-4">
+                <label for="subnetmask">Subnet Mask</label>
+                <input
+                  type="text"
+                  id="subnetmask"
+                  name="subnetmask"
+                  ng-model="form.subnetmask"
+                  ng-pattern="patterns.ipv4"
+                  ng-required="form.ipAcqMode === 'Static'"
+                  class="form-control"
+                  placeholder="e.g., 255.255.255.0"
+                />
+                <div
+                  class="text-danger small"
+                  ng-show="customWanForm.subnetmask.$error.pattern && customWanForm.subnetmask.$dirty"
+                >
+                  Please enter a valid IPv4 Subnetmask
+                </div>
+                <div
+                  class="text-danger small"
+                  ng-show="customWanForm.subnetmask.$error.required && customWanForm.subnetmask.$touched"
+                >
+                  Subnet Mask is required
+                </div>
+              </div>
+              <div class="mb-3 col-sm-4">
+                <label for="gatewayaddress">Gateway Address</label>
+                <input
+                  type="text"
+                  id="gatewayaddress"
+                  name="gatewayaddress"
+                  ng-model="form.gatewayaddress"
+                  ng-pattern="patterns.ipv4"
+                  ng-required="form.ipAcqMode === 'Static'"
+                  class="form-control"
+                  placeholder="e.g., 192.168.1.1"
+                />
+                <div
+                  class="text-danger small"
+                  ng-show="customWanForm.gatewayaddress.$error.pattern && customWanForm.gatewayaddress.$dirty"
+                >
+                  Please enter a valid IPv4 Gateway Address
+                </div>
+                <div
+                  class="text-danger small"
+                  ng-show="customWanForm.gatewayaddress.$error.required && customWanForm.gatewayaddress.$touched"
+                >
+                  Gateway Address is required
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <table
+                class="table static_dns_table table-bordered tableCount theme_intel"
+              >
+                <thead>
+                  <tr>
+                    <th>DNS Server</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="dns in staticDNSData">
+                    <td>
+                      <input
+                        type="text"
+                        class="form-control"
+                        ng-model="dns.ip"
+                        placeholder="Enter DNS IP"
+                        ng-pattern="patterns.ipv4"
+                        ng-disabled="!dns.editable"
+                        required
+                      />
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        class="btn btn-success btn-sm"
+                        ng-if="dns.editable"
+                        ng-click="confirmStaticDNSRow($index)"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-danger btn-sm"
+                        ng-click="removeStaticDNSRow($index)"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">
+                      <button
+                        type="button"
+                        class="btn btn-primary btn-sm"
+                        ng-click="addStaticDNSRow()"
+                      >
+                        Add DNS Server
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Bridge Fields Section -->
+          <div class="bridge" ng-if="showBridgeFields()">
+            <hr />
+            <h5>Bridge Configuration</h5>
+
+            <!-- Loading indicator -->
+            <div class="row" ng-if="loadingBridgeConnections">
+              <div class="col-sm-12">
+                <div class="alert alert-info">
+                  <i class="fa fa-spinner fa-spin"></i> Loading bridge
+                  connections...
+                </div>
+              </div>
+            </div>
+
+            <!-- Bridge connections dropdown -->
+            <div class="row" ng-if="!loadingBridgeConnections">
+              <div class="col-sm-12 mb-3 required">
+                <label for="bridgeConnection">Bridge Connection</label>
+                <select
+                  id="bridgeConnection"
+                  name="bridgeConnection"
+                  class="form-control"
+                  ng-model="form.selectedBridge"
+                  ng-options="bridge as bridge.name for bridge in bridgeConnections track by bridge.objName"
+                  ng-required="form.wanMode === 'BridgedWan'"
+                  ng-disabled="bridgeConnections.length === 0"
+                >
+                  <option value="" disabled selected>
+                    <span ng-if="bridgeConnections.length === 0"
+                      >No bridge connections available</span
+                    >
+                    <span ng-if="bridgeConnections.length > 0"
+                      >Select Bridge Connection</span
+                    >
+                  </option>
+                </select>
+                <div
+                  class="text-danger small"
+                  ng-show="customWanForm.bridgeConnection.$error.required && customWanForm.bridgeConnection.$touched"
+                >
+                  Please select a bridge connection
+                </div>
+                <div
+                  class="text-warning small"
+                  ng-if="bridgeConnections.length === 0"
+                >
+                  No bridge connections found. You may need to create a bridge
+                  first.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr />
+        </div>
+
+        <!-- IPv6 Configuration Section -->
+        <div class="ipv6-configuration" ng-if="form.showIPv6Options">
+          <h3 class="form-header">IPv6 Configuration</h3>
+
+          <!-- Prefix Acquisition Mode -->
+          <div class="row mb-3">
+            <div class="col-sm-6">
+              <label for="ipv6PrefixAcqMode">Prefix Acquisition Mode</label>
+            </div>
+            <div class="col-sm-6 required">
+              <select
+                id="ipv6PrefixAcqMode"
+                name="ipv6PrefixAcqMode"
+                ng-model="form.ipv6PrefixAcqMode"
+                ng-required="form.showIPv6Options"
+                class="form-control small"
+                ng-disabled="isEditMode"
+              >
+                <option ng-repeat="mode in ipv6PrefixAcqModes" value="{{mode}}"
+                  >{{mode}}</option
+                >
+              </select>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6PrefixAcqMode.$error.required && customWanForm.ipv6PrefixAcqMode.$touched"
+              >
+                Please select Prefix Acquisition Mode.
+              </div>
+            </div>
+          </div>
+
+          <!-- Static IPv6 Prefix (shown when Static is selected) -->
+          <div class="row mb-3" ng-if="showIPv6StaticPrefixFields()">
+            <div class="col-sm-6">
+              <label for="ipv6StaticPrefix">IPv6 Static Prefix</label>
+            </div>
+            <div class="col-sm-6 required">
+              <div class="input-group d-flex align-items-center">
+                <input
+                  type="text"
+                  id="ipv6StaticPrefix"
+                  name="ipv6StaticPrefix"
+                  ng-model="form.ipv6StaticPrefix"
+                  ng-required="form.ipv6PrefixAcqMode === 'Static'"
+                  ng-pattern="patterns.ipv6"
+                  class="form-control small mb-0"
+                  placeholder="e.g., 2001:db8::"
+                />
+                <span class="input-group-text">/</span>
+                <select
+                  class="form-control small"
+                  ng-model="form.ipv6StaticPrefixMask"
+                  style="max-width: 80px;"
+                >
+                  <option ng-repeat="mask in ipv6PrefixMasks" value="{{mask}}"
+                    >{{mask}}</option
+                  >
+                </select>
+              </div>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6StaticPrefix.$error.pattern && customWanForm.ipv6StaticPrefix.$dirty"
+              >
+                Please enter a valid IPv6 prefix
+              </div>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6StaticPrefix.$error.required && customWanForm.ipv6StaticPrefix.$touched"
+              >
+                IPv6 Static Prefix is required
+              </div>
+            </div>
+          </div>
+
+          <!-- IP Acquisition Mode -->
+          <div class="row mb-3">
+            <div class="col-sm-6">
+              <label for="ipv6IPAcqMode">IP Acquisition Mode</label>
+            </div>
+            <div class="col-sm-6 required">
+              <select
+                id="ipv6IPAcqMode"
+                name="ipv6IPAcqMode"
+                ng-model="form.ipv6IPAcqMode"
+                ng-required="form.showIPv6Options"
+                class="form-control small mb-0"
+                ng-disabled="isEditMode"
+              >
+                <option ng-repeat="mode in ipv6IPAcqModes" value="{{mode}}"
+                  >{{mode}}</option
+                >
+              </select>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6IPAcqMode.$error.required && customWanForm.ipv6IPAcqMode.$touched"
+              >
+                Please select IP Acquisition Mode.
+              </div>
+            </div>
+          </div>
+
+          <!-- Static IPv6 Address (shown when Static is selected) -->
+          <div class="row mb-3" ng-if="showIPv6StaticAddressFields()">
+            <div class="col-sm-6">
+              <label for="ipv6StaticAddress">IPv6 Static Address</label>
+            </div>
+            <div class="col-sm-6 required">
+              <input
+                type="text"
+                id="ipv6StaticAddress"
+                name="ipv6StaticAddress"
+                ng-model="form.ipv6StaticAddress"
+                ng-required="form.ipv6IPAcqMode === 'Static'"
+                ng-pattern="patterns.ipv6"
+                class="form-control small mb-0"
+                placeholder="e.g., 2001:db8::1"
+              />
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6StaticAddress.$error.pattern && customWanForm.ipv6StaticAddress.$dirty"
+              >
+                Please enter a valid IPv6 address
+              </div>
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6StaticAddress.$error.required && customWanForm.ipv6StaticAddress.$touched"
+              >
+                IPv6 Static Address is required
+              </div>
+            </div>
+          </div>
+
+          <!-- Static IPv6 Gateway (shown when Static Address is selected) -->
+          <div class="row mb-3" ng-if="showIPv6StaticAddressFields()">
+            <div class="col-sm-6">
+              <label for="ipv6StaticGateway">IPv6 Gateway (optional)</label>
+            </div>
+            <div class="col-sm-6">
+              <input
+                type="text"
+                id="ipv6StaticGateway"
+                name="ipv6StaticGateway"
+                ng-model="form.ipv6StaticGateway"
+                ng-pattern="patterns.ipv6"
+                class="form-control small mb-0"
+                placeholder="e.g., 2001:db8::ffff"
+              />
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6StaticGateway.$error.pattern && customWanForm.ipv6StaticGateway.$dirty"
+              >
+                Please enter a valid IPv6 address
+              </div>
+            </div>
+          </div>
+
+          <!-- IPv6 DNS Settings -->
+          <div class="row mb-3" ng-if="showIPv6DNSFields()">
+            <div class="col-sm-6">
+              <label for="ipv6PrimaryDNS">IPv6 Primary DNS</label>
+            </div>
+            <div class="col-sm-6">
+              <input
+                type="text"
+                id="ipv6PrimaryDNS"
+                name="ipv6PrimaryDNS"
+                ng-model="form.ipv6PrimaryDNS"
+                ng-pattern="patterns.ipv6"
+                class="form-control small mb-0"
+                placeholder="e.g., 2001:4860:4860::8888"
+              />
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6PrimaryDNS.$error.pattern && customWanForm.ipv6PrimaryDNS.$dirty"
+              >
+                Please enter a valid IPv6 address
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-3" ng-if="showIPv6DNSFields()">
+            <div class="col-sm-6">
+              <label for="ipv6SecondaryDNS">IPv6 Secondary DNS</label>
+            </div>
+            <div class="col-sm-6">
+              <input
+                type="text"
+                id="ipv6SecondaryDNS"
+                name="ipv6SecondaryDNS"
+                ng-model="form.ipv6SecondaryDNS"
+                ng-pattern="patterns.ipv6"
+                class="form-control small mb-0"
+                placeholder="e.g., 2001:4860:4860::8844"
+              />
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6SecondaryDNS.$error.pattern && customWanForm.ipv6SecondaryDNS.$dirty"
+              >
+                Please enter a valid IPv6 address
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-3" ng-if="showIPv6DNSFields()">
+            <div class="col-sm-6">
+              <label for="ipv6DomainName">IPv6 Domain Name</label>
+            </div>
+            <div class="col-sm-6">
+              <input
+                type="text"
+                id="ipv6DomainName"
+                name="ipv6DomainName"
+                ng-model="form.ipv6DomainName"
+                ng-pattern="patterns.domainName"
+                class="form-control small mb-0"
+                placeholder="e.g., example.com"
+              />
+              <div
+                class="text-danger small"
+                ng-show="customWanForm.ipv6DomainName.$error.pattern && customWanForm.ipv6DomainName.$dirty"
+              >
+                Please enter a valid domain name
+              </div>
+            </div>
+          </div>
+
+          <!-- DHCPv6 Options (shown when DHCPv6 is selected) -->
+          <div class="row" ng-if="form.ipv6IPAcqMode === 'DHCPv6'">
+            <div class="col-sm-12">
+              <div class="checkbox1 input-field1 mt-2">
+                <input
+                  type="checkbox"
+                  id="ipv6RequestAddresses"
+                  ng-model="form.ipv6RequestAddresses"
+                />
+                <label class="checkbox_left_align" for="ipv6RequestAddresses"
+                  >Request IPv6 Addresses via DHCPv6</label
+                >
+              </div>
+              <div class="checkbox1 input-field1 mt-2">
+                <input
+                  type="checkbox"
+                  id="ipv6RequestPrefixes"
+                  ng-model="form.ipv6RequestPrefixes"
+                />
+                <label class="checkbox_left_align" for="ipv6RequestPrefixes"
+                  >Request IPv6 Prefixes via DHCPv6-PD</label
+                >
+              </div>
+              <div class="checkbox1 input-field1 mt-2">
+                <input
+                  type="checkbox"
+                  id="ipv6RapidCommit"
+                  ng-model="form.ipv6RapidCommit"
+                />
+                <label class="checkbox_left_align" for="ipv6RapidCommit"
+                  >Enable Rapid Commit</label
+                >
               </div>
             </div>
           </div>
