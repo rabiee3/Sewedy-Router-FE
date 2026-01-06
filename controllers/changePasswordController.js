@@ -10,7 +10,6 @@ myapp.controller("changePasswordController", function(
   modifyService,
   $location
 ) {
-  //$("#ajaxLoaderSection").show();
   pageloadiconstatus = true;
   var previoousmessages = [];
   $scope.formsubmitted = false;
@@ -36,6 +35,7 @@ myapp.controller("changePasswordController", function(
   };
 
   $scope.Apply = function(event) {
+    $("#ajaxLoaderSection").show();
     $scope.formsubmitted = true;
     var formObj = $scope.changePassword;
     var formIsValid = !(formObj && formObj.$invalid);
@@ -135,7 +135,6 @@ myapp.controller("changePasswordController", function(
 
   function errorResponseDisplay(formname, response, status, event) {
     var formname = formname;
-    $("#ajaxLoaderSection").hide();
     if (status == 200) {
       $rootScope.$broadcast("rootScope:language_changed");
     } else if (500 <= status && status < 600) {

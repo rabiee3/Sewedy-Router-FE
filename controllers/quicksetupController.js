@@ -49,6 +49,7 @@ myapp.controller("quicksetupController", function(
     loadExistingCredentials();
   }
 
+  $("#ajaxLoaderSection").hide();
   // Watch for 2.4G security mode changes
   $scope.$watch("wifiSettings.selected_security_2_4G", function(newVal) {
     if (newVal && securityToEncryptionMap[newVal]) {
