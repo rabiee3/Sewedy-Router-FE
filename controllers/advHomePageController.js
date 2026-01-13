@@ -9,6 +9,15 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	$scope.wifi5G = false;
 	$scope.dslStatus = false;
 	$scope.internetStatus = false;
+	$scope.uptime_status = {
+		system:"",
+		system_status:"",
+		dsl:"",
+		dsl_status:"",
+		internet:"",
+		internet_status:""
+	}
+	
 	// Hide & show password function
 	$scope.hideShowPassword = function () {
 		if ($scope.inputType == 'password')
@@ -454,6 +463,30 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 			}).
 			error(function (data, status, headers, config) { });
 
+		$http.get(URL + 'cgi_get_uptime').
+			success(function (data, status, headers, config) {
+
+				if (status === 200) {
+					const dsl = data.Objects.find((elm)=>elm.ObjName === 'Device.DSL');
+					if (dsl) {
+						$scope.uptime_status.dsl = dsl.Param[0].ParamValue ?? "";
+						$scope.uptime_status.dsl_status = dsl.Param[1].ParamValue ?? "";
+					}
+
+					const system = data.Objects.find((elm)=>elm.ObjName === 'Device.System');
+					if (system) {
+						$scope.uptime_status.system = system.Param[0].ParamValue ?? "";
+					}
+
+					const internet = data.Objects.find((elm)=>elm.ObjName === 'Device.Internet');
+					if (internet) {
+						$scope.uptime_status.internet = internet.Param[0].ParamValue ?? "";
+						$scope.uptime_status.internet_status = internet.Param[1].ParamValue ?? "";
+					}
+				}
+
+			}).
+			error(function (data, status, headers, config) { });
 			
 	};
 	getSecondQueryData = function (reqParams, firstObjectName) {

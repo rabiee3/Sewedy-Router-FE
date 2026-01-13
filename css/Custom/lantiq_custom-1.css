@@ -1707,7 +1707,7 @@ img.internet_img{position: absolute;bottom:0px;right:0px;height:35px;z-index: 0;
 .adv_widget ul li{border-top:1px solid #e7eaec;padding:8px 15px 5px 15px;}
 /*.adv_widget ul li label{width:100%;margin-bottom:0px; }
 .adv_widget ul li label span{width:40%;display:inline;float: left;font-size:12px;text-align:left;margin:0px 8px }*/
-.adv_widget ul li span:nth-child(2){width:40%;display:inline;font-family: 'Roboto-Regular', sans-serif;font-weight:400;float: left;font-size:12px;overflow:visible} 
+.adv_widget ul li span:nth-child(2){width:53%;display:inline;font-family: 'Roboto-Regular', sans-serif;font-weight:400;float: left;font-size:12px;overflow:visible} 
 /*.adv_widget ul li label span{width:60%;display:inline;float: left; font-family: 'Roboto-Light', sans-serif;font-size:12px;text-align:left;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}
 .adv_widget ul li span + span{width:39%;font-weight:normal;font-family: 'Roboto-Regular', sans-serif;font-weight:400; font-size:12px;} */
 .acc{position: relative;}
@@ -2596,7 +2596,7 @@ label.required:before{color:red;content: "*";display: block;position:absolute;ri
 .connection_status label{display:block;margin:5px 0px 0px; color: #ffffff}
 .content_mg label{display: block;text-align:left;margin-bottom: 0px;}
 .adv_widget ul li label{width:100%;margin-bottom:0px; }
-.adv_widget ul li label span{width:53%;display:inline;float: left;text-align:left;margin:0px 4px;font-weight:bold;  }
+.adv_widget ul li label span{width:40%;display:inline;float: left;text-align:left;margin:0px 4px;font-weight:bold;  }
 .formlalignment .div2 > label{margin-top:12px;}
 .switchblock >label,.theme-default .input-field label,.required label{color:#292828;font-family:"Roboto-Regular" !important;font-weight:bold !important;}
 .switchblock >label{color:#292828;min-width:140px;max-width:190px;  }
