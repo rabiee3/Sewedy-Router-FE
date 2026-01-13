@@ -13,7 +13,6 @@
         <parameter name="Enable"  type="checkbox" Value="1" webname="Enable" ></parameter> 
                 </col>
                 <col>
-        <parameter name="Status"  type="string"  webname="Status" maxlen="64" access="readonly"></parameter>
                 </col>
             </row>
             <row>
@@ -49,4 +48,3 @@
       </object>
     </object>
 </view>
-

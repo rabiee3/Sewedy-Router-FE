@@ -204,6 +204,14 @@
           "childrens": []
         },
         {
+          "name": "DDNS",
+          "icon": "ddns",
+          "order": "3.20",
+          "view": "ddns",
+          "viewtype": "html",
+          "childrens": []
+        },
+        {
           "name": "Guest Access",
           "icon": "parentcontrol",
           "order": "5.2",
@@ -505,13 +513,6 @@
               "childrens": []
             }
           ]
-        },
-        {
-          "name": "Dynamic DNS",
-          "order": "15",
-          "icon": "wireless",
-          "view": "dyndns",
-          "viewtype": "tableform"
         },
         {
           "name": "WiFi 6GHz",

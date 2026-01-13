@@ -135,6 +135,10 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                     templateUrl: "iptv.html",
                     controller: 'iptv'
                 })
+                .when('/html/ddns', {
+                    templateUrl: "ddns.html",
+                    controller: 'ddns'
+                })
                 .when('/html/macFiltering/:id', {
                     templateUrl: "macFiltering.html",
                     controller: 'macFilteringController'
