@@ -6,12 +6,13 @@
         <title>Router Admin</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
         <link href="css/Bootstrap/bootstrap.css" rel="stylesheet" type="text/css">
+        <link href="css/Custom/spacing.min.css" rel="stylesheet" type="text/css">
         <link href="css/Custom/fonticons.css" rel="stylesheet" type="text/css">
         <link rel="stylesheet" type="text/css" href="css/datetimepicker/DateTimePicker.css" />
         <link id="themechange" href="" rel="stylesheet" type="text/css">        
         <link href="materialize/materialize.css" rel="stylesheet" type="text/css">
         <link rel="stylesheet" href="css/Custom/animate.css">
-        <link rel="favicon" href="/images/favicon.png">
+        <link rel="favicon" href="/images/te.ico">
         <script src="js/Jquery/jquery1.9.1.min.js"></script>
         <script src="js/Jquery/jquery-ui.min.js"></script>
         <script src="js/angular/angular1.3.15.min.js"></script>
@@ -23,8 +24,14 @@
         <script src="js/Custom/index.js"></script>
         <script src="js/Custom/menu.js"></script>
         <script src="services/tourService.js"></script>
+        <script src="services/helperService.js"></script>
         <script src="controllers/menuController.js"></script>
         <script src="controllers/quicksetupController.js"></script>
+        <script src="controllers/wan_wanconnectionsform.js"></script>
+        <script src="controllers/ipmapping.js"></script>
+        <script src="controllers/iptvController.js"></script>
+        <script src="controllers/atm_form_controller.js"></script>
+        <script src="controllers/ptm_form_controller.js"></script>
         <script src="services/httpService.js"></script>
         <script src="controllers/hybridController.js"></script>
         <script src="controllers/advHomePageController.js"></script> 
@@ -58,11 +65,12 @@
 	<script src="controllers/dualwanFormController.js"></script>
 	<script src="controllers/dualEthWanFormController.js"></script>
 	<script src="controllers/bridgeFormController.js"></script>
+        <script src="controllers/cgiTestController.js"></script>
         <script src="controllers/upnpController.js"></script>
         <script src="controllers/hotspotVenueInfoController.js"></script>
         <script src="controllers/airTimeFairness.js"></script>
         <script src="controllers/coreController.js"></script>
-        
+        <script src="controllers/macFilteringController.js"></script>
         <script src="js/jstree/jstree.min.js" type="text/javascript"></script>
         <link href="js/jstree/themes/default/style.css" rel="stylesheet" type="text/css"/>
         <script src="js/Custom/custom.js"></script>
@@ -149,7 +157,7 @@
                 </button>
                 <div class="navbar-inner">
                     <div class="navbar-header">
-                        <button ng-click="home()" class="navbar-brand" ><img src="images/maxlinear-logo.png" height="45px"></button>
+                        <button ng-click="home()" class="navbar-brand" ><img src="images/we-logo.png" height="45px"></button>
                         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-navbar-collapse"><i class="navbar-icon fa fa-bars"></i></button>
                     </div> 
                     <div id="main-navbar-collapse" class="collapse navbar-collapse main-navbar-collapse">
@@ -177,7 +185,7 @@
                                         </ul>                                       
                                     </div>
                                 </li> -->
-                                <li><a class="dropdown-toggle lngbtn" ng-click="langclick()"><span id="header_home">English</span><span class="fa fa-angle-down" style="margin-left: 3px;"></span></a>
+                                <!-- <li><a class="dropdown-toggle lngbtn" ng-click="langclick()"><span id="header_home">English</span><span class="fa fa-angle-down" style="margin-left: 3px;"></span></a>
                                     <div class="dropdown-menu language no-padding pull-right no-padding-vr">
                                         <div class="">
                                             <ul class="notification_ul">
@@ -186,18 +194,18 @@
                                             </ul>
                                         </div>
                                     </div>
-                                </li>
+                                </li> -->
 								                <!-- <li>
                                     <a style="overflow: hidden;white-space: nowrap;">
                                         <switch-widget id="Polling" label="Auto-Refresh" ng-model="$rootScope.enablePolling" cgiset="false" object="" param="" checkdisplay="false" checkvalue="" checkurl="" customfun="polling"/>  
                                     </a>
                                 </li> -->
-                                <li>
+                                <!-- <li>
                                     <div class="no-padding-vr">
                                         <i class="fa fa-user" style="padding-left:15px;"></i>
                                         <span style="padding-right:15px;">{{ username }}</span>
                                     </div>
-                                </li>
+                                </li> -->
                                 <li>
                                    <a title="Logout">
                                        <i class="fa fa-sign-out" ng-click="Logout()" style="margin-left:8px;cursor: pointer;">
@@ -251,13 +259,13 @@
  
  
 					  </div>
-                    <div class="social_icon_group">                            
+                    <!-- <div class="social_icon_group">                            
                         <a target="_blank" href="https://www.facebook.com/"><i class="fa fa-facebook"></i></a>
                         <a target="_blank" href="https://twitter.com/"><i class="fa fa-twitter "></i></a>
                         <a target="_blank" href="https://in.linkedin.com/"><i class="fa fa-linkedin"></i></a>
-                        <!--<a href="https://www.lantiq.com/rss"><i class="fa fa-rss"></i></a>-->
+                        <a href="https://www.lantiq.com/rss"><i class="fa fa-rss"></i></a>
                         <a target="_blank" href="https://www.youtube.com/"><i class="fa fa-youtube"></i></a>
-                    </div>                        
+                    </div>                         -->
                 </footer>
             </div>
             <div id="main-menu-bg"></div>
@@ -335,9 +343,6 @@
                         }
                         var windowheight = $(window).height();
                         var windowwidth = $(window).width();
-                        $(window).on('beforeunload', function () {
-                            return "You should keep this page open.";
-                        });
                         $("#content-wrapper").css("min-height", windowheight);
                         setTimeout(function () {
                             $("#myTab li:first-child").addClass('active');

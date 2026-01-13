@@ -42,10 +42,10 @@
 		</row>
 		<row>
 		<col>
-       <parameter  name="X_LANTIQ_COM_SourceInterface" required="false" type="dropdown" webname="Source Interface" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=false&amp;Name=&amp;Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=Object=Device.WiFi.Radio&amp;Enable=true&amp;Name=&amp;Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=bridge&amp;Name="></parameter>
+       <parameter  name="X_LANTIQ_COM_SourceInterface" required="false" type="dropdown" webname="Source Interface" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=false&amp;Name=&amp;Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=&amp;Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=bridge&amp;Name=,cgi_get_filterbyparamvalnosubobj?Object=Device.WiFi.SSID&amp;X_LANTIQ_COM_Vendor_IsEndPoint=false"></parameter>
 		</col>
 		<col>
-       <parameter  name="X_LANTIQ_COM_DestInterface" required="false" type="dropdown" webname="Destination Interface" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=false&amp;Name=&amp;Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=Object=Device.WiFi.Radio&amp;Enable=true&amp;Name=&amp;Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=bridge&amp;Name="></parameter>
+       <parameter  name="X_LANTIQ_COM_DestInterface" required="false" type="dropdown" webname="Destination Interface" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=false&amp;Name=&amp;Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=bridge&amp;Name=,cgi_get_filterbyparamvalnosubobj?Object=Device.WiFi.SSID&amp;X_LANTIQ_COM_Vendor_IsEndPoint=false"></parameter>
 		</col>
 		</row>
         <row>

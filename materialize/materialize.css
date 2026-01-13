@@ -6544,6 +6544,11 @@ input[type=text], input[type=password], input[type=email], input[type=url], inpu
     -ms-transform: translateY(-140%);
     -o-transform: translateY(-140%);
     transform: translateY(-140%); }
+
+    .input-field label.special{
+      top: 14px;
+      left: 0;
+    }
   .input-field .prefix {
     position: absolute;
     width: 3rem;

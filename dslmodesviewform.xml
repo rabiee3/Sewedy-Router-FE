@@ -32,7 +32,15 @@
             <row>
                 <col><parameter   name="EntitiesEnabled"  type="dropdown"  validvalues="Auto,Single link,Bonding" webname="Operation Mode" required="false" ></parameter></col>
             </row>
-            <parameter  name="XTSE_Modes"  type="multi-checkbox" webname="Modes" url="dslmodes"></parameter>
+
+            <row>
+                <col><parameter name="XTSE_Modes" type="multi-checkbox" webname="Modes" url="dslmodes"></parameter></col>
+            </row>
+
+            <row>
+                <col><parameter name="VDSL_Profiles" type="multi-checkbox" webname="VDSL Profiles" fakeurl="vdslprofiles"></parameter></col>
+            </row>
+            
         </object>
         <parameter  name="Modify"  action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" maxlen="64"></parameter>
     </object>

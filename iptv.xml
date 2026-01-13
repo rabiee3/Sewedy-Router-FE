@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="iptv">
+    <header>
+        <image>images/icons/system.png</image>
+
+        <name>Basic - IPTV</name>
+        <description>Configure IPTV for the LAN ports</description>
+    </header>
+    <object name="iptv" viewtype="form" title="IPTV">
+
+        <parameter name="EnableIPTV" type="toggle" webname="Enable IPTV"
+            Value="false"></parameter>
+
+        <parameter name="LAN_PORTS" type="multi-checkbox" webname="Selected LAN" fakeurl="lanports"></parameter>
+
+        <parameter name="Modify" action="post" routeurl="send_cgiset($event)" type="submitbutton"
+            webname="Apply" maxlen="64"></parameter>
+    </object>
+</view>

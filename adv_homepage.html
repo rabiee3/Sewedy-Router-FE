@@ -9,6 +9,16 @@ and open the template in the editor.
     <title>Intel</title>
     <link href="css/Bootstrap/bootstrap.css" rel="stylesheet" type="text/css" />
     <script src="controllers/advHomePageController.js"></script>
+    <style>
+      #router_svg {
+        width: 100%;
+        height: calc(100vh - 125px);
+      }
+
+      .point_data text {
+        font-family: Arial, Helvetica, sans-serif;
+      }
+    </style>
   </head>
   <body>
     <div id="translation" class="hide">advhomepage</div>
@@ -18,13 +28,6 @@ and open the template in the editor.
       ng-controller="advHomePageController"
       ng-cloak
     >
-      <!-- <div class="subheader">
-                 <div>
-                     <img src="images/icons/system.png" class="iconDetails" alt="img">
-                 </div>
-                 <div><h4>Device Status</h4></div>
-                 <p>Current Device Status Information</p>
-                     </div> -->
       <div class="row no-margin-hr" ng-show="postformnamepopup">
         <div class="alert alert-danger">
           <a
@@ -168,7 +171,263 @@ and open the template in the editor.
       </div>
       <div class="row no-margin-hr">
         <div class="col-lg-8">
-          <div class="row">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            version="1.1"
+            id="router_svg"
+            x="0px"
+            y="0px"
+            width="245px"
+            height="217.5px"
+            viewBox="0 0 245 217.5"
+            enable-background="new 0 0 245 217.5"
+            xml:space="preserve"
+          >
+            <g id="Layer_2">
+              <path
+                fill="#1C1C1C"
+                d="M203.334,194.001c0,0-9.001,2.667-6.667,5.999c2.524,3.605,6.89,9.369,3.333,12.036s-9,0.891-16.5-6.786   c-2.529-2.589-7.963-3.813-12.417-4.334c-5.265-0.615-16.583-1.166-16.583-1.166l33.965-2.087L203.334,194.001z"
+              />
+              <path
+                fill="#6B6B6B"
+                d="M121.25,200.5c0,0,55.564,0.15,73.083-2.832c15.667-2.667,28.834-11.68,37.606-18.109   c3.567-2.613,4.394-3.569,4.561-12.809c0.665-36.783,3.641-102.737,3.667-140.25c0.008-11.012-1.667-15.845-19.151-16.508   c-11.882-0.451-43.763-3.738-59.805-4.613C153.189,4.941,121.25,4.75,121.25,4.75V200.5z"
+              />
+              <path
+                fill="#606060"
+                d="M121.25,200.5c0,0,55.564,0.15,73.083-2.832c15.661-2.666,28.839-11.684,37.606-18.109   c3.567-2.613,4.963-5.184,4.561-12.809c-0.264-5.004,0.191-14.938,0.191-14.938s0.809,14.063-15.441,24.688   c-4.447,2.908-14.663,8.277-21.337,9.889c-31.538,7.612-78.663,5.361-78.663,5.361V200.5z"
+              />
+              <g id="Layer_3"></g>
+              <g id="Layer_4">
+                <path
+                  fill="#494949"
+                  d="M213.5,108.625c0,0-26.5-11.375-52.125-15.375s-40.125-3.5-40.125-3.5v5.625    c0,0,21.092-0.283,43.125,3.125C196.766,103.51,213.5,108.625,213.5,108.625z"
+                />
+              </g>
+              <path
+                fill="#1C1C1C"
+                d="M39.916,194.001c0,0,9.001,2.667,6.667,5.999c-2.525,3.605-6.89,9.369-3.333,12.036s9,0.891,16.5-6.786   c2.529-2.589,7.963-3.813,12.417-4.334c5.265-0.615,16.583-1.166,16.583-1.166l-33.965-2.087L39.916,194.001z"
+              />
+              <path
+                fill="#6B6B6B"
+                d="M122,200.5c0,0-55.565,0.15-73.083-2.832c-15.667-2.667-28.834-11.68-37.607-18.109   c-3.567-2.613-4.393-3.569-4.56-12.809C6.085,129.967,3.109,64.013,3.083,26.5C3.075,15.488,4.75,10.655,22.235,9.992   c11.881-0.451,43.762-3.738,59.804-4.613C90.06,4.941,122,4.75,122,4.75V200.5z"
+              />
+              <path
+                fill="#606060"
+                d="M122,200.5c0,0-55.565,0.15-73.083-2.832c-15.661-2.666-28.839-11.684-37.607-18.109   c-3.567-2.613-4.962-5.184-4.56-12.809c0.264-5.004-0.191-14.938-0.191-14.938S5.75,165.875,22,176.5   c4.447,2.908,14.663,8.277,21.337,9.889C74.875,194.001,122,191.75,122,191.75V200.5z"
+              />
+              <path
+                fill="#494949"
+                d="M29.75,108.625c0,0,26.5-11.375,52.125-15.375S122,89.75,122,89.75v5.625c0,0-21.092-0.283-43.125,3.125   C46.484,103.51,29.75,108.625,29.75,108.625z"
+              />
+            </g>
+            <g id="points">
+              <g class="point_data">
+                <circle
+                  id="WPS_x5F_Point"
+                  fill="#FFFFFF"
+                  cx="169.823"
+                  cy="40.364"
+                  r="2.802"
+                />
+                <text
+                  transform="matrix(1 0 0 1 166.4063 34.835)"
+                  fill="#FFFFFF"
+                  font-family="'Arial-BoldMT'"
+                  font-size="3"
+                >
+                  WPS
+                </text>
+              </g>
+              <g class="point_data">
+                <circle
+                  id="LAN4_x5F_Point"
+                  ng-attr-fill="{{ $root.eth_port_status[3] == false ? '#ffffff' : '#35f42f' }}"
+                  cx="157.323"
+                  cy="40.364"
+                  r="2.802"
+                />
+                <text
+                  transform="matrix(1 0 0 1 153.4063 34.835)"
+                  fill="#FFFFFF"
+                  font-family="'Arial-BoldMT'"
+                  font-size="3"
+                >
+                  LAN4
+                </text>
+              </g>
+              <g class="point_data">
+                <circle
+                  id="LAN3_x5F_Point"
+                  ng-attr-fill="{{ $root.eth_port_status[2] == false ? '#ffffff' : '#35f42f' }}"
+                  cx="145.573"
+                  cy="40.364"
+                  r="2.802"
+                />
+                <text
+                  transform="matrix(1 0 0 1 141.6563 34.835)"
+                  fill="#FFFFFF"
+                  font-family="'Arial-BoldMT'"
+                  font-size="3"
+                >
+                  LAN3
+                </text>
+              </g>
+              <g class="point_data">
+                <circle
+                  id="LAN2_x5F_Point"
+                  ng-attr-fill="{{ $root.eth_port_status[1] == false ? '#ffffff' : '#35f42f' }}"
+                  cx="133.698"
+                  cy="40.364"
+                  r="2.802"
+                />
+                <text
+                  transform="matrix(1 0 0 1 129.7813 34.835)"
+                  fill="#FFFFFF"
+                  font-family="'Arial-BoldMT'"
+                  font-size="3"
+                >
+                  LAN2
+                </text>
+              </g>
+              <g class="point_data">
+                <circle
+                  ng-attr-fill="{{ $root.eth_port_status[0] == false ? '#ffffff' : '#35f42f' }}"
+                  id="LAN1_x5F_Point"
+                  cx="122"
+                  cy="40.364"
+                  r="2.802"
+                />
+                <text
+                  transform="matrix(1 0 0 1 118.083 34.835)"
+                  fill="#FFFFFF"
+                  font-family="'Arial-BoldMT'"
+                  font-size="3"
+                >
+                  LAN1
+                </text>
+              </g>
+              <g class="point_data">
+                <circle
+                  id="_x35_G_x5F_Point"
+                  ng-attr-fill="{{ wifi5G ? '#35f42f' : '#ffffff' }}"
+                  cx="110.5"
+                  cy="40.364"
+                  r="2.802"
+                />
+                <text
+                  transform="matrix(1 0 0 1 108.499 34.835)"
+                  fill="#FFFFFF"
+                  font-family="'Arial-BoldMT'"
+                  font-size="3"
+                >
+                  5G
+                </text>
+              </g>
+              <g class="point_data">
+                <circle
+                  ng-attr-fill="{{ wifi2_4G ? '#35f42f' : '#ffffff' }}"
+                  cx="98.5"
+                  cy="40.364"
+                  r="2.802"
+                />
+                <text
+                  transform="matrix(1 0 0 1 95.248 34.835)"
+                  fill="#FFFFFF"
+                  font-family="'Arial-BoldMT'"
+                  font-size="3"
+                >
+                  2.4G
+                </text>
+              </g>
+              <g class="point_data">
+                <circle
+                  id="InternetPoint"
+                  ng-attr-fill="{{ internetStatus ? '#35f42f' : '#ffffff' }}"
+                  cx="86.5"
+                  cy="40.364"
+                  r="2.802"
+                />
+                <text
+                  transform="matrix(1 0 0 1 80.9995 34.835)"
+                  font-family="'Arial-BoldMT'"
+                  fill="#FFFFFF"
+                  font-size="3"
+                >
+                  Internet
+                </text>
+              </g>
+              <g class="point_data">
+                <circle
+                  id="DSL_x5F_Point"
+                  fill="#35F42F"
+                  cx="74.75"
+                  cy="40.364"
+                  r="2.802"
+                  ng-attr-fill="{{ dslStatus ? '#35f42f' : '#ffffff' }}"
+                />
+                <text
+                  transform="matrix(1 0 0 1 71.75 34.835)"
+                  fill="#FFFFFF"
+                  font-family="'Arial-BoldMT'"
+                  font-size="3"
+                >
+                  DSL
+                </text>
+              </g>
+            </g>
+            <g id="Layer_6">
+              <g>
+                <path
+                  fill="#FFFFFF"
+                  d="M122.001,148.788c-9.152,0.003-16.562-7.376-16.659-16.47c-0.1-9.266,7.299-16.661,16.28-16.853    c9.353-0.2,16.828,7.228,17.03,16.198c0.106,4.669-1.473,8.711-4.709,12.077C130.748,147.064,126.409,148.796,122.001,148.788    L122.001,148.788z M128.414,132.884c1.425,0,2.852,0,4.275,0c0.27,0,0.424-0.147,0.424-0.416c0.001-0.491,0.009-0.985-0.002-1.478    c-0.021-1.023-0.479-1.799-1.359-2.318c-0.402-0.236-0.848-0.337-1.313-0.337c-1.742-0.001-3.484,0-5.227,0    c-0.214,0-0.426,0.021-0.637,0.065c-1.109,0.235-1.974,1.226-2.059,2.356c-0.022,0.302-0.009,0.604-0.01,0.906    c-0.001,0.578-0.019,1.157,0.007,1.733c0.063,1.41,1.228,2.517,2.638,2.517c1.738,0,3.478,0,5.217,0    c0.164,0,0.328-0.004,0.49-0.033c0.979-0.169,1.658-0.717,2.055-1.623c0.095-0.215-0.075-0.413-0.332-0.358    c-0.307,0.064-0.623,0.063-0.93,0.002c-0.144-0.028-0.246-0.006-0.326,0.088c-0.243,0.283-0.555,0.41-0.924,0.41    c-0.555-0.002-1.109,0-1.663,0c-1.185,0-2.37,0-3.554-0.002c-0.526,0-0.965-0.322-1.115-0.816    c-0.061-0.194-0.041-0.395-0.049-0.594c-0.002-0.086,0.022-0.105,0.107-0.105C125.559,132.885,126.986,132.884,128.414,132.884    L128.414,132.884z M121.499,131.268c0-0.836,0-1.67,0-2.507c0-0.271-0.149-0.424-0.422-0.425c-0.226-0.001-0.452-0.001-0.678,0    c-0.261,0-0.415,0.156-0.415,0.415c0,1.617,0,3.231,0,4.849c0,0.485-0.345,0.817-0.84,0.799c-0.451-0.016-0.901-0.019-1.353,0    c-0.485,0.021-0.833-0.313-0.833-0.791c0-1.618,0-3.237,0-4.855c0-0.252-0.154-0.413-0.408-0.416    c-0.237-0.003-0.475-0.003-0.712,0c-0.086,0.002-0.171,0.014-0.244,0.073c-0.112,0.091-0.154,0.205-0.153,0.347    c0.001,1.613,0.001,3.227,0.001,4.838c0,0.489-0.344,0.82-0.841,0.805c-0.45-0.014-0.899-0.02-1.349,0    c-0.487,0.021-0.837-0.314-0.837-0.791c0-1.618,0-3.236,0-4.855c0-0.254-0.155-0.414-0.407-0.417    c-0.234-0.002-0.469-0.002-0.704,0c-0.259,0.003-0.41,0.161-0.41,0.422c0,1.61,0,3.22,0,4.829c0,0.085,0.003,0.17,0.01,0.255    c0.097,1.16,1.087,2.072,2.251,2.072c0.51,0,1.02,0.003,1.53,0c0.538-0.004,1.018-0.177,1.436-0.515    c0.057-0.047,0.09-0.056,0.151-0.004c0.428,0.354,0.924,0.519,1.478,0.519c0.486,0,0.973,0,1.459,0    c0.166,0,0.328-0.017,0.489-0.052c1.058-0.226,1.801-1.146,1.8-2.229C121.499,132.845,121.499,132.057,121.499,131.268    L121.499,131.268z"
+                />
+                <path
+                  fill="#5B2C91"
+                  d="M128.414,132.884c-1.428,0-2.855,0.001-4.284-0.002c-0.084,0-0.11,0.021-0.106,0.104    c0.006,0.199-0.012,0.399,0.047,0.595c0.15,0.494,0.589,0.817,1.115,0.817c1.186,0,2.371,0,3.555,0c0.554,0,1.107,0,1.662,0    c0.369,0,0.682-0.127,0.925-0.409c0.08-0.095,0.183-0.116,0.325-0.089c0.308,0.062,0.623,0.063,0.93,0    c0.258-0.055,0.427,0.144,0.333,0.357c-0.396,0.906-1.077,1.454-2.056,1.623c-0.162,0.029-0.326,0.033-0.49,0.033    c-1.739,0-3.479,0-5.217,0c-1.409,0-2.575-1.107-2.638-2.516c-0.025-0.578-0.008-1.156-0.007-1.734    c0.001-0.303-0.012-0.604,0.01-0.906c0.084-1.132,0.95-2.122,2.059-2.357c0.21-0.045,0.422-0.064,0.637-0.064    c1.742-0.001,3.484-0.001,5.227,0c0.465,0,0.91,0.1,1.313,0.337c0.881,0.519,1.338,1.295,1.359,2.318    c0.011,0.491,0.002,0.985,0.002,1.478c-0.002,0.268-0.154,0.416-0.424,0.416C131.264,132.884,129.838,132.884,128.414,132.884    L128.414,132.884z M127.809,131.368c0.883,0,1.767,0,2.647,0c0.353,0,0.704-0.002,1.055,0.001    c0.074,0.001,0.089-0.023,0.082-0.105c-0.007-0.065-0.008-0.134-0.003-0.201c0.047-0.646-0.474-1.205-1.109-1.207    c-1.782-0.002-3.565,0-5.348,0.002c-0.447,0-0.869,0.302-1.031,0.721c-0.088,0.229-0.076,0.465-0.08,0.701    c-0.002,0.076,0.023,0.09,0.094,0.09C125.346,131.368,126.578,131.368,127.809,131.368L127.809,131.368z"
+                />
+                <path
+                  fill="#5B2C91"
+                  d="M121.499,131.268c0,0.789,0,1.578,0,2.367c0,1.083-0.743,2.004-1.8,2.229    c-0.161,0.035-0.323,0.052-0.489,0.052c-0.487,0-0.973,0-1.459,0c-0.554,0-1.05-0.165-1.478-0.519    c-0.061-0.051-0.094-0.043-0.151,0.004c-0.418,0.338-0.897,0.511-1.435,0.515c-0.51,0.003-1.021,0-1.531,0    c-1.164,0-2.154-0.912-2.251-2.072c-0.007-0.085-0.01-0.17-0.01-0.255c0-1.609,0-3.219,0-4.829c0-0.262,0.15-0.419,0.41-0.422    c0.235-0.002,0.47-0.002,0.704,0c0.252,0.003,0.407,0.163,0.407,0.417c0,1.619,0,3.237,0,4.855c0,0.477,0.349,0.812,0.836,0.791    c0.45-0.02,0.899-0.014,1.349,0c0.497,0.016,0.841-0.315,0.841-0.805c0-1.613,0-3.225-0.001-4.839    c0-0.141,0.042-0.255,0.154-0.346c0.073-0.06,0.158-0.071,0.244-0.073c0.237-0.003,0.475-0.003,0.712,0    c0.253,0.003,0.408,0.163,0.408,0.416c0,1.619,0,3.237,0,4.855c0,0.477,0.348,0.812,0.833,0.791c0.451-0.019,0.901-0.016,1.352,0    c0.496,0.019,0.84-0.313,0.84-0.799c0-1.617,0-3.231,0-4.849c0-0.259,0.154-0.415,0.416-0.415c0.226-0.001,0.451-0.001,0.677,0    c0.273,0,0.422,0.153,0.422,0.426C121.499,129.596,121.499,130.432,121.499,131.268L121.499,131.268z"
+                />
+                <path
+                  fill="#FFFFFF"
+                  d="M127.809,131.368c-1.23,0-2.463,0-3.693,0.001c-0.071,0-0.096-0.014-0.094-0.09    c0.004-0.236-0.01-0.473,0.08-0.701c0.16-0.418,0.582-0.721,1.031-0.721c1.782-0.002,3.564-0.002,5.348-0.002    c0.636,0.002,1.158,0.563,1.109,1.207c-0.005,0.067-0.004,0.136,0.003,0.201c0.009,0.082-0.008,0.106-0.082,0.105    c-0.351-0.003-0.704,0-1.055,0C129.574,131.369,128.691,131.369,127.809,131.368L127.809,131.368z"
+                />
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <div class="col-lg-4 mbl-no-padding-hr">
+          <adv-widget
+            title="System Info"
+            icon="panel-heading-icon"
+            time="30000"
+            color="#98989a"
+            polling="false"
+            webname='["Manufacturer","Serial Number","Software Version", "Model Name", "Hardware Version"]'
+            url="cgi_get?Object=Device.DeviceInfo&Manufacturer=&SerialNumber=&SoftwareVersion=&ModelName=&HardwareVersion="
+          >
+          </adv-widget>
+          <br />
+
+          <adv-widget
+            title="Memory Information"
+            icon="panel-heading-icon"
+            time="30000"
+            color="#000000"
+            polling="true"
+            webname='["Total Memory","Free Memory","Buffer Memory","Cached Memory"]'
+            url="cgi_get?Object=Device.DeviceInfo.MemoryStatus&Total=&Free=&X_LANTIQ_COM_Buffer=&X_LANTIQ_COM_Cached="
+          >
+          </adv-widget>
+        </div>
+      </div>
+
+      <div class="row mt-5">
+        <div class="col-lg-12">
+          <div class="col-lg-12">
             <div class="panel">
               <div class="panel-heading text-left">
                 <span class="panel_heading_icon">
@@ -180,8 +439,6 @@ and open the template in the editor.
               </div>
               <div class="panel-body">
                 <div class="title_txt">
-                  <!--<img src="images/checkbox-ltq.png" alt="checkbox-icon" width="40"/>-->
-                  <!--<h4 ng-bind="'advhomepage.Device Status' | translate"></h4>-->
                   <p
                     ng-bind="'advhomepage.Click on each node in the device map for more information' | translate"
                   ></p>
@@ -198,12 +455,12 @@ and open the template in the editor.
                       ng-click="toggleDetails($event)"
                     >
                       <div class="content_mg">
-                        <div
-                          ><span
+                        <div>
+                          <span
                             ng-bind="'Device.IP.Interface.*.Internet Status' | translate"
                           ></span
-                          ><b ng-bind="DeviceIPInterface.Status"></b
-                        ></div>
+                          ><b ng-bind="DeviceIPInterface.Status"></b>
+                        </div>
                         <span
                           class="error"
                           forname="DeviceIPInterface_Status"
@@ -211,14 +468,14 @@ and open the template in the editor.
                           ng-bind="DeviceIPInterface_Statusval"
                         >
                         </span>
-                        <div
-                          ><span
+                        <div>
+                          <span
                             ng-bind="'Device.IP.Interface.*.IPv4Address.*.WAN IP' | translate"
                           ></span
                           ><b
                             ng-bind="DeviceIPInterfaceIPv4Address.IPAddress"
-                          ></b
-                        ></div>
+                          ></b>
+                        </div>
                         <span
                           class="error"
                           forname="DeviceIPInterfaceIPv4Address_IPAddress"
@@ -226,10 +483,10 @@ and open the template in the editor.
                           ng-bind="DeviceIPInterfaceIPv4Address_IPAddressval"
                         >
                         </span>
-                        <div
-                          ><span ng-bind="'macaddress' | translate"></span
-                          ><b ng-bind="MacAddress"></b
-                        ></div>
+                        <div>
+                          <span ng-bind="'macaddress' | translate"></span
+                          ><b ng-bind="MacAddress"></b>
+                        </div>
                       </div>
                       <img
                         ng-show="DeviceIPInterface.Status=='Up'"
@@ -260,11 +517,11 @@ and open the template in the editor.
                           <div
                             ng-bind="'Device.WiFi.AccessPoint.1.Security.WiFi Security Level' | translate"
                           ></div>
-                          <div
-                            ><b
+                          <div>
+                            <b
                               ng-bind="DeviceWiFiAccessPoint1Security.ModeEnabled"
-                            ></b
-                          ></div>
+                            ></b>
+                          </div>
                           <span
                             class="error"
                             forname="DeviceWiFiAccessPoint1Security_ModeEnabled"
@@ -285,10 +542,11 @@ and open the template in the editor.
                           ></div>
                           <div
                             ng-show="RadioNumberOfEntries == '2' || RadioNumberOfEntries == '3'"
-                            ><b
+                          >
+                            <b
                               ng-bind="DeviceWiFiAccessPoint2Security.ModeEnabled"
-                            ></b
-                          ></div>
+                            ></b>
+                          </div>
                           <span
                             class="error"
                             forname="DeviceWiFiAccessPoint2Security_ModeEnabled"
@@ -309,10 +567,6 @@ and open the template in the editor.
                     <div class="devider-hr">
                       <div></div>
                     </div>
-                    <!--  Uncomment following code the implement no of devices count block.    
-                                        <div class="devider2"></div>
-                                        <div class="btn_2">
-                                            <div class="home_samplebox palesky" data-target="3" ng-click="toggleDetails($event)">-->
                     <div
                       class="home_samplebox tabHeader p-2"
                       data-target="4"
@@ -339,14 +593,6 @@ and open the template in the editor.
                         </div>
                       </div>
                     </div>
-                    <!-- <div class="home_samplebox palesky" data-target="4" ng-click="toggleDetails($event)">
-                                                <div class="headertxt  no-padding-hr" ng-bind="'advhomepage.No of Devices' | translate"></div>
-                                                <div class="contentdashboard">
-                                                    <div class="count_block ">0</div>
-                                                    <div class="img_block"><img src="images/icons/usb.png" alt="img" class="usb_icon" height="50"/></div>
-                                                </div>
-                                            </div>
-                                        </div>-->
                   </div>
                   <div ng-include="'adv_homepage_systemstatus.html'"></div>
                   <div ng-include="'adv_homepage_securitylevel.html'"></div>
@@ -356,79 +602,6 @@ and open the template in the editor.
               </div>
             </div>
           </div>
-
-          <div class="row">
-            <div class="row" ng-if="$root.message">
-              <div class="col-lg-6">
-                <adv-widget
-                  title="DSL Line Status"
-                  icon="dsl-panel-icon"
-                  time="30000"
-                  polling="true"
-                  webname='["Upstream Data Rate (kbps)","Downstream Data Rate (kbps)"]'
-                  url="cgi_get?Object=Device.DSL.Channel.1&UpstreamCurrRate=&DownstreamCurrRate="
-                  checker="true"
-                  checkervalue=""
-                  checkerurl="cgi_get?Object=Device.DSL.X_LANTIQ_COM_Config&Enable="
-                >
-                </adv-widget>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-4 mbl-no-padding-hr">
-          <adv-widget
-            title="System Info"
-            icon="panel-heading-icon"
-            time="30000"
-            color="#98989a"
-            polling="false"
-            webname='["Manufacturer","Serial Number","Software Version", "Model Name", "Hardware Version"]'
-            url="cgi_get?Object=Device.DeviceInfo&Manufacturer=&SerialNumber=&SoftwareVersion=&ModelName=&HardwareVersion="
-          >
-          </adv-widget>
-
-          <adv-widget
-            title="Memory Information"
-            icon="panel-heading-icon"
-            time="30000"
-            color="#000000"
-            polling="true"
-            webname='["Total Memory","Free Memory","Buffer Memory","Cached Memory"]'
-            url="cgi_get?Object=Device.DeviceInfo.MemoryStatus&Total=&Free=&X_LANTIQ_COM_Buffer=&X_LANTIQ_COM_Cached="
-          >
-          </adv-widget>
-
-          <dynamic-port-status-widget
-            id="EthernetPortStatus"
-            title="Ethernet Port Status"
-            icon="panel-heading-icon"
-            color="darkgray_bg"
-            onimage="images/lan-port-gr.png"
-            offimage="images/lan-port.png"
-            polling="true"
-            time="10000"
-            wsprotocol="protocol_device_update"
-            urls='["cgi_get_fillparams?Object=Device.Ethernet.Interface.1", "cgi_get_fillparams?Object=Device.Ethernet.Interface.2", "cgi_get_fillparams?Object=Device.Ethernet.Interface.3", "cgi_get_fillparams?Object=Device.Ethernet.Interface.4"]'
-            params='["Status","Name","MaxBitRate"]'
-          >
-          </dynamic-port-status-widget>
-
-          <dynamic-port-status-widget
-            id="DSLPortStatus"
-            title="DSL Port Status"
-            icon="panel-heading-icon"
-            color="darkgray_bg"
-            onimage="images/voip.png"
-            offimage="images/voip_blck.png"
-            socket="false"
-            polling="true"
-            time="10000"
-            urls='["cgi_get?Object=Device.DSL.Line.1"]'
-            params='["Status","Name","DownstreamMaxBitRate"]'
-          >
-          </dynamic-port-status-widget>
         </div>
       </div>
     </div>

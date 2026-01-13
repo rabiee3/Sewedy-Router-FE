@@ -34,7 +34,6 @@ myapp.controller('firewallController', function ($scope,$timeout,firewallService
         console.log($rootScope["breadcrumbs"])
     }, 10);*/
 		var jsonpromise = $interval(function () {
-        console.log(breadcrumbsdata)
         if (jsonloadstatus) {
             if (breadcrumbsdata[$route.current.params.param] == undefined) {
                 $rootScope["breadcrumbs"] = JSON.parse(localStorage.getItem('breadcrumbarray'));
@@ -83,7 +82,6 @@ myapp.controller('firewallController', function ($scope,$timeout,firewallService
             }
             $interval.cancel(jsonpromise);
         }
-        console.log($rootScope["breadcrumbs"])
 
     }, 500);
     $scope.homefun = function () {
@@ -221,6 +219,9 @@ myapp.controller('firewallController', function ($scope,$timeout,firewallService
                 success(function (data, status, headers, config) {
                     if (status === 200) {
                         var params = ["Description", "DestPort", "Target"];
+                        if(!Array.isArray(data.Objects)){
+                            return
+                        }
                         objects = data.Objects[0];
                         $scope.mainArray.push(objects);
                         function sortByDigits(array) {
@@ -288,11 +289,28 @@ myapp.controller('firewallController', function ($scope,$timeout,firewallService
     $scope.customdropdownchange = function (value) {
         $scope[value + "change"] = true;
     }
-    $scope.firewallApply = function () {
+
+    function hasObjectWithTarget(cgiString, objectName, targetValue) {
+        // Escape special regex characters in the input strings
+        const escapedObject = objectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedTarget = targetValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
+        const pattern = new RegExp(`Object=${escapedObject}.*?&Target=${escapedTarget}`);
+        return pattern.test(cgiString);
+    }
+
+    $scope.firewallApply = async function () {
         $rootScope.initialtime=Date.now();
         $('#ajaxLoaderSection').show();
         var urlstatus = false;
-        console.log(firewallpostarray);
+        const mountedDevicesRes = await $http.get(URL + "cgi_get?Object=Device.USB.X_LANTIQ_COM_MountedDevice.MountedDevice")
+
+        const hasObjectTarget = (cgiString, obj, target) => {
+            return cgiString.includes(`Object=${obj}`) && 
+                cgiString.includes(`Target=${target}`) &&
+                cgiString.indexOf(`Object=${obj}`) < cgiString.indexOf(`Target=${target}`);
+        };
+        
         var url = URL + "cgi_set?";
         var post = '';
         if (firewallpostarray.length > 0) {
@@ -310,6 +328,16 @@ myapp.controller('firewallController', function ($scope,$timeout,firewallService
             urlstatus = true;
             post += "&Config=" + $scope["DeviceFirewall"]["Config"]
         }
+
+        if(hasObjectTarget(post,"Device.Firewall.Chain.1.Rule.3","Accept")){
+            if(!mountedDevicesRes.data || mountedDevicesRes.data.Objects?.length <= 0){
+                alert("Can not apply FTP rule, as there are no mounted USB devices detected");
+                $('#ajaxLoaderSection').hide();
+                window.location.reload();
+                return;
+            }
+        }
+
         if (urlstatus) {
             var setData = function(){
                 $http.post(url, post).
