@@ -485,6 +485,8 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 					}
 				}
 
+				// Start the uptime increment interval
+				startUptimeUpdater();
 			}).
 			error(function (data, status, headers, config) { });
 			
@@ -709,5 +711,76 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	$scope.popupclose = function (scopeparam) {
 		$scope[scopeparam] = false;
 	}
+
+	// Function to parse uptime string (format: '0 days 09:39:47') and increment it by 1 second
+	var incrementUptime = function(uptimeString) {
+		if (!uptimeString || uptimeString === "") return uptimeString;
+		
+		const regex = /(\d+)\s+days\s+(\d{2}):(\d{2}):(\d{2})/;
+		const match = uptimeString.match(regex);
+		
+		if (!match) return uptimeString;
+		
+		let days = parseInt(match[1]);
+		let hours = parseInt(match[2]);
+		let minutes = parseInt(match[3]);
+		let seconds = parseInt(match[4]);
+		
+		// Increment seconds
+		seconds++;
+		
+		// Handle overflow
+		if (seconds >= 60) {
+			seconds = 0;
+			minutes++;
+		}
+		if (minutes >= 60) {
+			minutes = 0;
+			hours++;
+		}
+		if (hours >= 24) {
+			hours = 0;
+			days++;
+		}
+		
+		// Format the output
+		return days + " days " + 
+			(hours < 10 ? "0" + hours : hours) + ":" +
+			(minutes < 10 ? "0" + minutes : minutes) + ":" +
+			(seconds < 10 ? "0" + seconds : seconds);
+	};
+
+	// Function to start the uptime updater interval
+	var startUptimeUpdater = function() {
+		// Clear any existing interval
+		if ($scope.uptimeInterval) {
+			$interval.cancel($scope.uptimeInterval);
+		}
+		
+		// Set up a new interval to update uptime every second
+		$scope.uptimeInterval = $interval(function() {
+			// Update DSL uptime if status is "Up"
+			if ($scope.uptime_status.dsl_status === "Up") {
+				$scope.uptime_status.dsl = incrementUptime($scope.uptime_status.dsl);
+			}
+			
+			// Update Internet uptime if status is "Up"
+			if ($scope.uptime_status.internet_status === "Up") {
+				$scope.uptime_status.internet = incrementUptime($scope.uptime_status.internet);
+			}
+			
+			// Update System uptime (always "Up")
+			if ($scope.uptime_status.system) {
+				$scope.uptime_status.system = incrementUptime($scope.uptime_status.system);
+			}
+		}, 1000);
+	};
+
+	// Clean up interval when controller is destroyed
+	$scope.$on('$destroy', function() {
+		if ($scope.uptimeInterval) {
+			$interval.cancel($scope.uptimeInterval);
+		}
+	});
 
 });
