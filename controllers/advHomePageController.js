@@ -3,6 +3,7 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	pageloadiconstatus = true;
 	// Set the default value of inputType
 	$scope.inputType = 'password';
+	$scope.noofclients = 0;
 	httpService.getRulesJson();
 	$scope.selectedTab = 1;
 	$scope.wifi2_4G = false;
@@ -204,9 +205,6 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	};
 	getNumberOfClients = function (reqParams) {
 		var reqdataarray = [];
-		$scope.noofclients = 0;
-		$scope.tableDataArray = [];
-		$scope.tablevalues = [];
 		var post = 'cgi_get?';
 		var reqdata = reqParams.split('&');
 		angular.forEach(reqdata, function (reqobject) {
@@ -231,11 +229,11 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 				success(function (data, status, headers, config) {
 					if (status === 200) {
 						objects = data.Objects;
+						var newTablevalues = [];
 						for (var obj = 0; obj < objects.length; obj++) {
 							var objobjname = objects[obj].ObjName;
 							var objectindex = reqdataarray.indexOf(modifyService.dotstarremove(objobjname, '.*'));
 							if (objectindex > -1) {
-
 								if (objectindex == 0) {
 									var objectParamValues = objects[obj].Param;
 									for (var i = 0; i < objectParamValues.length; i++) {
@@ -245,7 +243,7 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 											if ($scope[reqdataarray[objectindex] + "data"] == undefined)
 												$scope[reqdataarray[objectindex] + "data"] = [];
 											if (param_value != " ")
-												$scope.noofclients += parseInt(param_value);
+												$scope.noofclients = parseInt(param_value);
 											$scope[reqdataarray[objectindex] + "data"].push(parseInt(param_value));
 										}
 									}
@@ -280,14 +278,21 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 							}
 
 						}
-						var noofclients = $scope[reqdataarray[0] + "data"];
-						for (var pool = 0; pool < noofclients; pool++) {
+						for (var pool = 0; pool < $scope.noofclients; pool++) {
 							var tempobj = {};
 							tempobj["IPAddress"] = $scope[reqdataarray[1] + "tbdata"][pool]["IPAddress"];
 							tempobj["HostName"] = $scope[reqdataarray[1] + "tbdata"][pool]["HostName"];
 							tempobj["PhysAddress"] = $scope[reqdataarray[1] + "tbdata"][pool]["PhysAddress"];
-							$scope.tablevalues.push(tempobj);
+							newTablevalues.push(tempobj);
 						}
+						
+						// Only update if data has changed
+						var newDataStr = JSON.stringify(newTablevalues);
+						var oldDataStr = JSON.stringify($scope.tablevalues);
+						if (newDataStr !== oldDataStr) {
+							$scope.tablevalues = newTablevalues;
+						}
+						
 						$scope["numberofclients" + "popup"] = false;
 					} else if (500 <= status && status < 600) {
 						$scope["numberofclients" + "popup"] = true;
@@ -604,14 +609,43 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	// 	}
 	// }, 1000);
 	//    getTableData("cgi_get?Object=Device.DHCPv4.Server.Pool.1");
-	getNumberOfClients("Device.Hosts.?HostNumberOfEntries&Device.Hosts.Host.*?PhysAddress,IPv4AddressNumberOfEntries,HostName,IPv4Address");
 	getFirstQueryData("cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true");
 
 	get_Status();
 	var refreshData = function () {
-		getFirstQueryData("cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true");
-		getWifi_Status();
+		getNumberOfClients("Device.Hosts.?HostNumberOfEntries&Device.Hosts.Host.*?PhysAddress,IPv4AddressNumberOfEntries,HostName,IPv4Address");
+
+		$http.get(URL + 'cgi_get_uptime').
+			success(function (data, status, headers, config) {
+
+				if (status === 200) {
+					const dsl = data.Objects.find((elm)=>elm.ObjName === 'Device.DSL');
+					if (dsl) {
+						$scope.uptime_status.dsl = dsl.Param[0].ParamValue ?? "";
+						$scope.uptime_status.dsl_status = dsl.Param[1].ParamValue ?? "";
+					}
+
+					const system = data.Objects.find((elm)=>elm.ObjName === 'Device.System');
+					if (system) {
+						$scope.uptime_status.system = system.Param[0].ParamValue ?? "";
+					}
+
+					const internet = data.Objects.find((elm)=>elm.ObjName === 'Device.Internet');
+					if (internet) {
+						$scope.uptime_status.internet = internet.Param[0].ParamValue ?? "";
+						$scope.uptime_status.internet_status = internet.Param[1].ParamValue ?? "";
+					}
+				}
+
+				// Start the uptime increment interval
+				startUptimeUpdater();
+			}).
+			error(function () { });
 	};
+
+	// Start polling by default
+	refreshData();
+	$scope.promise = $interval(refreshData, 6000);
 
 	$scope.$on('enablePollingState', function (event, next, current) {
 		if ($rootScope.enablePolling == true) {
