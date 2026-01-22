@@ -139,6 +139,10 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                     templateUrl: "ddns.html",
                     controller: 'ddns'
                 })
+                .when('/html/macFilter', {
+                    templateUrl: "macFilter.html",
+                    controller: 'macFilterController'
+                })
                 .when('/html/macFiltering/:id', {
                     templateUrl: "macFiltering.html",
                     controller: 'macFilteringController'

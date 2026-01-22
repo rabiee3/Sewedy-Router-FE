@@ -1,0 +1,129 @@
+<div class="row ltq_breadcrumbs">
+    <div class="row"></div>
+</div>
+
+<!-- Subheader -->
+<div class="subheader">
+    <div>
+        <img src="images/icons/internet.png" class="iconDetails" alt="MAC Filter" />
+    </div>
+    <div>
+        <h4>MAC Filter</h4>
+    </div>
+    <p>
+        This page allows you to configure MAC Address Filtering.
+    </p>
+</div>
+
+<div class="panel p-1" ng-controller="macFilterController">
+    <!-- Global Settings -->
+    <div class="panel">
+        <div class="panel-heading blu_bg">
+            <span class="panel_heading_icon"><img src="images/icons/settings-1.png" alt="panel-icon" /></span>
+            <span>MAC Filter Settings</span>
+        </div>
+        <div class="panel-body">
+            <form class="form-horizontal row" name="macFilterGlobalForm">
+                <div class="row">
+                    <div class="form-group checkbox1 input-field1 col-sm-6">
+
+                        <input type="checkbox" id="globalEnable" ng-model="global.Enable" ng-true-value="'1'"
+                            ng-false-value="'0'" />
+                        <label for="globalEnable" class="checkbox_left_align">
+                            Enable MAC Filter
+                        </label>
+
+                    </div>
+
+                    <div class="col-sm-6 d-flex align-items-center">
+                        <div class="col-sm-4 control-label text-left font-weight-bold">Default Action:</div>
+                        <div class="col-sm-8 d-flex align-items-center justify-content-center">
+                            <input id="permit" name="defaultAction" class="with-gap" type="radio"
+                                ng-model="global.DefaultAction" value="1">
+                            <label for="permit">Permit</label>
+                            <input id="deny" name="defaultAction" class="with-gap" type="radio"
+                                ng-model="global.DefaultAction" value="0">
+                            <label for="deny">Deny</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-12 text-right">
+                        <button type="button" class="btn btn-info" ng-click="saveGlobalSettings()">
+                            Apply Settings
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Rules Section -->
+    <div class="panel mt-4">
+        <div class="panel-heading blu_bg">
+            <span class="panel_heading_icon"><img src="images/icons/rules2.png" alt="panel-icon" /></span>
+            <span>MAC Filter Rules</span>
+        </div>
+        <div class="panel-body">
+            <!-- Toolbar -->
+            <div class="mb-3">
+                <button type="button" class="btn btn-primary btn-sm" ng-click="showAddForm()" ng-if="!isAdding">
+                    <i class="fa fa-plus"></i> Add New MAC
+                </button>
+            </div>
+
+            <!-- Add Form -->
+            <div class="well" ng-if="isAdding">
+                <form name="addRuleForm" novalidate>
+                    <div class="row d-flex align-items-center">
+                        <div class="col-sm-2">
+                            <label>MAC Address</label>
+                        </div>
+                        <div class="col-sm-6">
+                            <input type="text" name="macAddress" ng-model="newRule.MACAddress" class="form-control"
+                                pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$" required
+                                placeholder="XX:XX:XX:XX:XX:XX" />
+                            <div class="text-danger small" ng-show="addRuleForm.macAddress.$error.pattern">
+                                Invalid MAC Address format
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <button type="button" class="btn btn-success btn-sm" ng-click="addRule()"
+                                ng-disabled="addRuleForm.$invalid">
+                                Add
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" ng-click="cancelAdd()">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Rules Table -->
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>MAC Address</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="rule in rules">
+                        <td>{{ rule.MACAddress }}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-xs table-btn m-0" ng-click="deleteRule(rule)"
+                                title="Delete">
+                                <i class="fa fa-trash-o btn_color_red"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr ng-if="rules.length === 0">
+                        <td colspan="2" class="text-center text-muted">No rules defined</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

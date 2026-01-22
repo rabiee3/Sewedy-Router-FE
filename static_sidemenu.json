@@ -204,6 +204,14 @@
           "childrens": []
         },
         {
+          "name": "MAC Filter",
+          "icon": "internet",
+          "order": "3.90",
+          "view": "macFilter",
+          "viewtype": "custom",
+          "childrens": []
+        },
+        {
           "name": "DDNS",
           "icon": "ddns",
           "order": "3.20",
