@@ -14,11 +14,18 @@ myapp.controller("ddns", function($scope, $http) {
    * STATIC DATA (PLACEHOLDERS)
    * =============================== */
 
-  $scope.wanList = ["1_TR09_INTERNET_R_VID_10"];
-  $scope.serviceProviders = ["DynDNS", "No-IP", "Custom"];
+  $scope.wanList = [];
+  $scope.serviceProviders = [];
 
-  $scope.patterns = {
-    domainName: /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  // Mapping of service providers to their host values
+  $scope.serviceProviderHosts = {
+    "dyndns": "members.dyndns.org",
+    "cloudflare": "update.cloudflare.com",
+    "freedns": "freedns.afraid.org",
+    "godaddy": "dynamicdns.godaddy.com",
+    "no-ip": "dynupdate.no-ip.com",
+    "bind": "", // BIND typically uses custom DNS server, no standard update URL
+    "route53": "" // AWS Route 53 uses API, not standard DDNS update URL
   };
 
   /* ===============================
@@ -27,7 +34,9 @@ myapp.controller("ddns", function($scope, $http) {
 
   function init() {
     resetForm();
+    loadServiceProviders();
     loadDDNSTable();
+    loadCurrentWans();
   }
 
   /* ===============================
@@ -38,13 +47,10 @@ myapp.controller("ddns", function($scope, $http) {
     $scope.form = {
       enableDDNS: false,
       wanName: "",
-      domainName: "",
       serviceProvider: "",
       host: "",
-      port: "",
       username: "",
       password: "",
-      encryptionMode: "NONE",
     };
 
     $scope.isEditMode = false;
@@ -56,52 +62,185 @@ myapp.controller("ddns", function($scope, $http) {
   }
 
   /* ===============================
+   * Watch service provider changes to auto-fill host
+   * =============================== */
+
+  $scope.$watch('form.serviceProvider', function(newValue, oldValue) {
+    if (newValue && newValue !== oldValue && $scope.serviceProviderHosts[newValue]) {
+      // Auto-fill host when service provider is selected
+      $scope.form.host = $scope.serviceProviderHosts[newValue];
+    }
+  });
+
+  /* ===============================
+   * HELPER: Map server name to service provider
+   * =============================== */
+
+  function getServiceProviderFromServer(serverName) {
+    // Return the server name as-is if it's in the supported services list
+    // Otherwise return it as-is (might be a custom host or unknown provider)
+    if (serverName && serverName !== "") {
+      // Check if it's in the loaded service providers list
+      if ($scope.serviceProviders.indexOf(serverName) !== -1) {
+        return serverName;
+      }
+      // Return as-is if not found in list (could be custom or legacy)
+      return serverName;
+    } else {
+      return "";
+    }
+  }
+
+  /* ===============================
+   * HELPER: Get parameter value from Param array
+   * =============================== */
+
+  function getParamValue(params, paramName) {
+    if (!params || !Array.isArray(params)) {
+      return "";
+    }
+    var param = params.find(function(p) {
+      return p.ParamName === paramName;
+    });
+    return param ? param.ParamValue : "";
+  }
+
+  /* ===============================
+   * CGI GET (LOAD SERVICE PROVIDERS)
+   * =============================== */
+
+  function loadServiceProviders() {
+    $("#ajaxLoaderSection").show();
+    $http.get('/cgi/cgi_get?Object=Device.DynamicDNS')
+      .then(function(response) {
+        var supportedServices = "";
+        
+        if (response.data && response.data.Objects) {
+          response.data.Objects.forEach(function(obj) {
+            if (obj.ObjName === "Device.DynamicDNS" && obj.Param) {
+              var supportedServicesParam = obj.Param.find(function(param) {
+                return param.ParamName === "SupportedServices";
+              });
+              
+              if (supportedServicesParam && supportedServicesParam.ParamValue) {
+                supportedServices = supportedServicesParam.ParamValue;
+              }
+            }
+          });
+        }
+        
+        // Parse comma-separated string into array
+        if (supportedServices) {
+          $scope.serviceProviders = supportedServices.split(',').map(function(service) {
+            return service.trim();
+          });
+        } else {
+          // Fallback to empty array if no services found
+          $scope.serviceProviders = [];
+        }
+        
+        $("#ajaxLoaderSection").hide();
+      })
+      .catch(function(error) {
+        console.error("Error loading service providers:", error);
+        // Fallback to empty array on error
+        $scope.serviceProviders = [];
+        $("#ajaxLoaderSection").hide();
+      });
+  }
+
+  /* ===============================
    * CGI GET (TABLE LOAD)
    * =============================== */
 
   function loadDDNSTable() {
-    /*
-     * PLACEHOLDER FOR REAL CGI_GET
-     *
-     * $http.get('/cgi-bin/cgi_get_ddns')
-     *   .then(function (response) {
-     *     $scope.ddnsEntries = response.data;
-     *   });
-     */
+    $("#ajaxLoaderSection").show();
+    $http.get('/cgi/cgi_get?Object=Device.DynamicDNS.Client')
+      .then(function(response) {
+        var entries = [];
+        
+        if (response.data && response.data.Objects) {
+          response.data.Objects.forEach(function(obj) {
+            // Extract ID from ObjName (e.g., "Device.DynamicDNS.Client.1" -> 1)
+            var idMatch = obj.ObjName.match(/Device\.DynamicDNS\.Client\.(\d+)/);
+            if (!idMatch) {
+              return; // Skip if ObjName doesn't match expected pattern
+            }
+            
+            var id = parseInt(idMatch[1], 10);
+            var params = obj.Param || [];
+            
+            // Extract parameter values
+            var enableValue = getParamValue(params, "Enable");
+            var serverName = getParamValue(params, "Server");
+            var serviceProvider = getServiceProviderFromServer(serverName);
+            
+            // Build entry object
+            var entry = {
+              id: id,
+              enableDDNS: enableValue === "true",
+              wanName: getParamValue(params, "Interface"),
+              serviceProvider: serviceProvider,
+              host: getParamValue(params, "Hostname"),
+              username: getParamValue(params, "Username"),
+              password: getParamValue(params, "Password"), // Already masked as "******"
+              status: getParamValue(params, "Status"),
+              provider: serviceProvider
+            };
+            
+            entries.push(entry);
+          });
+        }
+        
+        $scope.ddnsEntries = entries;
+        $("#ajaxLoaderSection").hide();
+      })
+      .catch(function(error) {
+        console.error("Error loading DDNS table:", error);
+        // Keep empty array on error
+        $scope.ddnsEntries = [];
+        $("#ajaxLoaderSection").hide();
+      });
+  }
 
-    // MOCK DATA (2 rows)
-    $scope.ddnsEntries = [
-      {
-        id: 1,
-        enableDDNS: true,
-        wanName: "1_TR09_INTERNET_R_VID_10",
-        domainName: "home1.example.com",
-        serviceProvider: "DynDNS",
-        host: "members.dyndns.org",
-        port: 443,
-        username: "user1",
-        password: "******",
-        encryptionMode: "TLS",
-        status: "Enabled",
-        provider: "DynDNS",
-        domain: "home1.example.com",
-      },
-      {
-        id: 2,
-        enableDDNS: false,
-        wanName: "1_TR09_INTERNET_R_VID_10",
-        domainName: "office.example.com",
-        serviceProvider: "No-IP",
-        host: "dynupdate.no-ip.com",
-        port: 80,
-        username: "user2",
-        password: "******",
-        encryptionMode: "NONE",
-        status: "Disabled",
-        provider: "No-IP",
-        domain: "office.example.com",
-      },
-    ];
+  /* ===============================
+   * CGI GET (TABLE LOAD)
+   * =============================== */
+
+  function loadCurrentWans() {
+    $("#ajaxLoaderSection").show();
+    $http.get('/cgi/cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true')
+      .then(function (response) {
+        var wanNames = [];
+        
+        if (response.data && response.data.Objects) {
+          // Filter for main interface objects (not sub-objects like IPv4Address, IPv6Address, Stats)
+          var interfaceObjects = response.data.Objects.filter(function(obj) {
+            // Match pattern: Device.IP.Interface.X (where X is a number, no additional dots)
+            return /^Device\.IP\.Interface\.\d+$/.test(obj.ObjName);
+          });
+          
+          // Extract the "Name" parameter value from each interface
+          interfaceObjects.forEach(function(interfaceObj) {
+            if (interfaceObj.Param) {
+              var nameParam = interfaceObj.Param.find(function(param) {
+                return param.ParamName === "Name";
+              });
+              
+              if (nameParam && nameParam.ParamValue) {
+                wanNames.push(nameParam.ParamValue);
+              }
+            }
+          });
+        }
+        
+        $scope.wanList = wanNames;
+        $("#ajaxLoaderSection").hide();
+      })
+      .catch(function(error) {
+        console.error("Error loading WAN list:", error);
+        $("#ajaxLoaderSection").hide();
+      });
   }
 
   /* ===============================
@@ -126,53 +265,124 @@ myapp.controller("ddns", function($scope, $http) {
   };
 
   /* ===============================
+   * HELPER: Map service provider to server name
+   * =============================== */
+
+  function getServerName(serviceProvider, host) {
+    // Service providers are already in lowercase format
+    // Return the service provider name directly as it matches the API format
+    if (serviceProvider && $scope.serviceProviders.indexOf(serviceProvider) !== -1) {
+      return serviceProvider;
+    } else {
+      // Fallback: return lowercase or use host if provided
+      return (serviceProvider || "").toLowerCase() || host || "";
+    }
+  }
+
+  /* ===============================
    * APPLY (ADD / EDIT)
    * =============================== */
 
   $scope.apply = function() {
-    if ($scope.isEditMode) {
-      /*
-       * PLACEHOLDER FOR CGI_SET (EDIT)
-       *
-       * $http.post('/cgi-bin/cgi_set_ddns', {
-       *   action: 'edit',
-       *   id: $scope.selectedEntry.id,
-       *   data: $scope.form
-       * })
-       * .then(function () {
-       *   loadDDNSTable();
-       *   resetForm();
-       * });
-       */
-
-      console.log("EDIT CGI_SET payload:", {
-        action: "edit",
-        id: $scope.selectedEntry.id,
-        data: $scope.form,
-      });
-    } else {
-      /*
-       * PLACEHOLDER FOR CGI_SET (ADD)
-       *
-       * $http.post('/cgi-bin/cgi_set_ddns', {
-       *   action: 'add',
-       *   data: $scope.form
-       * })
-       * .then(function () {
-       *   loadDDNSTable();
-       *   resetForm();
-       * });
-       */
-
-      console.log("ADD CGI_SET payload:", {
-        action: "add",
-        data: $scope.form,
-      });
+    // Validate required fields
+    if (!$scope.form.serviceProvider || $scope.form.serviceProvider.trim() === "") {
+      alert("Service Provider is required and cannot be empty.");
+      return;
     }
 
-    // Simulate refresh
-    loadDDNSTable();
-    resetForm();
+    if (!$scope.form.host || $scope.form.host.trim() === "") {
+      alert("Host is required and cannot be empty.");
+      return;
+    }
+
+    if (!$scope.form.username || $scope.form.username.trim() === "") {
+      alert("User Name is required and cannot be empty.");
+      return;
+    }
+
+    if (!$scope.form.password || $scope.form.password.trim() === "") {
+      alert("Password is required and cannot be empty.");
+      return;
+    }
+
+    // Map service provider to server name
+    var serverName = getServerName($scope.form.serviceProvider, $scope.form.host);
+
+    if ($scope.isEditMode) {
+      // Build query parameters for Modify
+      var params = {
+        Object: "Device.DynamicDNS.Client." + $scope.selectedEntry.id,
+        Operation: "Modify",
+        Enable: $scope.form.enableDDNS ? "true" : "false",
+        Server: serverName,
+        Interface: $scope.form.wanName || "",
+        Username: $scope.form.username || "",
+        Password: $scope.form.password || "",
+        Hostname: $scope.form.host || ""
+      };
+
+      // Build URL with query string
+      var queryString = Object.keys(params)
+        .map(function(key) {
+          return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
+        })
+        .join("&");
+      
+      var url = "/cgi/cgi_set_ddns?" + queryString;
+
+      // Make the CGI_SET call
+      $("#ajaxLoaderSection").show();
+      $http.get(url)
+        .then(function(response) {
+          // Success: refresh table and reset form
+          loadDDNSTable();
+          resetForm();
+          $("#ajaxLoaderSection").hide();
+        })
+        .catch(function(error) {
+          // Error handling
+          console.error("Error modifying DDNS entry:", error);
+          alert("Failed to modify DDNS entry. Please try again.");
+          $("#ajaxLoaderSection").hide();
+        });
+    } else {
+      // Build query parameters for Add
+      var params = {
+        Object: "Device.DynamicDNS.Client",
+        Operation: "Add",
+        Enable: $scope.form.enableDDNS ? "true" : "false",
+        Server: serverName,
+        Interface: $scope.form.wanName || "",
+        Username: $scope.form.username || "",
+        Password: $scope.form.password || "",
+        Hostname: $scope.form.host
+      };
+
+      // Build URL with query string
+      var queryString = Object.keys(params)
+        .map(function(key) {
+          return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
+        })
+        .join("&");
+      
+      var url = "/cgi/cgi_set_ddns?" + queryString;
+
+      // Make the CGI_SET call
+      $("#ajaxLoaderSection").show();
+      $http.get(url)
+        .then(function(response) {
+          // Success: refresh table and reset form
+          loadDDNSTable();
+          resetForm();
+          $("#ajaxLoaderSection").hide();
+        })
+        .catch(function(error) {
+          // Error handling
+          console.error("Error adding DDNS entry:", error);
+          alert("Failed to add DDNS entry. Please try again.");
+          $("#ajaxLoaderSection").hide();
+        });
+    }
   };
 
   /* ===============================
@@ -184,27 +394,55 @@ myapp.controller("ddns", function($scope, $http) {
       return;
     }
 
-    /*
-     * PLACEHOLDER FOR CGI_SET (DELETE)
-     *
-     * $http.post('/cgi-bin/cgi_set_ddns', {
-     *   action: 'delete',
-     *   id: entry.id
-     * })
-     * .then(function () {
-     *   loadDDNSTable();
-     *   resetForm();
-     * });
-     */
+    $("#ajaxLoaderSection").show();
 
-    console.log("DELETE CGI_SET payload:", {
-      action: "delete",
-      id: entry.id,
-    });
+    // First, modify the entry to set Enable=false
+    var modifyParams = {
+      Object: "Device.DynamicDNS.Client." + entry.id,
+      Operation: "Modify",
+      Enable: "false"
+    };
 
-    // Simulate refresh
-    loadDDNSTable();
-    resetForm();
+    var modifyQueryString = Object.keys(modifyParams)
+      .map(function(key) {
+        return encodeURIComponent(key) + "=" + encodeURIComponent(modifyParams[key]);
+      })
+      .join("&");
+    
+    var modifyUrl = "/cgi/cgi_set_ddns?" + modifyQueryString;
+
+    // First call: Modify with Enable=false
+    $http.get(modifyUrl)
+      .then(function(response) {
+        // After successful modify, proceed with delete
+        var deleteParams = {
+          Object: "Device.DynamicDNS.Client." + entry.id,
+          Operation: "Del"
+        };
+
+        var deleteQueryString = Object.keys(deleteParams)
+          .map(function(key) {
+            return encodeURIComponent(key) + "=" + encodeURIComponent(deleteParams[key]);
+          })
+          .join("&");
+        
+        var deleteUrl = "/cgi/cgi_set_ddns?" + deleteQueryString;
+
+        // Second call: Delete
+        return $http.get(deleteUrl);
+      })
+      .then(function(response) {
+        // Success: refresh table and reset form
+        loadDDNSTable();
+        resetForm();
+        $("#ajaxLoaderSection").hide();
+      })
+      .catch(function(error) {
+        // Error handling
+        console.error("Error deleting DDNS entry:", error);
+        alert("Failed to delete DDNS entry. Please try again.");
+        $("#ajaxLoaderSection").hide();
+      });
   };
 
   /* ===============================
