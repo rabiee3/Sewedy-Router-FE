@@ -17,17 +17,6 @@ myapp.controller("ddns", function($scope, $http) {
   $scope.wanList = [];
   $scope.serviceProviders = [];
 
-  // Mapping of service providers to their host values
-  $scope.serviceProviderHosts = {
-    "dyndns": "members.dyndns.org",
-    "cloudflare": "update.cloudflare.com",
-    "freedns": "freedns.afraid.org",
-    "godaddy": "dynamicdns.godaddy.com",
-    "no-ip": "dynupdate.no-ip.com",
-    "bind": "", // BIND typically uses custom DNS server, no standard update URL
-    "route53": "" // AWS Route 53 uses API, not standard DDNS update URL
-  };
-
   /* ===============================
    * INIT
    * =============================== */
@@ -60,17 +49,6 @@ myapp.controller("ddns", function($scope, $http) {
   function fillFormFromEntry(entry) {
     $scope.form = angular.copy(entry);
   }
-
-  /* ===============================
-   * Watch service provider changes to auto-fill host
-   * =============================== */
-
-  $scope.$watch('form.serviceProvider', function(newValue, oldValue) {
-    if (newValue && newValue !== oldValue && $scope.serviceProviderHosts[newValue]) {
-      // Auto-fill host when service provider is selected
-      $scope.form.host = $scope.serviceProviderHosts[newValue];
-    }
-  });
 
   /* ===============================
    * HELPER: Map server name to service provider
@@ -336,7 +314,6 @@ myapp.controller("ddns", function($scope, $http) {
         .then(function(response) {
           // Success: refresh table and reset form
           loadDDNSTable();
-          resetForm();
           $("#ajaxLoaderSection").hide();
         })
         .catch(function(error) {
@@ -373,7 +350,6 @@ myapp.controller("ddns", function($scope, $http) {
         .then(function(response) {
           // Success: refresh table and reset form
           loadDDNSTable();
-          resetForm();
           $("#ajaxLoaderSection").hide();
         })
         .catch(function(error) {
