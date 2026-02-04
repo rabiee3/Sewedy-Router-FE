@@ -9,6 +9,7 @@ myapp.controller("ddns", function($scope, $http) {
   $scope.isEditMode = false;
 
   $scope.form = {};
+  $scope.originalForm = {};
 
   /* ===============================
    * STATIC DATA (PLACEHOLDERS)
@@ -42,12 +43,14 @@ myapp.controller("ddns", function($scope, $http) {
       password: "",
     };
 
+    $scope.originalForm = {};
     $scope.isEditMode = false;
     $scope.selectedEntry = null;
   }
 
   function fillFormFromEntry(entry) {
     $scope.form = angular.copy(entry);
+    $scope.originalForm = angular.copy(entry);
   }
 
   /* ===============================
@@ -258,6 +261,103 @@ myapp.controller("ddns", function($scope, $http) {
   }
 
   /* ===============================
+   * HELPER: Extract WAN interface name
+   * =============================== */
+
+  function extractWANInterface(wanName) {
+    // Extract the interface name from wanName (e.g., "pppoe-wan9" -> "wan9")
+    if (!wanName || wanName.trim() === "") {
+      return "";
+    }
+    
+    // Get the part after the last dash
+    var parts = wanName.split('-');
+    if (parts.length > 1) {
+      return parts[parts.length - 1];
+    }
+    
+    return wanName;
+  }
+
+  /* ===============================
+   * HELPER: Check if form has changed
+   * =============================== */
+
+  function hasFormChanged() {
+    // Compare all form fields with original form
+    return $scope.form.enableDDNS !== $scope.originalForm.enableDDNS ||
+           $scope.form.wanName !== $scope.originalForm.wanName ||
+           $scope.form.serviceProvider !== $scope.originalForm.serviceProvider ||
+           $scope.form.host !== $scope.originalForm.host ||
+           $scope.form.username !== $scope.originalForm.username ||
+           $scope.form.password !== $scope.originalForm.password;
+  }
+
+  /* ===============================
+   * CGI ACTION: Disconnect WAN
+   * =============================== */
+
+  function disconnectWAN(wanInterface) {
+    if (!wanInterface || wanInterface.trim() === "") {
+      return Promise.reject("WAN interface name is required");
+    }
+
+    var queryParams = {
+      Object: "Device.X_LANTIQ_COM_NwHardware.WANConnection",
+      ConnectionName: "",
+      UciSection: ""
+    };
+
+    var queryString = Object.keys(queryParams)
+      .map(function(key) {
+        return encodeURIComponent(key) + "=" + encodeURIComponent(queryParams[key]);
+      })
+      .join("&");
+    
+    var url = "/cgi/cgi_action?" + queryString;
+    
+    var payload = "Action=Disconnect&Interface=" + encodeURIComponent(wanInterface);
+
+    return $http.post(url, payload, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+  }
+
+  /* ===============================
+   * CGI ACTION: Connect WAN
+   * =============================== */
+
+  function connectWAN(wanInterface) {
+    if (!wanInterface || wanInterface.trim() === "") {
+      return Promise.reject("WAN interface name is required");
+    }
+
+    var queryParams = {
+      Object: "Device.X_LANTIQ_COM_NwHardware.WANConnection",
+      ConnectionName: "",
+      UciSection: ""
+    };
+
+    var queryString = Object.keys(queryParams)
+      .map(function(key) {
+        return encodeURIComponent(key) + "=" + encodeURIComponent(queryParams[key]);
+      })
+      .join("&");
+    
+    var url = "/cgi/cgi_action?" + queryString;
+    
+    var payload = "Action=Connect&Interface=" + encodeURIComponent(wanInterface);
+
+    return $http.post(url, payload, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+  }
+
+  /* ===============================
    * APPLY (ADD / EDIT)
    * =============================== */
 
@@ -312,7 +412,25 @@ myapp.controller("ddns", function($scope, $http) {
       $("#ajaxLoaderSection").show();
       $http.get(url)
         .then(function(response) {
-          // Success: refresh table and reset form
+          // Check if form has changed to decide whether to reconnect WAN
+          if (hasFormChanged()) {
+            var wanInterface = extractWANInterface($scope.form.wanName);
+            
+            if (wanInterface) {
+              // Disconnect first, then connect
+              return disconnectWAN(wanInterface)
+                .then(function() {
+                  return connectWAN(wanInterface);
+                });
+            } else {
+              return Promise.resolve();
+            }
+          } else {
+            return Promise.resolve();
+          }
+        })
+        .then(function() {
+          // Success: refresh table
           loadDDNSTable();
           $("#ajaxLoaderSection").hide();
         })
@@ -348,14 +466,28 @@ myapp.controller("ddns", function($scope, $http) {
       $("#ajaxLoaderSection").show();
       $http.get(url)
         .then(function(response) {
-          // Success: refresh table and reset form
+          // Success: extract WAN interface and disconnect/reconnect
+          var wanInterface = extractWANInterface($scope.form.wanName);
+          
+          if (wanInterface) {
+            // Disconnect first, then connect
+            return disconnectWAN(wanInterface)
+              .then(function() {
+                return connectWAN(wanInterface);
+              });
+          } else {
+            return Promise.resolve();
+          }
+        })
+        .then(function() {
+          // After WAN reconnection succeeds, refresh table 
           loadDDNSTable();
           $("#ajaxLoaderSection").hide();
         })
         .catch(function(error) {
           // Error handling
-          console.error("Error adding DDNS entry:", error);
-          alert("Failed to add DDNS entry. Please try again.");
+          console.error("Error adding DDNS entry or reconnecting WAN:", error);
+          alert("Failed to add DDNS entry or reconnect WAN. Please try again.");
           $("#ajaxLoaderSection").hide();
         });
     }

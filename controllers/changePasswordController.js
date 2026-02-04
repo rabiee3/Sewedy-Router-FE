@@ -115,6 +115,7 @@ myapp.controller("changePasswordController", function(
   };
 
   $scope.Skip = function() {
+    $("#ajaxLoaderSection").show();
     $scope.formsubmitted = true;
     var url = URL + "cgi_action";
     var payload = "Newpassword=" + encodeURIComponent("V1120004");
@@ -126,9 +127,11 @@ myapp.controller("changePasswordController", function(
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     })
       .success(function(responseData, status) {
+        $("#ajaxLoaderSection").hide();
         $location.path("/quicksetup");
       })
       .error(function(error) {
+        $("#ajaxLoaderSection").hide();
         alert("Something Wrong happened, please try again");
       });
   };
