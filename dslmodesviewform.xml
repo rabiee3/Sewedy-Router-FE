@@ -11,9 +11,9 @@
             <parameter  name="Enable" type="toggle" webname="DSL"></parameter>
         </object>
         <object name="Device.DSL.X_LANTIQ_COM_Config" parentname="Device.DSL.X_LANTIQ_COM_Config" depends="Enable" parent="true">
-            <row>
+            <!-- <row>
                 <col><parameter   name="LinkEncapsulationConfig"  type="dropdown"  url="dslconnectype" webname="DSL PHY - TC" ></parameter></col>
-            </row>
+            </row> -->
             <row>
                 <col><parameter   name="ReTxUs"  type="checkbox"  webname="US Retransmission" ></parameter></col>
                 <col></col>

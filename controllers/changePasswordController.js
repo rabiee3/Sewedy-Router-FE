@@ -61,56 +61,9 @@ myapp.controller("changePasswordController", function(
               : "changePassword";
           errorResponseDisplay(formname, responseData, status, event);
           console.log(status);
-
-          // Fetch all users in the system
-          $http({
-            method: "GET",
-            url: URL + "cgi_get?Object=Device.Users.User",
-          })
-            .success(function(getResponse) {
-              if (getResponse && getResponse.Objects) {
-                // Find the admin user
-                var adminUser = getResponse.Objects.find(function(user) {
-                  return user.Param.some(function(param) {
-                    return param.ParamName === "Username" && param.ParamValue === "admin";
-                  });
-                });
-
-                if (adminUser) {
-                  var adminUserId = adminUser.ObjName.split(".").pop(); // Extract the ID
-
-                  // Change the password for the admin user
-                  var setPayload =
-                    "Object=Device.Users.User." +
-                    adminUserId +
-                    "&Operation=Modify&Password=" +
-                    encodeURIComponent($scope.passwords.userpassword);
-
-                  $http({
-                    method: "POST",
-                    url: URL + "cgi_set",
-                    data: setPayload,
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                  })
-                    .success(function(setResponse) {
-                      console.log("Password updated for admin user.", setResponse);
-                      $location.path("/quicksetup");
-                    })
-                    .error(function(setError) {
-                      console.error("Failed to update password for admin user.", setError);
-                    });
-                } else {
-                  alert("Admin user not found.");
-                }
-              }
-            })
-            .error(function(getError) {
-              console.error("Failed to fetch users.", getError);
-            });
+          $location.path("/quicksetup");
         })
-        .error(function(error) {
-          console.log(error)
-        });
+        .error(function(error) {});
     }
   };
 
@@ -118,7 +71,7 @@ myapp.controller("changePasswordController", function(
     $("#ajaxLoaderSection").show();
     $scope.formsubmitted = true;
     var url = URL + "cgi_action";
-    var payload = "Newpassword=" + encodeURIComponent("V1120004");
+    var payload = "SkipNewPassword";
 
     $http({
       method: "POST",

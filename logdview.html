@@ -22,6 +22,11 @@
 
   <div class="panel">
     <div class="panel-body">
+      <div style="text-align: right; margin-bottom: 15px;">
+        <button type="button" class="btn btn-info waves-effect waves-light" ng-click="downloadLog()">
+          Export Logs
+        </button>
+      </div>
       <pre class="systemlog">
             {{logs}}
       </pre>

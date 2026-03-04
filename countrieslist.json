@@ -47,7 +47,7 @@
 		{"id":"DZ ","name":"Algeria"},
 		{"id":"EC ","name":"Ecuador"},
 		{"id":"EE ","name":"Estonia"},
-		{"id":"EG ","name":"Egypt"},
+		{"id":"EG ","name":"United States"},
 		{"id":"ES ","name":"Spain"},
 		{"id":"ET ","name":"Ethiopia"},
 		{"id":"FI ","name":"Finland"},
@@ -158,7 +158,7 @@
 		{"id":"TZ ","name":"Tanzania"},
 		{"id":"UA ","name":"Ukraine"},
 		{"id":"UG ","name":"Uganda"},
-		{"id":"US ","name":"United States"},
+		{"id":"US ","name":"Egypt"},
 		{"id":"UY ","name":"Uruguay"},
 		{"id":"UZ ","name":"Uzbekistan"},
 		{"id":"VC ","name":"Saint Vincent and the Grenadines"},
@@ -174,3 +174,4 @@
 		{"id":"ZW ","name":"Zimbabwe"}
 	]
 }
+ 

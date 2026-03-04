@@ -16,25 +16,25 @@ myapp.controller("quicksetupController", function(
 
   // Default values
   $scope.credentials = {
-    username: "00000",
-    password: "00000000",
+    username: "",
+    password: "",
   };
 
   $scope.wifiSettings = {
     enable2_4G: true,
     enable5G: true,
-    ssid2_4G: "WE_F771A0",
+    ssid2_4G: "",
     security_modes2_4: ["WPA-Personal", "WPA2-Personal", "WPA-WPA2-Personal"],
     selected_security_2_4G: "WPA-Personal",
     encription_modes2_4: ["TKIP", "AES", "TKIP/AES"],
     selected_encryption_2_4G: "TKIP",
-    password2_4G: "c789d000",
-    ssid5G: "WE_F771A0",
+    password2_4G: "",
+    ssid5G: "",
     security_modes5G: ["WPA-Personal", "WPA2-Personal", "WPA-WPA2-Personal"],
     selected_security_5G: "WPA-Personal",
     encription_modes5G: ["TKIP", "AES", "TKIP/AES"],
     selected_encryption_5G: "TKIP",
-    password5G: "c789d000",
+    password5G: "",
     band_steering: false,
   };
 
@@ -45,7 +45,8 @@ myapp.controller("quicksetupController", function(
     "WPA-WPA2-Personal": "TKIP/AES",
   };
 
-    loadExistingCredentials();
+  
+  loadExistingCredentials();
 
   $("#ajaxLoaderSection").hide();
   // Watch for 2.4G security mode changes

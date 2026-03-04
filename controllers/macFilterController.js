@@ -117,19 +117,17 @@ myapp.controller("macFilterController", function ($scope, $http, $route, $rootSc
         $scope.newRule.MACAddress = '';
     };
 
-    // Add New Rule
+    // Add New Rule 
     $scope.addRule = function() {
-        var target = 'Accept'; 
-        if ($scope.global.DefaultAction == '1') {
-             target = 'Drop'; 
-        } else {
-             target = 'Accept';
+        var target = 'Drop'; 
+        if ($scope.global.DefaultAction == '0') {
+             target = 'Accept'; 
         }
 
         var postUrl = URL_BASE + "cgi_set";
         var body = "Object=Device.Firewall.X_LANTIQ_COM_ParentalControl.Rule&Operation=Add" +
                    "&Enable=1" +
-                   "&Target=Accept" +
+                   "&Target=" + target +
                    "&MACAddress=" + $scope.newRule.MACAddress + 
                    "&TimeStart=22:00&TimeEnd=21:59&DaysOfTheWeek=Sun,Mon,Tue,Wed,Thu,Fri,Sat";
         $("#ajaxLoaderSection").show();

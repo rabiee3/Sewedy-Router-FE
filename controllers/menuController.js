@@ -90,6 +90,36 @@ myapp.controller("menuController", function(
     });
   }
 
+  $scope.downloadLog = function () {
+    var config = {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8;'
+      },
+      responseType: "arraybuffer"
+    };
+
+    $http.post(URL + "cgi_action", "Action=DownloadLog", config)
+      .success(function (data) {
+        var blob = new Blob([data], { type: "application/octet-stream" });
+        var reader = new FileReader();
+        reader.onload = function () {
+          var a = document.createElement("a");
+          document.body.appendChild(a);
+          a.style = "display: none";
+          a.href = reader.result;
+          a.download = "system_logs.txt";
+          a.click();
+          setTimeout(function () {
+            document.body.removeChild(a);
+          }, 1000);
+        };
+        reader.readAsDataURL(blob);
+      })
+      .error(function () {
+        console.error("Failed to download logs");
+      });
+  };
+
   // Watch for language change (optional)
   $rootScope.$on("rootScope:language_changed", function() {
     menuload();
