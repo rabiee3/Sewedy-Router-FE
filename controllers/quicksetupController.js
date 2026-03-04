@@ -45,9 +45,7 @@ myapp.controller("quicksetupController", function(
     "WPA-WPA2-Personal": "TKIP/AES",
   };
 
-  if ($routeParams.id) {
     loadExistingCredentials();
-  }
 
   $("#ajaxLoaderSection").hide();
   // Watch for 2.4G security mode changes
@@ -218,7 +216,7 @@ myapp.controller("quicksetupController", function(
       if (user_pass) {
         setTimeout(() => {
           $scope.$apply(() => {
-            $scope.credentials.username = Number(user_pass.Username);
+            $scope.credentials.username = user_pass.Username;
             if (user_pass.Password) {
               $scope.credentials.password = user_pass.Password;
             }
