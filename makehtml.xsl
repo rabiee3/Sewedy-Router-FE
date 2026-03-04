@@ -5179,7 +5179,19 @@
             <div class="row checkbox-top-align" >
                 <div class="col-sm-12 col-md-12 col-lg-12 col-xs-12 text-left">                
                     <div class="checkbox1">                        
-                        <input type="checkbox" ng-true-value="'1'" class="hidden-dom-removal" ng-false-value="'0'" >  
+                        <input type="checkbox" class="hidden-dom-removal" >
+                            <xsl:attribute name="ng-true-value">
+                                <xsl:choose>
+                                    <xsl:when test="@truevalue">'<xsl:value-of select="@truevalue"/>'</xsl:when>
+                                    <xsl:otherwise>'1'</xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:attribute>
+                            <xsl:attribute name="ng-false-value">
+                                <xsl:choose>
+                                    <xsl:when test="@falsevalue">'<xsl:value-of select="@falsevalue"/>'</xsl:when>
+                                    <xsl:otherwise>'0'</xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:attribute>  
                             <xsl:attribute name="id">
                                 <xsl:value-of select="concat(translate(translate($paramobjectname,'*',''),'.',''),'_',@name)"/>
                             </xsl:attribute>
