@@ -1123,6 +1123,18 @@ myapp.controller("wan_wanconnectionsform", function(
         }
 
         await loadIPv6Settings();
+
+        // Store original values for change detection
+        $scope.originalValues = {
+          username: $scope.form.username,
+          password: $scope.form.password,
+          defaultGateway: $scope.form.defaultGateway,
+        };
+
+        console.log(
+          "Original values stored for edit mode change detection:",
+          $scope.originalValues
+        );
       }
     } catch (error) {
       console.error("Error loading edit mode data:", error);
@@ -1757,118 +1769,206 @@ myapp.controller("wan_wanconnectionsform", function(
   // EDIT MODE OPTIMIZATION - Detect and apply selective changes
   // ============================================================
 
-  /**
-   * Check if changes between old and new configuration allow for
-   * simple modification without full delete/recreate cycle.
-   * Returns true if only simple, non-structural fields changed.
-   */
-  function canApplySelectively() {
-    if (!$scope.isEditMode) return false;
+  // Store original values for comparison in edit mode
+  $scope.originalValues = {
+    username: "",
+    password: "",
+    defaultGateway: "1",
+  };
 
-    // Get all fields that would trigger a full delete/recreate
-    const structuralChanges = [
-      // WAN layer changes (access type, encapsulation mode)
-      $scope.form.accessType,
-      $scope.form.encapsulationMode,
-      $scope.form.wanMode,
-      $scope.form.serviceType,
-      // IP Acquisition mode changes
-      $scope.form.ipAcqMode,
-      // VLAN changes
-      $scope.form.enableVlan,
-      $scope.form.vlanId,
-      // Static IP changes
-      $scope.form.ipaddress,
-      $scope.form.subnetmask,
-      $scope.form.gatewayaddress,
-      // NAT changes
-      $scope.form.enableNAT,
-      $scope.form.natType,
-      // ATM-specific changes
-      $scope.form.vpiVci,
-      $scope.form.encapsulation,
-      $scope.form.linkType,
-      $scope.form.atmQosClass,
-      $scope.form.peakCellRate,
-      $scope.form.maximumBSize,
-      $scope.form.sustainableCellRate,
-      // Bridge changes
-      $scope.form.selectedBridge,
-      // Protocol type changes
-      $scope.form.protocolType,
+  /**
+   * Detects which selective changes have been made.
+   * Returns an object with detected changes and their callbacks.
+   * Example: { ppoeCreds: true, defaultGateway: true, callbacks: [...] }
+   */
+  function detectSelectiveChanges() {
+    if (!$scope.isEditMode) return { hasSelectiveChanges: false };
+
+    const changes = {
+      hasSelectiveChanges: false,
+      ppoeCreds: false,
+      defaultGateway: false,
+      callbacks: [], // Post-operation callbacks
+      affectedObjects: [], // Track objects that were modified
+    };
+
+    // Check for structural changes that trigger full delete/recreate
+    const structuralFields = [
+      "accessType",
+      "encapsulationMode",
+      "wanMode",
+      "serviceType",
+      "ipAcqMode",
+      "enableVlan",
+      "vlanId",
+      "ipaddress",
+      "subnetmask",
+      "gatewayaddress",
+      "enableNAT",
+      "natType",
+      "vpiVci",
+      "encapsulation",
+      "linkType",
+      "atmQosClass",
+      "peakCellRate",
+      "maximumBSize",
+      "sustainableCellRate",
+      "selectedBridge",
+      "protocolType",
+      "macCloneEnabled",
+      "mac_address",
+      "mtu_mru_size",
     ];
 
-    // For now, we only support selective modification for PPPoE credentials
-    // Check if ONLY PPPoE is enabled and encapsulation mode hasn't changed
-    if (
-      $scope.form.encapsulationMode !== "PPPoE" ||
-      $scope.form.ipAcqMode !== "PPPoE"
-    ) {
-      return false;
+    // Check if any structural field changed
+    let structuralChangeDetected = false;
+    for (const field of structuralFields) {
+      // Skip certain comparisons if originalValues not yet set
+      if (!$scope.originalValues.hasOwnProperty(field)) continue;
+
+      if ($scope.form[field] !== $scope.originalValues[field]) {
+        structuralChangeDetected = true;
+        break;
+      }
     }
 
-    return true;
+    // If structural changes detected, must do full delete/recreate
+    if (structuralChangeDetected) return { hasSelectiveChanges: false };
+
+    // Check for PPPoE credentials changes
+    if (
+      $scope.form.encapsulationMode === "PPPoE" &&
+      $scope.form.ipAcqMode === "PPPoE"
+    ) {
+      if (
+        $scope.form.username !== $scope.originalValues.username ||
+        $scope.form.password !== $scope.originalValues.password
+      ) {
+        changes.ppoeCreds = true;
+        changes.hasSelectiveChanges = true;
+      }
+    }
+
+    // Check for default gateway changes
+    if (
+      $scope.form.defaultGateway !== $scope.originalValues.defaultGateway
+    ) {
+      changes.defaultGateway = true;
+      changes.hasSelectiveChanges = true;
+
+      // Register callback to refresh LED after successful modification
+      changes.callbacks.push({
+        type: "refreshLed",
+        execute: async function() {
+          try {
+            console.log(
+              "Calling RefreshLed action to update physical LED..."
+            );
+            await $http.get(URL + "cgi_action?action=RefreshLed");
+            console.log("RefreshLed executed successfully");
+          } catch (error) {
+            console.warn(
+              "Warning: RefreshLed action failed, but modification was successful:",
+              error
+            );
+          }
+        },
+      });
+    }
+
+    return changes;
   }
 
   /**
-   * Build a modification request for simple field changes (e.g., PPPoE credentials).
-   * This is used in edit mode when only simple fields changed.
+   * Build a modification request for one or more selective changes.
+   * Supports: PPPoE credentials, Default Gateway
+   * Handles multiple changes in a single request.
    */
-  async function buildSelectiveModifyRequest() {
+  async function buildSelectiveModifyRequest(changes) {
     let request = "";
+    const modifiedObjects = [];
 
     try {
-      // For PPPoE, we need to find and modify the PPP interface
-      if (
-        $scope.form.encapsulationMode === "PPPoE" &&
-        $scope.form.ipAcqMode === "PPPoE"
-      ) {
-        // Get the main IP interface object to find associated PPP interface
-        const ipResponse = await $http.get(
-          URL + "cgi_get?Object=" + $scope.editIPInterface
+      // Get the main IP interface object once
+      const ipResponse = await $http.get(
+        URL + "cgi_get?Object=" + $scope.editIPInterface
+      );
+
+      if (!ipResponse.data?.Objects?.length) {
+        console.error("Could not find IP interface object");
+        return "";
+      }
+
+      const ipObj = ipResponse.data.Objects.find(
+        (obj) =>
+          obj.ObjName === $scope.editIPInterface ||
+          obj.ObjName.startsWith($scope.editIPInterface.replace(/\.$/, ""))
+      );
+
+      if (!ipObj) {
+        console.error("Could not find main IP Interface in response");
+        return "";
+      }
+
+      // ==================== Modify Default Gateway ====================
+      if (changes.defaultGateway) {
+        request += `Object=${encodeParam(
+          ipObj.ObjName
+        )}&Operation=Modify`;
+        request += `&X_LANTIQ_COM_DefaultGateway=${
+          $scope.form.defaultGateway === "1" ? "true" : "false"
+        }`;
+        request += `&`;
+
+        modifiedObjects.push({
+          type: "defaultGateway",
+          object: ipObj.ObjName,
+        });
+
+        console.log(
+          "Building selective modify request for Default Gateway:",
+          ipObj.ObjName
+        );
+      }
+
+      // ==================== Modify PPPoE Credentials ====================
+      if (changes.ppoeCreds) {
+        const ipInterfaceName = getParamFromObject(ipObj, "Name");
+
+        // Get all PPP interfaces to find the matching one
+        const pppResponse = await $http.get(
+          URL + "cgi_get?Object=Device.PPP.Interface"
         );
 
-        if (ipResponse.data?.Objects?.length > 0) {
-          const ipObj = ipResponse.data.Objects.find(
-            (obj) =>
-              obj.ObjName === $scope.editIPInterface ||
-              obj.ObjName.startsWith($scope.editIPInterface.replace(/\.$/, ""))
-          );
+        if (pppResponse.data?.Objects?.length > 0) {
+          const pppInterface = pppResponse.data.Objects.find((pppObj) => {
+            const pppName = getParamFromObject(pppObj, "Name");
+            return pppName === ipInterfaceName;
+          });
 
-          if (ipObj) {
-            const ipInterfaceName = getParamFromObject(ipObj, "Name");
+          if (pppInterface) {
+            request += `Object=${encodeParam(
+              pppInterface.ObjName
+            )}&Operation=Modify`;
+            request += `&Username=${encodeParam($scope.form.username)}`;
+            request += `&Password=${encodeParam($scope.form.password)}`;
+            request += `&`;
 
-            // Get all PPP interfaces to find the matching one
-            const pppResponse = await $http.get(
-              URL + "cgi_get?Object=Device.PPP.Interface"
+            modifiedObjects.push({
+              type: "ppoeCreds",
+              object: pppInterface.ObjName,
+            });
+
+            console.log(
+              "Building selective modify request for PPPoE credentials:",
+              pppInterface.ObjName
             );
-
-            if (pppResponse.data?.Objects?.length > 0) {
-              const pppInterface = pppResponse.data.Objects.find(
-                (pppObj) => {
-                  const pppName = getParamFromObject(pppObj, "Name");
-                  return pppName === ipInterfaceName;
-                }
-              );
-
-              if (pppInterface) {
-                // Build modify request for PPP Interface
-                request += `Object=${encodeParam(
-                  pppInterface.ObjName
-                )}&Operation=Modify`;
-                request += `&Username=${encodeParam($scope.form.username)}`;
-                request += `&Password=${encodeParam($scope.form.password)}`;
-                request += `&`;
-
-                console.log(
-                  "Building selective modify request for:",
-                  pppInterface.ObjName
-                );
-              }
-            }
           }
         }
       }
+
+      // Store modified objects for reference
+      changes.affectedObjects = modifiedObjects;
     } catch (error) {
       console.error(
         "Error building selective modify request:",
@@ -1887,8 +1987,11 @@ myapp.controller("wan_wanconnectionsform", function(
   function determineEditStrategy() {
     if (!$scope.isEditMode) return "full-replace";
 
-    // Check if we can apply changes selectively
-    if (canApplySelectively()) {
+    // Detect what changes were made
+    const changes = detectSelectiveChanges();
+
+    // If selective changes detected, use selective modify
+    if (changes.hasSelectiveChanges) {
       return "selective-modify";
     }
 
@@ -2201,18 +2304,30 @@ myapp.controller("wan_wanconnectionsform", function(
       // Remove existing connections if needed
       await helperService.removeExistingIPTVConnection();
 
-      // Determine edit strategy (selective modify vs full replace)
-      const editStrategy = $scope.isEditMode
-        ? determineEditStrategy()
-        : null;
+      // Determine edit strategy and detect selective changes
+      let editStrategy = null;
+      let detectedChanges = null;
+
+      if ($scope.isEditMode) {
+        detectedChanges = detectSelectiveChanges();
+        editStrategy = detectedChanges.hasSelectiveChanges
+          ? "selective-modify"
+          : "full-replace";
+      }
 
       if (editStrategy === "selective-modify") {
         // OPTIMIZATION: Apply selective modifications for simple field changes
         console.log(
           "Using selective modification strategy for edit mode"
         );
+        console.log("Detected changes:", {
+          ppoeCreds: detectedChanges.ppoeCreds,
+          defaultGateway: detectedChanges.defaultGateway,
+        });
 
-        const modifyRequest = await buildSelectiveModifyRequest();
+        const modifyRequest = await buildSelectiveModifyRequest(
+          detectedChanges
+        );
         if (modifyRequest) {
           const modifyResult = await $http.post(
             URL + "cgi_set",
@@ -2223,6 +2338,30 @@ myapp.controller("wan_wanconnectionsform", function(
             console.log(
               "Successfully applied selective modifications"
             );
+
+            // Execute post-operation callbacks
+            if (
+              detectedChanges.callbacks &&
+              detectedChanges.callbacks.length > 0
+            ) {
+              console.log(
+                "Executing " +
+                  detectedChanges.callbacks.length +
+                  " post-modification callbacks..."
+              );
+
+              for (const callback of detectedChanges.callbacks) {
+                try {
+                  await callback.execute();
+                } catch (callbackError) {
+                  console.error(
+                    "Callback " + callback.type + " failed:",
+                    callbackError
+                  );
+                }
+              }
+            }
+
             $location.path("/tableform/wan_wanconnections");
             $scope.$applyAsync();
             return;
