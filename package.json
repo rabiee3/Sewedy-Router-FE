@@ -1,0 +1,10 @@
+{
+  "name": "sewedy-router-fe",
+  "version": "1.0.0",
+  "description": "Sewedy Router Frontend",
+  "scripts": {},
+  "dependencies": {},
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}

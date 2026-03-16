@@ -191,8 +191,8 @@
         <div class="row d-flex align-items-center mt-3">
           <div class="col-sm-4">
             <label class="active special" for="mtumru_size">
-              <span ng-if="form.accessType != 'ATM'">MTU Size</span>
-              <span ng-if="form.accessType == 'ATM'">MRU Size</span>
+              <span ng-if="form.encapsulationMode !== 'PPPoE'">MTU Size</span>
+              <span ng-if="form.encapsulationMode === 'PPPoE'">MRU Size</span>
             </label>
           </div>
           <div class="col-sm-8">
@@ -216,7 +216,7 @@
                 class="text-danger small"
                 ng-show="customWanForm.mtu_mru_size.$error.required && customWanForm.mtu_mru_size.$touched"
               >
-                {{form.accessType == 'ATM' ? 'MRU' : 'MTU'}} Size is required
+                {{form.encapsulationMode === 'PPPoE' ? 'MRU' : 'MTU'}} Size is required
               </div>
             </div>
           </div>
