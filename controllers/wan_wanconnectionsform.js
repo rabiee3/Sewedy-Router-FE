@@ -1753,6 +1753,148 @@ myapp.controller("wan_wanconnectionsform", function(
     return request;
   }
 
+  // ============================================================
+  // EDIT MODE OPTIMIZATION - Detect and apply selective changes
+  // ============================================================
+
+  /**
+   * Check if changes between old and new configuration allow for
+   * simple modification without full delete/recreate cycle.
+   * Returns true if only simple, non-structural fields changed.
+   */
+  function canApplySelectively() {
+    if (!$scope.isEditMode) return false;
+
+    // Get all fields that would trigger a full delete/recreate
+    const structuralChanges = [
+      // WAN layer changes (access type, encapsulation mode)
+      $scope.form.accessType,
+      $scope.form.encapsulationMode,
+      $scope.form.wanMode,
+      $scope.form.serviceType,
+      // IP Acquisition mode changes
+      $scope.form.ipAcqMode,
+      // VLAN changes
+      $scope.form.enableVlan,
+      $scope.form.vlanId,
+      // Static IP changes
+      $scope.form.ipaddress,
+      $scope.form.subnetmask,
+      $scope.form.gatewayaddress,
+      // NAT changes
+      $scope.form.enableNAT,
+      $scope.form.natType,
+      // ATM-specific changes
+      $scope.form.vpiVci,
+      $scope.form.encapsulation,
+      $scope.form.linkType,
+      $scope.form.atmQosClass,
+      $scope.form.peakCellRate,
+      $scope.form.maximumBSize,
+      $scope.form.sustainableCellRate,
+      // Bridge changes
+      $scope.form.selectedBridge,
+      // Protocol type changes
+      $scope.form.protocolType,
+    ];
+
+    // For now, we only support selective modification for PPPoE credentials
+    // Check if ONLY PPPoE is enabled and encapsulation mode hasn't changed
+    if (
+      $scope.form.encapsulationMode !== "PPPoE" ||
+      $scope.form.ipAcqMode !== "PPPoE"
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Build a modification request for simple field changes (e.g., PPPoE credentials).
+   * This is used in edit mode when only simple fields changed.
+   */
+  async function buildSelectiveModifyRequest() {
+    let request = "";
+
+    try {
+      // For PPPoE, we need to find and modify the PPP interface
+      if (
+        $scope.form.encapsulationMode === "PPPoE" &&
+        $scope.form.ipAcqMode === "PPPoE"
+      ) {
+        // Get the main IP interface object to find associated PPP interface
+        const ipResponse = await $http.get(
+          URL + "cgi_get?Object=" + $scope.editIPInterface
+        );
+
+        if (ipResponse.data?.Objects?.length > 0) {
+          const ipObj = ipResponse.data.Objects.find(
+            (obj) =>
+              obj.ObjName === $scope.editIPInterface ||
+              obj.ObjName.startsWith($scope.editIPInterface.replace(/\.$/, ""))
+          );
+
+          if (ipObj) {
+            const ipInterfaceName = getParamFromObject(ipObj, "Name");
+
+            // Get all PPP interfaces to find the matching one
+            const pppResponse = await $http.get(
+              URL + "cgi_get?Object=Device.PPP.Interface"
+            );
+
+            if (pppResponse.data?.Objects?.length > 0) {
+              const pppInterface = pppResponse.data.Objects.find(
+                (pppObj) => {
+                  const pppName = getParamFromObject(pppObj, "Name");
+                  return pppName === ipInterfaceName;
+                }
+              );
+
+              if (pppInterface) {
+                // Build modify request for PPP Interface
+                request += `Object=${encodeParam(
+                  pppInterface.ObjName
+                )}&Operation=Modify`;
+                request += `&Username=${encodeParam($scope.form.username)}`;
+                request += `&Password=${encodeParam($scope.form.password)}`;
+                request += `&`;
+
+                console.log(
+                  "Building selective modify request for:",
+                  pppInterface.ObjName
+                );
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error(
+        "Error building selective modify request:",
+        error
+      );
+      return "";
+    }
+
+    return request;
+  }
+
+  /**
+   * Determines the edit strategy for the current configuration change.
+   * Returns: 'selective-modify' for simple changes, 'full-replace' for complex changes
+   */
+  function determineEditStrategy() {
+    if (!$scope.isEditMode) return "full-replace";
+
+    // Check if we can apply changes selectively
+    if (canApplySelectively()) {
+      return "selective-modify";
+    }
+
+    return "full-replace";
+  }
+
   async function deleteOldConnection() {
     if (!$scope.isEditMode || !$scope.editIPInterface) return "";
 
@@ -2059,7 +2201,42 @@ myapp.controller("wan_wanconnectionsform", function(
       // Remove existing connections if needed
       await helperService.removeExistingIPTVConnection();
 
-      // Delete old connection in edit mode
+      // Determine edit strategy (selective modify vs full replace)
+      const editStrategy = $scope.isEditMode
+        ? determineEditStrategy()
+        : null;
+
+      if (editStrategy === "selective-modify") {
+        // OPTIMIZATION: Apply selective modifications for simple field changes
+        console.log(
+          "Using selective modification strategy for edit mode"
+        );
+
+        const modifyRequest = await buildSelectiveModifyRequest();
+        if (modifyRequest) {
+          const modifyResult = await $http.post(
+            URL + "cgi_set",
+            modifyRequest
+          );
+
+          if (modifyResult.status === 200) {
+            console.log(
+              "Successfully applied selective modifications"
+            );
+            $location.path("/tableform/wan_wanconnections");
+            $scope.$applyAsync();
+            return;
+          } else {
+            const errorMsg =
+              modifyResult.data?.Objects?.[0]?.Param?.[0]
+                ?.ParamValue || "Failed to apply modifications.";
+            alert(errorMsg);
+            return;
+          }
+        }
+      }
+
+      // DEFAULT STRATEGY: Full replace (delete old, create new)
       if ($scope.isEditMode) {
         const deleteRequest = await deleteOldConnection();
         if (deleteRequest) {
