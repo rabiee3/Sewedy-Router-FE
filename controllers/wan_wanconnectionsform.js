@@ -580,11 +580,15 @@ myapp.controller(
   // Watch for Encapsulation Mode changes
   // ------------------------------------------------------------
   $scope.$watch("form.encapsulationMode", function (newVal) {
+   // Only apply defaults in new mode, not in edit mode
+   if ($scope.isEditMode) {
+    return;
+   }
+
    if (newVal === "PPPoE") {
     // For PPPoE, IP Acquisition Mode should be PPPoE
     $scope.form.ipAcqMode = "PPPoE";
     // Set MRU default for PPPoE
-
     $scope.form.mtu_mru_size = "1492";
    } else if (newVal === "IPoE") {
     // If switching to IPoE, reset IP Acquisition Mode if needed
@@ -592,7 +596,6 @@ myapp.controller(
      $scope.form.ipAcqMode = "DHCP";
     }
     // Set MTU default for IPoE
-
     $scope.form.mtu_mru_size = "1500";
    }
   });
@@ -860,8 +863,8 @@ myapp.controller(
 
    try {
     $scope.editIPInterface = $scope.internetObject.split(",")[0];
-    // Use cgi_get_fillparams to ensure we get all parameters including MaxMTUSize
-    const response = await $http.get(URL + "cgi_get_fillparams?Object=" + $scope.editIPInterface);
+    // Use cgi_get to get all related objects including addressing information and MaxMTUSize
+    const response = await $http.get(URL + "cgi_get?Object=" + $scope.editIPInterface);
 
     if (response.data?.Objects?.length > 0) {
      // Find the main IP Interface object
@@ -950,6 +953,7 @@ myapp.controller(
          $scope.form.username = username;
          $scope.form.password = getParamFromObject(pppInterface, "Password") || "";
          $scope.form.mtu_mru_size = getParamFromObject(pppInterface, "MaxMRUSize");
+         
         } else {
          console.log("No matching PPP interface found for name:", ipInterfaceName);
         }
@@ -960,17 +964,9 @@ myapp.controller(
      } else if (addressingType === "DHCP") {
       $scope.form.encapsulationMode = "IPoE";
       $scope.form.ipAcqMode = "DHCP";
-      // Load MaxMTUSize for IPoE
-      if (!$scope.form.mtu_mru_size) {
-       $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
-      }
      } else if (addressingType === "Static") {
       $scope.form.encapsulationMode = "IPoE";
       $scope.form.ipAcqMode = "Static";
-      // Load MaxMTUSize for IPoE
-      if (!$scope.form.mtu_mru_size) {
-       $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
-      }
       // Load static IP fields
       const ipv4Obj = response.data.Objects.find((obj) => obj.ObjName.includes(".IPv4Address"));
       if (ipv4Obj) {
@@ -981,16 +977,28 @@ myapp.controller(
       $scope.form.encapsulationMode = "IPoE";
       $scope.form.wanMode = "BridgedWan";
       $scope.form.ipAcqMode = "Bridge";
-      // Load MaxMTUSize for IPoE
-      if (!$scope.form.mtu_mru_size) {
-       $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
-      }
      } else {
       // Default if addressing type not found
       console.log("No addressing type found, defaulting to IPoE/DHCP");
       $scope.form.encapsulationMode = "IPoE";
       $scope.form.ipAcqMode = "DHCP";
-      $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
+     }
+
+     // Load MTU/MRU based on the encapsulation mode we just determined
+     if ($scope.form.encapsulationMode === "PPPoE") {
+      // PPPoE MRU already loaded from pppInterface above
+      // Ensure we have a value, if not use default
+      if (!$scope.form.mtu_mru_size) {
+       $scope.form.mtu_mru_size = "1492";
+      }
+     } else {
+      // IPoE (DHCP, Static, Bridge, etc.) - always load MaxMTUSize from IP Interface
+      const maxMTUSize = getParamFromObject(ipObj, "MaxMTUSize");
+      if (maxMTUSize) {
+       $scope.form.mtu_mru_size = maxMTUSize;
+      } else {
+       $scope.form.mtu_mru_size = "1500";
+      }
      }
 
      // Load other basic form fields from the main IP Interface object
@@ -1006,11 +1014,6 @@ myapp.controller(
       $scope.form.defaultGateway = "1";
      } else {
       $scope.form.defaultGateway = "0";
-     }
-
-     // Only set MTU if not already set by PPPoE
-     if (!$scope.form.mtu_mru_size) {
-      $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
      }
 
      // Load NAT settings
@@ -2120,9 +2123,7 @@ myapp.controller(
 
        // Execute post-operation callbacks
        if (detectedChanges.callbacks && detectedChanges.callbacks.length > 0) {
-        console.log(
-         "Executing " + detectedChanges.callbacks.length + " post-modification callbacks..."
-        );
+
 
         for (const callback of detectedChanges.callbacks) {
          try {
@@ -2173,7 +2174,6 @@ myapp.controller(
           "Content-Type": "application/x-www-form-urlencoded",
          },
         });
-        console.log("User-defined DNS set successfully");
        } catch (dnsError) {
         console.error("Failed to set user-defined DNS:", dnsError);
        }
@@ -2339,11 +2339,13 @@ myapp.controller(
     $scope.form.atmQosClass = "UBR"; // Reset to default
    }
 
-   // Reset form based on access type
-   if (newVal === "PTM" || newVal === "ETH") {
-    $scope.form.mtu_mru_size = "1500"; // MTU for PTM/ETH
-   } else if (newVal === "ATM") {
-    $scope.form.mtu_mru_size = "1492"; // MRU for ATM
+   // Reset form based on access type (only in new mode, not in edit mode)
+   if (!$scope.isEditMode) {
+    if (newVal === "PTM" || newVal === "ETH") {
+     $scope.form.mtu_mru_size = "1500"; // MTU for PTM/ETH
+    } else if (newVal === "ATM") {
+     $scope.form.mtu_mru_size = "1492"; // MRU for ATM
+    }
    }
 
    // Mark data as ready after everything is loaded
