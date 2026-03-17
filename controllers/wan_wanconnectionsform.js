@@ -860,7 +860,8 @@ myapp.controller(
 
    try {
     $scope.editIPInterface = $scope.internetObject.split(",")[0];
-    const response = await $http.get(URL + "cgi_get?Object=" + $scope.editIPInterface);
+    // Use cgi_get_fillparams to ensure we get all parameters including MaxMTUSize
+    const response = await $http.get(URL + "cgi_get_fillparams?Object=" + $scope.editIPInterface);
 
     if (response.data?.Objects?.length > 0) {
      // Find the main IP Interface object
@@ -948,7 +949,7 @@ myapp.controller(
 
          $scope.form.username = username;
          $scope.form.password = getParamFromObject(pppInterface, "Password") || "";
-         $scope.form.mtu_mru_size = getParamFromObject(pppInterface, "MaxMRUSize") || "1492";
+         $scope.form.mtu_mru_size = getParamFromObject(pppInterface, "MaxMRUSize");
         } else {
          console.log("No matching PPP interface found for name:", ipInterfaceName);
         }
@@ -959,9 +960,17 @@ myapp.controller(
      } else if (addressingType === "DHCP") {
       $scope.form.encapsulationMode = "IPoE";
       $scope.form.ipAcqMode = "DHCP";
+      // Load MaxMTUSize for IPoE
+      if (!$scope.form.mtu_mru_size) {
+       $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
+      }
      } else if (addressingType === "Static") {
       $scope.form.encapsulationMode = "IPoE";
       $scope.form.ipAcqMode = "Static";
+      // Load MaxMTUSize for IPoE
+      if (!$scope.form.mtu_mru_size) {
+       $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
+      }
       // Load static IP fields
       const ipv4Obj = response.data.Objects.find((obj) => obj.ObjName.includes(".IPv4Address"));
       if (ipv4Obj) {
@@ -972,11 +981,16 @@ myapp.controller(
       $scope.form.encapsulationMode = "IPoE";
       $scope.form.wanMode = "BridgedWan";
       $scope.form.ipAcqMode = "Bridge";
+      // Load MaxMTUSize for IPoE
+      if (!$scope.form.mtu_mru_size) {
+       $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
+      }
      } else {
       // Default if addressing type not found
       console.log("No addressing type found, defaulting to IPoE/DHCP");
       $scope.form.encapsulationMode = "IPoE";
       $scope.form.ipAcqMode = "DHCP";
+      $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
      }
 
      // Load other basic form fields from the main IP Interface object
@@ -996,7 +1010,7 @@ myapp.controller(
 
      // Only set MTU if not already set by PPPoE
      if (!$scope.form.mtu_mru_size) {
-      $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize") || "1500";
+      $scope.form.mtu_mru_size = getParamFromObject(ipObj, "MaxMTUSize");
      }
 
      // Load NAT settings
@@ -1028,9 +1042,8 @@ myapp.controller(
       username: $scope.form.username,
       password: $scope.form.password,
       defaultGateway: $scope.form.defaultGateway,
+      mtu_mru_size: $scope.form.mtu_mru_size,
      };
-
-     console.log("Original values stored for edit mode change detection:", $scope.originalValues);
     }
    } catch (error) {
     console.error("Error loading edit mode data:", error);
@@ -1576,6 +1589,7 @@ myapp.controller(
    username: "",
    password: "",
    defaultGateway: "1",
+   mtu_mru_size: "1500",
   };
 
   /**
@@ -1590,6 +1604,7 @@ myapp.controller(
     hasSelectiveChanges: false,
     ppoeCreds: false,
     defaultGateway: false,
+    mtuMruSize: false,
     callbacks: [], // Post-operation callbacks
     affectedObjects: [], // Track objects that were modified
    };
@@ -1619,7 +1634,6 @@ myapp.controller(
     "protocolType",
     "macCloneEnabled",
     "mac_address",
-    "mtu_mru_size",
    ];
 
    // Check if any structural field changed
@@ -1658,9 +1672,7 @@ myapp.controller(
      type: "refreshLed",
      execute: async function () {
       try {
-       console.log("Calling RefreshLed action to update physical LED...");
        await $http.get(URL + "cgi_action?action=RefreshLed");
-       console.log("RefreshLed executed successfully");
       } catch (error) {
        console.warn("Warning: RefreshLed action failed, but modification was successful:", error);
       }
@@ -1668,12 +1680,18 @@ myapp.controller(
     });
    }
 
+   // Check for MTU/MRU size changes
+   if ($scope.form.mtu_mru_size !== $scope.originalValues.mtu_mru_size) {
+    changes.mtuMruSize = true;
+    changes.hasSelectiveChanges = true;
+   }
+
    return changes;
   }
 
   /**
    * Build a modification request for one or more selective changes.
-   * Supports: PPPoE credentials, Default Gateway
+   * Supports: PPPoE credentials, Default Gateway, MTU/MRU Size
    * Handles multiple changes in a single request.
    */
   async function buildSelectiveModifyRequest(changes) {
@@ -1712,8 +1730,6 @@ myapp.controller(
       type: "defaultGateway",
       object: ipObj.ObjName,
      });
-
-     console.log("Building selective modify request for Default Gateway:", ipObj.ObjName);
     }
 
     // ==================== Modify PPPoE Credentials ====================
@@ -1739,12 +1755,48 @@ myapp.controller(
         type: "ppoeCreds",
         object: pppInterface.ObjName,
        });
-
-       console.log(
-        "Building selective modify request for PPPoE credentials:",
-        pppInterface.ObjName
-       );
       }
+     }
+    }
+
+    // ==================== Modify MTU/MRU Size ====================
+    if (changes.mtuMruSize) {
+     // Determine which parameter to use based on encapsulation mode
+     if ($scope.form.encapsulationMode === "PPPoE") {
+      // For PPPoE, we need to modify the PPP Interface with MaxMRUSize
+      const ipInterfaceName = getParamFromObject(ipObj, "Name");
+
+      // Get all PPP interfaces to find the matching one
+      const pppResponse = await $http.get(URL + "cgi_get?Object=Device.PPP.Interface");
+
+      if (pppResponse.data?.Objects?.length > 0) {
+       const pppInterface = pppResponse.data.Objects.find((pppObj) => {
+        const pppName = getParamFromObject(pppObj, "Name");
+        return pppName === ipInterfaceName;
+       });
+
+       if (pppInterface) {
+        request += `Object=${encodeParam(pppInterface.ObjName)}&Operation=Modify`;
+        request += `&MaxMRUSize=${encodeParam($scope.form.mtu_mru_size)}`;
+        request += `&`;
+
+        modifiedObjects.push({
+         type: "mtuMruSize",
+         object: pppInterface.ObjName,
+        });
+
+       }
+      }
+     } else {
+      // For IPoE, modify the IP Interface with MaxMTUSize
+      request += `Object=${encodeParam(ipObj.ObjName)}&Operation=Modify`;
+      request += `&MaxMTUSize=${encodeParam($scope.form.mtu_mru_size)}`;
+      request += `&`;
+
+      modifiedObjects.push({
+       type: "mtuMruSize",
+       object: ipObj.ObjName,
+      });
      }
     }
 
@@ -2059,19 +2111,12 @@ myapp.controller(
     }
 
     if (editStrategy === "selective-modify") {
-     // OPTIMIZATION: Apply selective modifications for simple field changes
-     console.log("Using selective modification strategy for edit mode");
-     console.log("Detected changes:", {
-      ppoeCreds: detectedChanges.ppoeCreds,
-      defaultGateway: detectedChanges.defaultGateway,
-     });
 
      const modifyRequest = await buildSelectiveModifyRequest(detectedChanges);
      if (modifyRequest) {
       const modifyResult = await $http.post(URL + "cgi_set", modifyRequest);
 
       if (modifyResult.status === 200) {
-       console.log("Successfully applied selective modifications");
 
        // Execute post-operation callbacks
        if (detectedChanges.callbacks && detectedChanges.callbacks.length > 0) {
@@ -2163,7 +2208,6 @@ myapp.controller(
 
         if (exactAliasMatch) {
          targetInterface = exactAliasMatch.ObjName;
-         console.log("Found interface by exact alias match:", targetInterface);
         } else {
          const aliasPatternMatch = ipResponse.data.Objects.find((obj) => {
           const aliasParam = obj.Param?.find((p) => p.ParamName === "Alias");
@@ -2172,7 +2216,6 @@ myapp.controller(
 
          if (aliasPatternMatch) {
           targetInterface = aliasPatternMatch.ObjName;
-          console.log("Found interface by alias pattern:", targetInterface);
          } else {
           let highestNumber = -1;
           let latestInterface = null;
@@ -2190,7 +2233,6 @@ myapp.controller(
 
           if (latestInterface) {
            targetInterface = latestInterface;
-           console.log("Found latest interface by number:", targetInterface);
           }
          }
         }
