@@ -1,0 +1,93 @@
+<div>
+  <div class="row ltq_breadcrumbs">
+    <div class="row"></div>
+  </div>
+
+  <!-- Subheader -->
+  <div class="subheader">
+    <div>
+      <img
+        src="images/icons/internet.png"
+        class="iconDetails"
+        alt="Internet Icon"
+      />
+    </div>
+    <div>
+      <h4>IPTV</h4>
+    </div>
+    <p>
+      This page allows you to create IPTV
+    </p>
+  </div>
+
+  <!-- Main Form -->
+  <div class="panel">
+    <div class="panel-heading blu_bg">
+      <span class="ng-binding">IPTV</span>
+    </div>
+    <div class="panel-body">
+      <form
+        ng-if="!iptvdata.isIPTVConnExist"
+        name="new_map_rule"
+        novalidate
+        autocomplete="off"
+      >
+        <div class="row">
+          <!-- Enable IPTV -->
+          <div class="col-sm-4 checkbox1 input-field1 my-3">
+            <input
+              id="enableIPTV"
+              name="Enable"
+              type="checkbox"
+              ng-true-value="'1'"
+              ng-false-value="'0'"
+              ng-model="iptvdata.enableVlan"
+              ng-change="updateParent()"
+            />
+            <label class="checkbox_left_align" for="enableIPTV"
+              >Enable IPTV</label
+            >
+          </div>
+          <!-- LANs Dropdown -->
+          <div class="col-sm-6 mb-3 required">
+            <label for="connectionType">LANs</label>
+            <select
+              ng-if="!iptvdata.isIPTVConnExist"
+              id="lans"
+              materal_select=""
+              ng-required="true"
+              name="lans"
+              class="dropdown-toggle"
+              ng-options="lan as lan.name for lan in iptvdata.lans track by lan.id"
+              ng-model="iptvdata.selectedLan"
+            >
+              <option value="" disabled selected>Select LAN</option>
+            </select>
+          </div>
+        </div>
+
+        <button
+          ng-if="!iptvdata.isIPTVConnExist"
+          type="submit"
+          ng-click="addnewIptvConnection()"
+          class="btn btn-info"
+        >
+          Update IPTV
+        </button>
+      </form>
+
+      <h3 class="mb-5" ng-if="iptvdata.isIPTVConnExist">
+        IPTV currently attached to LAN {{iptvdata.existingbridgeInfo.ethMembers[0].slice(-1)}}
+      </h3>
+
+      <button
+        ng-if="iptvdata.isIPTVConnExist"
+        type="submit"
+        ng-click="removeIPTV()"
+        class="btn btn-info"
+      >
+        Remove Existing IPTV connection
+      </button>
+    </div>
+  </div>
+</div>

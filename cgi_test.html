@@ -1,0 +1,39 @@
+<div>
+  <div id="ajaxLoaderSection" style="display: none;">Loading...</div>
+
+  <h1>CGI Test Page</h1>
+
+  <form ng-submit="submitCommands()">
+    <div ng-repeat="command in commands track by $index" class="command-group">
+      <div class="row p-2 border my-3">
+        <div class="col-sm-9">
+          <label for="cgiCommand{{$index}}">CGI Command {{$index + 1}}:</label>
+          <input
+            type="text"
+            class="w-100"
+            id="cgiCommand{{$index}}"
+            ng-model="command.cmd"
+            placeholder="Enter CGI Command (e.g. Object=Device.WiFi.SSID.1&Operation=Get)"
+            required
+          />
+        </div>
+        <div class="col-sm-1">
+          <select ng-model="command.method" required>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+          </select>
+        </div>
+
+        <div class="col-sm-1 d-flex">
+          <div class="d-flex">
+            <button type="button" ng-click="removeCommand($index)">-</button>
+            <button type="button" ng-click="addCommand()">+</button>
+          </div>
+          <button type="submit">Submit</button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <pre>{{results | json}}</pre>
+</div>

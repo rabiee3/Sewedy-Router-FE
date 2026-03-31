@@ -15,13 +15,29 @@
         </object>
         <object name="Device.WiFi.AccessPoint.*"  url="cgi_get_nosubobj?Object=Device.WiFi.AccessPoint" >
             <parameter  name="IsolationEnable"  type="toggle" webname="AP Isolation"></parameter>
-	    <parameter  name="MaxAssociatedDevices"  type="number" Value="cgi_get_defval?Object=Device.WiFi.AccessPoint.1&amp;MaxAssociatedDevices=" required="false" webname="Max connected STAs" ></parameter>
+	        <parameter  name="MaxAssociatedDevices"  type="number" Value="cgi_get_defval?Object=Device.WiFi.AccessPoint.1&amp;MaxAssociatedDevices=" required="false" webname="Max connected STAs" ></parameter>
             <parameter  name="UAPSDEnable"  type="toggle" webname="WMM-PS" Value="cgi_get_defval?Object=Device.WiFi.AccessPoint.1&amp;UAPSDEnable=" ></parameter>
         </object>
         <object name="Device.WiFi.SSID.*"  url="cgi_get_nosubobj?Object=Device.WiFi.SSID" >
             <parameter  name="X_LANTIQ_COM_Vendor_BridgeName" type="string" Value="cgi_get_defval?Object=Device.WiFi.SSID.1&amp;X_LANTIQ_COM_Vendor_BridgeName=" required="true" webname="Bridge Name" ></parameter>
             <parameter name="X_LANTIQ_COM_Vendor_SsidType"  type="dropdown2" validvalues="backhaul,Radio,ExtendedHybrid" webname="AP Type" display="No"></parameter>
             <parameter name="X_MXL_COM_Vendor_NumExtender" type="string" webname="Max number of backhaul" parent="'ExtendedHybrid'" parentname="Device.WiFi.SSID.*" depends="X_LANTIQ_COM_Vendor_SsidType" Value="cgi_get_defval?Object=Device.WiFi.SSID.1&amp;X_MXL_COM_Vendor_NumExtender="></parameter>
+        </object>
+
+        <object name="temp1">
+            <parameter name="MaxSpeedLimit" type="number" Value="0" required="false" webname="Max Speed Limit" ></parameter>
+        </object>
+        
+        <object name="temp">
+            <parameter name="EnableDHCP" webname="EnableDHCP" type="checkbox" Value="1"></parameter>
+        </object>
+
+        <object name="isAutoToggle">
+            <parameter name="IsManualChannel" type="toggle" webname="Specify Manual Channel"></parameter>
+        </object>
+
+        <object name="Device.IP.Interface.1.IPv4Address.2">
+            <parameter name="Channel" type="dropdown" webname="Channel" dependsonobject="isAutoToggle" dependsonparam="IsManualChannel" dependsonparamvalue="true" dynamicvalues="getChannelList()"></parameter>
         </object>
     </object>
 </view>

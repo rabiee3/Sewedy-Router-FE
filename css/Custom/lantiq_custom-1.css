@@ -26,6 +26,7 @@ button, button:focus, button:active,
     width: 600px;
 }
 
+label{margin-bottom: 0;}
 
 hr{background:#dedede; }
 /*Custom fonts ROBOTO ,Tahoma */
@@ -602,7 +603,7 @@ a.menuitem-highlight:before {
     overflow: hidden;
     width: 240px;
 }
-
+.dropdown-toggle.small,.form-control.small{height: 2rem !important;}
 .dropdown-toggle > i{font-size: 18px;}
 .language {margin-top:16px; }
 ul.notification_ul{padding-left:0px;}
@@ -763,6 +764,12 @@ a.menuitem-highlight .systemconfig{background:url("../../images/icons/syslog-1.p
     margin-bottom: 10px;
     padding: 0 10px 6px 8px;margin:0px 0px 8px 0px; 
 }
+
+.form-header{
+    padding: 7px 15px;
+    background: #5c2d91;
+    color: white;
+}
 /*.block-heading-two h3 span {
     border-color: #32c8de ! important;
     border-bottom: 3px solid;
@@ -790,23 +797,21 @@ a.menuitem-highlight .systemconfig{background:url("../../images/icons/syslog-1.p
 .input-group-btn ul > li{
     font-weight: normal;
     display: block;
-    white-space: pre;
-    min-height: 1.2em;
-    padding: 0px 2px 1px;
-    background-color: #EFEEEE;
-    border-color: #285e8e;
-   
 }
 
 .dropdown-menu {
       background:#EFEEEE;
      
  }
+
+ .open > .dropdown-menu{
+    overflow: hidden;
+ }
 .dropdown-menu > li > a{
     font: inherit;
     font-size: 14px;
     color: #26a69a;
-    padding: 0px 3px;
+    padding: 9px;
 }
 
 .dropdown-menu > li > a:hover,
@@ -865,7 +870,7 @@ connectstatus{
 /*.checkbox-listview label{line-height:15px;}*/
 .checkbox-scroll-vr{max-height:200px;height:auto;overflow-y: scroll;overflow: auto;border:1px solid #dedede;padding:5px;}
 .checkbox-scroll-vr p{margin-bottom:5px !important;}
-.editableselect{width:20px;left:-12px;z-index:3;background-color:#f6f6f6 !important;text-align:center;}
+.editableselect{width:20px;left:0px;z-index:3;background-color:#f6f6f6 !important;text-align:center;}
 .editableselect span.caret-icon{text-align:center;margin-left:-4px !important;color:#000000;}
 /*Media Queiries */
 @media (max-width: 480px){
@@ -1702,7 +1707,7 @@ img.internet_img{position: absolute;bottom:0px;right:0px;height:35px;z-index: 0;
 .adv_widget ul li{border-top:1px solid #e7eaec;padding:8px 15px 5px 15px;}
 /*.adv_widget ul li label{width:100%;margin-bottom:0px; }
 .adv_widget ul li label span{width:40%;display:inline;float: left;font-size:12px;text-align:left;margin:0px 8px }*/
-.adv_widget ul li span:nth-child(2){width:40%;display:inline;font-family: 'Roboto-Regular', sans-serif;font-weight:400;float: left;font-size:12px;overflow:visible} 
+.adv_widget ul li span:nth-child(2){width:53%;display:inline;font-family: 'Roboto-Regular', sans-serif;font-weight:400;float: left;font-size:12px;overflow:visible} 
 /*.adv_widget ul li label span{width:60%;display:inline;float: left; font-family: 'Roboto-Light', sans-serif;font-size:12px;text-align:left;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}
 .adv_widget ul li span + span{width:39%;font-weight:normal;font-family: 'Roboto-Regular', sans-serif;font-weight:400; font-size:12px;} */
 .acc{position: relative;}
@@ -1934,8 +1939,8 @@ ul.weekdayslist li.active a span{background:#5C2D91;color:#ffffff; }
     content:" *";
     color:red;
 }
-[type="checkbox"] + label.checkbox_left_align{min-width:215px; padding-left:0px;padding-right:35px; }
-[type="checkbox"] + label.checkbox_left_align::before{right:0;left:auto;padding-left:0px; }
+[type="checkbox"] + label.checkbox_left_align{min-width:calc(33.33333333% + 28px); padding-left:0px;padding-right:35px; }
+[type="checkbox"] + label.checkbox_left_align::before{right:0;left:auto;padding-left:0px;margin-top: 1px; }
 [type="checkbox"]:checked + label.checkbox_left_align::before{right:12px;left:auto;}
 .formlalignment .div1{}
 /*.formlalignment .div2 > label{margin-top:12px;}*/
@@ -2562,8 +2567,8 @@ select > option {
 .lantiq-form-text input:-ms-input-placeholder {  color:#5C2D91;font-size:24px; }  ie 
 .lantiq-form-text input:-moz-placeholder {  color:#5C2D91;font-size:24px; }*/
 
-.theme-default .form-control[disabled]{background:#efefef;height:24px;margin-top:10px;color:#666666;}
-select:disabled{background: #efefef !important;color: #666666 !important;cursor: not-allowed;}
+.theme-default .form-control[disabled]{background:#efefef;height:24px;color:#666666;}
+select:disabled{background: #efefef !important;color: #a2a2a2 !important;cursor: not-allowed;}
 .table_plusicon{margin-right:5px; }
 .table-column-3 th{width:33.3333%;}
 /*.custom_formgroup label{display:inline; }*/
@@ -2591,7 +2596,7 @@ label.required:before{color:red;content: "*";display: block;position:absolute;ri
 .connection_status label{display:block;margin:5px 0px 0px; color: #ffffff}
 .content_mg label{display: block;text-align:left;margin-bottom: 0px;}
 .adv_widget ul li label{width:100%;margin-bottom:0px; }
-.adv_widget ul li label span{width:53%;display:inline;float: left;text-align:left;margin:0px 4px;font-weight:bold;  }
+.adv_widget ul li label span{width:40%;display:inline;float: left;text-align:left;margin:0px 4px;font-weight:bold;  }
 .formlalignment .div2 > label{margin-top:12px;}
 .switchblock >label,.theme-default .input-field label,.required label{color:#292828;font-family:"Roboto-Regular" !important;font-weight:bold !important;}
 .switchblock >label{color:#292828;min-width:140px;max-width:190px;  }
@@ -2680,7 +2685,7 @@ ul#strength {
 .wrapperdiv{display:table;width:100%;}
 .wrapperdiv .panel-body{display:table;width:100%;height:100%; }
 .wrapperdiv .panel-body .form-group{ display: inline-block;float: none;vertical-align: top; }
-.table-button-group{vertical-align: middle;min-width:97px;max-width:120px;text-align:center; padding:0px; }
+.table-button-group{vertical-align: middle;min-width:97px;max-width:120px;text-align:center; padding:0px; white-space: nowrap; }
 .table-button-group a{float:none;margin:0px;}
 
 /*.table-button-group{vertical-align: middle;width:80px;text-align:center; }
@@ -3000,7 +3005,16 @@ ul#strength {
   -moz-animation-duration:4s;
 }
 
-/*Helpers*/
-.text-center{
-  text-align: center;
+/*Custom*/
+.input-field.required label:after {
+    content: "*";
+    display: block;
+    color: red;
+    position: absolute;
+    width: 100%;
+    height: 20px;
+    z-index: 1232456789;
+    top: -5px;
+    right: -110%;
+    opacity: 1;
 }

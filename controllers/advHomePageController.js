@@ -3,8 +3,22 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	pageloadiconstatus = true;
 	// Set the default value of inputType
 	$scope.inputType = 'password';
+	$scope.noofclients = 0;
 	httpService.getRulesJson();
 	$scope.selectedTab = 1;
+	$scope.wifi2_4G = false;
+	$scope.wifi5G = false;
+	$scope.dslStatus = false;
+	$scope.internetStatus = false;
+	$scope.uptime_status = {
+		system:"",
+		system_status:"",
+		dsl:"",
+		dsl_status:"",
+		internet:"",
+		internet_status:""
+	}
+	
 	// Hide & show password function
 	$scope.hideShowPassword = function () {
 		if ($scope.inputType == 'password')
@@ -35,7 +49,7 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	$scope.clickstatus = "div1";
 	var changedFields = [];
 	$scope.showDetails = false;
-
+	$rootScope.eth_port_status = [];
 	function setWifiSecurityBasedOnRadioBandSelected(radioBandType) {
 		if (radioBandType === "WiFi2.4")
 			$scope._activeTab = 2;
@@ -191,9 +205,6 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	};
 	getNumberOfClients = function (reqParams) {
 		var reqdataarray = [];
-		$scope.noofclients = 0;
-		$scope.tableDataArray = [];
-		$scope.tablevalues = [];
 		var post = 'cgi_get?';
 		var reqdata = reqParams.split('&');
 		angular.forEach(reqdata, function (reqobject) {
@@ -218,11 +229,11 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 				success(function (data, status, headers, config) {
 					if (status === 200) {
 						objects = data.Objects;
+						var newTablevalues = [];
 						for (var obj = 0; obj < objects.length; obj++) {
 							var objobjname = objects[obj].ObjName;
 							var objectindex = reqdataarray.indexOf(modifyService.dotstarremove(objobjname, '.*'));
 							if (objectindex > -1) {
-
 								if (objectindex == 0) {
 									var objectParamValues = objects[obj].Param;
 									for (var i = 0; i < objectParamValues.length; i++) {
@@ -232,7 +243,7 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 											if ($scope[reqdataarray[objectindex] + "data"] == undefined)
 												$scope[reqdataarray[objectindex] + "data"] = [];
 											if (param_value != " ")
-												$scope.noofclients += parseInt(param_value);
+												$scope.noofclients = parseInt(param_value);
 											$scope[reqdataarray[objectindex] + "data"].push(parseInt(param_value));
 										}
 									}
@@ -267,14 +278,21 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 							}
 
 						}
-						var noofclients = $scope[reqdataarray[0] + "data"];
-						for (var pool = 0; pool < noofclients; pool++) {
+						for (var pool = 0; pool < $scope.noofclients; pool++) {
 							var tempobj = {};
 							tempobj["IPAddress"] = $scope[reqdataarray[1] + "tbdata"][pool]["IPAddress"];
 							tempobj["HostName"] = $scope[reqdataarray[1] + "tbdata"][pool]["HostName"];
 							tempobj["PhysAddress"] = $scope[reqdataarray[1] + "tbdata"][pool]["PhysAddress"];
-							$scope.tablevalues.push(tempobj);
+							newTablevalues.push(tempobj);
 						}
+						
+						// Only update if data has changed
+						var newDataStr = JSON.stringify(newTablevalues);
+						var oldDataStr = JSON.stringify($scope.tablevalues);
+						if (newDataStr !== oldDataStr) {
+							$scope.tablevalues = newTablevalues;
+						}
+						
 						$scope["numberofclients" + "popup"] = false;
 					} else if (500 <= status && status < 600) {
 						$scope["numberofclients" + "popup"] = true;
@@ -301,6 +319,30 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 		}
 		getData();
 	};
+
+	function getDefaultGatewayStatus(data) {
+		for (const item of data) {
+			if (!item.Param) continue;
+
+			const isDefaultGateway = item.Param.some(p =>
+			p.ParamName === "X_LANTIQ_COM_DefaultGateway" && p.ParamValue === "true"
+			);
+
+			if (isDefaultGateway) {
+			const status = item.Param.find(p => p.ParamName === "Status");
+			const name = item.ObjName;
+			const ipv4 = item.Child && item.Child[0] ? item.Child[0].ObjName : null;
+
+			return {
+				interface: name,
+				status: status ? status.ParamValue : "Unknown",
+				ipv4: ipv4
+			};
+			}
+		}
+		return null;
+	}
+
 	getFirstQueryData = function (reqParams) {
 		$http.get(URL + reqParams).
 			success(function (data, status, headers, config) {
@@ -360,6 +402,99 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 				}
 			}).
 			error(function (data, status, headers, config) { });
+	};
+	get_Status = function () {
+		$http.get(URL + 'cgi_get_nosubobj?Object=Device.WiFi.Radio.1').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[0].ParamValue === "true" ? $scope.wifi2_4G = true : $scope.wifi2_4G = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_nosubobj?Object=Device.WiFi.Radio.2').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[0].ParamValue === "true" ? $scope.wifi5G = true : $scope.wifi5G = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get?Object=Device.DSL.Line.1').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[2].Param[2].ParamValue === "UP" ? $scope.dslStatus = true : $scope.dslStatus = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_fillparams?Object=Device.Ethernet.Interface.1').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[1].ParamValue === "Up" ? $rootScope.eth_port_status[0] = true : $rootScope.eth_port_status[0] = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_fillparams?Object=Device.Ethernet.Interface.2').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[1].ParamValue === "Up" ? $rootScope.eth_port_status[1] = true : $rootScope.eth_port_status[1] = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_fillparams?Object=Device.Ethernet.Interface.3').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[1].ParamValue === "Up" ? $rootScope.eth_port_status[2] = true : $rootScope.eth_port_status[2] = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_fillparams?Object=Device.Ethernet.Interface.4').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					data.Objects[0].Param[1].ParamValue === "Up" ? $rootScope.eth_port_status[3] = true : $rootScope.eth_port_status[3] = false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_filterbyparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true').
+			success(function (data, status, headers, config) {
+				if (status === 200) {
+					$scope.internetStatus = getDefaultGatewayStatus(data.Objects).status === "Up" ? true : false;
+				}
+			}).
+			error(function (data, status, headers, config) { });
+
+		$http.get(URL + 'cgi_get_uptime').
+			success(function (data, status, headers, config) {
+
+				if (status === 200) {
+					const dsl = data.Objects.find((elm)=>elm.ObjName === 'Device.DSL');
+					if (dsl) {
+						$scope.uptime_status.dsl = dsl.Param[0].ParamValue ?? "";
+						$scope.uptime_status.dsl_status = dsl.Param[1].ParamValue ?? "";
+					}
+
+					const system = data.Objects.find((elm)=>elm.ObjName === 'Device.System');
+					if (system) {
+						$scope.uptime_status.system = system.Param[0].ParamValue ?? "";
+					}
+
+					const internet = data.Objects.find((elm)=>elm.ObjName === 'Device.Internet');
+					if (internet) {
+						$scope.uptime_status.internet = internet.Param[0].ParamValue ?? "";
+						$scope.uptime_status.internet_status = internet.Param[1].ParamValue ?? "";
+					}
+				}
+
+				// Start the uptime increment interval
+				startUptimeUpdater();
+			}).
+			error(function (data, status, headers, config) { });
+			
 	};
 	getSecondQueryData = function (reqParams, firstObjectName) {
 		$http.get(URL + reqParams + firstObjectName).
@@ -474,11 +609,43 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	// 	}
 	// }, 1000);
 	//    getTableData("cgi_get?Object=Device.DHCPv4.Server.Pool.1");
-	getNumberOfClients("Device.Hosts.?HostNumberOfEntries&Device.Hosts.Host.*?PhysAddress,IPv4AddressNumberOfEntries,HostName,IPv4Address");
 	getFirstQueryData("cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true");
+
+	get_Status();
 	var refreshData = function () {
-		getFirstQueryData("cgi_get?Object=Device.IP.Interface&X_LANTIQ_COM_DefaultGateway=true");
+		getNumberOfClients("Device.Hosts.?HostNumberOfEntries&Device.Hosts.Host.*?PhysAddress,IPv4AddressNumberOfEntries,HostName,IPv4Address");
+
+		$http.get(URL + 'cgi_get_uptime').
+			success(function (data, status, headers, config) {
+
+				if (status === 200) {
+					const dsl = data.Objects.find((elm)=>elm.ObjName === 'Device.DSL');
+					if (dsl) {
+						$scope.uptime_status.dsl = dsl.Param[0].ParamValue ?? "";
+						$scope.uptime_status.dsl_status = dsl.Param[1].ParamValue ?? "";
+					}
+
+					const system = data.Objects.find((elm)=>elm.ObjName === 'Device.System');
+					if (system) {
+						$scope.uptime_status.system = system.Param[0].ParamValue ?? "";
+					}
+
+					const internet = data.Objects.find((elm)=>elm.ObjName === 'Device.Internet');
+					if (internet) {
+						$scope.uptime_status.internet = internet.Param[0].ParamValue ?? "";
+						$scope.uptime_status.internet_status = internet.Param[1].ParamValue ?? "";
+					}
+				}
+
+				// Start the uptime increment interval
+				startUptimeUpdater();
+			}).
+			error(function () { });
 	};
+
+	// Start polling by default
+	refreshData();
+	$scope.promise = $interval(refreshData, 6000);
 
 	$scope.$on('enablePollingState', function (event, next, current) {
 		if ($rootScope.enablePolling == true) {
@@ -578,5 +745,76 @@ myapp.controller('advHomePageController', function ($scope, $route, $http, $loca
 	$scope.popupclose = function (scopeparam) {
 		$scope[scopeparam] = false;
 	}
+
+	// Function to parse uptime string (format: '0 days 09:39:47') and increment it by 1 second
+	var incrementUptime = function(uptimeString) {
+		if (!uptimeString || uptimeString === "") return uptimeString;
+		
+		const regex = /(\d+)\s+days\s+(\d{2}):(\d{2}):(\d{2})/;
+		const match = uptimeString.match(regex);
+		
+		if (!match) return uptimeString;
+		
+		let days = parseInt(match[1]);
+		let hours = parseInt(match[2]);
+		let minutes = parseInt(match[3]);
+		let seconds = parseInt(match[4]);
+		
+		// Increment seconds
+		seconds++;
+		
+		// Handle overflow
+		if (seconds >= 60) {
+			seconds = 0;
+			minutes++;
+		}
+		if (minutes >= 60) {
+			minutes = 0;
+			hours++;
+		}
+		if (hours >= 24) {
+			hours = 0;
+			days++;
+		}
+		
+		// Format the output
+		return days + " days " + 
+			(hours < 10 ? "0" + hours : hours) + ":" +
+			(minutes < 10 ? "0" + minutes : minutes) + ":" +
+			(seconds < 10 ? "0" + seconds : seconds);
+	};
+
+	// Function to start the uptime updater interval
+	var startUptimeUpdater = function() {
+		// Clear any existing interval
+		if ($scope.uptimeInterval) {
+			$interval.cancel($scope.uptimeInterval);
+		}
+		
+		// Set up a new interval to update uptime every second
+		$scope.uptimeInterval = $interval(function() {
+			// Update DSL uptime if status is "Up"
+			if ($scope.uptime_status.dsl_status === "Up") {
+				$scope.uptime_status.dsl = incrementUptime($scope.uptime_status.dsl);
+			}
+			
+			// Update Internet uptime if status is "Up"
+			if ($scope.uptime_status.internet_status === "Up") {
+				$scope.uptime_status.internet = incrementUptime($scope.uptime_status.internet);
+			}
+			
+			// Update System uptime (always "Up")
+			if ($scope.uptime_status.system) {
+				$scope.uptime_status.system = incrementUptime($scope.uptime_status.system);
+			}
+		}, 1000);
+	};
+
+	// Clean up interval when controller is destroyed
+	$scope.$on('$destroy', function() {
+		if ($scope.uptimeInterval) {
+			$interval.cancel($scope.uptimeInterval);
+		}
+	});
 
 });

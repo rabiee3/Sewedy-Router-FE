@@ -81,6 +81,10 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                   templateUrl: "quick_setup.html",
                   controller: 'quicksetupController'
                 })
+                .when('/quicksetup/:id', {
+                  templateUrl: "quick_setup.html",
+                  controller: 'quicksetupController'
+                })
                 .when('/tableform/:param2', {
                     template: function (params) {
                         return displayResult(params.param2, 'makehtml');
@@ -114,7 +118,35 @@ myapp.config(['$routeProvider', 'ngDialogProvider','$sceDelegateProvider',
                         
                     },
                     template: "<div></div>"
-                });
+                })
+                .when('/wan_connections_views/', {
+                    templateUrl: "wan_wanconnectionsform.html",
+                    controller: 'wan_wanconnectionsform'
+                })              
+                .when('/wan_connections_views/:id', {
+                    templateUrl: "wan_wanconnectionsform.html",
+                    controller: 'wan_wanconnectionsform'
+                })
+                .when('/html/ipmapping', {
+                    templateUrl: "ipmapping.html",
+                    controller: 'ipmapping'
+                })
+                .when('/html/iptv', {
+                    templateUrl: "iptv.html",
+                    controller: 'iptv'
+                })
+                .when('/html/ddns', {
+                    templateUrl: "ddns.html",
+                    controller: 'ddns'
+                })
+                .when('/html/macFiltering/:id', {
+                    templateUrl: "macFiltering.html",
+                    controller: 'macFilteringController'
+                })
+                .when('/html/cgi_test', {
+                    templateUrl: "cgi_test.html",
+                    controller: 'cgi_test'
+                });;
     }]);
 	
 function httpInterceptor($rootScope,  $location, $timeout) {
@@ -133,7 +165,7 @@ function httpInterceptor($rootScope,  $location, $timeout) {
     response: function(res) {
       //TODO - Rabie - remove change password scenario
         if(res.status == 209){
-            $location.path( '/quicksetup');
+            $location.path( '/custom/changePassword');
         }
     var csrfHeader = res.headers('X-Csrf-Token');
 	if(csrfHeader !== null && csrfHeader !== "" && csrfHeader !== undefined && csrfHeader !== $rootScope.xsrfHeader){
@@ -1128,6 +1160,7 @@ myapp.directive('dynamicPortStatusWidget', function () {
                                         if (obj.ParamName == "Status") {
                                             var image = getStatusImage(obj.ParamValue);
                                             temp.push(image);
+                                            $rootScope.eth_port_status.push(obj.ParamValue);
                                         }else
                                             temp.push(obj.ParamValue);
                                         $scope.dynamicPortData[refObjectName] =  temp;
@@ -2788,5 +2821,4 @@ myapp.directive('pushButtonWidget', function () {
     };
     return PushButtonWidget;
 });
-
 

@@ -1999,6 +1999,11 @@
                                     <xsl:value-of select="concat('checkboxurl(&quot;',@url,'&quot;,&quot;',@name,'&quot;,&quot;',@urlparam,'&quot;)')"/>
                                 </xsl:attribute>           
                             </xsl:when>
+                            <xsl:when test ="@fakeurl">
+                                <xsl:attribute name="ng-init">
+                                    <xsl:value-of select="concat('checkboxurl(&quot;',@fakeurl,'&quot;,&quot;',@name,'&quot;,&quot;',@urlparam,'&quot;)')"/>
+                                </xsl:attribute>           
+                            </xsl:when>
                             <xsl:otherwise>
                                 <xsl:attribute name="ng-init">
                                     <xsl:value-of select="concat(@name,'=','&quot;',@validvalues,'&quot;')"/>
@@ -2025,6 +2030,11 @@
                                 </xsl:attribute>
                                 <xsl:choose>
                                     <xsl:when test="(@urlparam or not(contains(@url,'cgi_get'))) and not(@validvalues)">
+                                        <xsl:attribute name="checklist-model" >
+                                            <xsl:value-of select="concat('getRoles(&quot;',translate(translate($paramobjectname,'*',''),'.',''),'.',@name,'&quot;,&quot;true','&quot;)')"/>
+                                        </xsl:attribute>
+                                    </xsl:when>
+                                    <xsl:when test="@fakeurl">
                                         <xsl:attribute name="checklist-model" >
                                             <xsl:value-of select="concat('getRoles(&quot;',translate(translate($paramobjectname,'*',''),'.',''),'.',@name,'&quot;,&quot;true','&quot;)')"/>
                                         </xsl:attribute>
@@ -4366,6 +4376,11 @@
                             </xsl:attribute>
                         </xsl:if>
                        <xsl:choose>
+                            <xsl:when test="@dynamicvalues">
+                                <xsl:attribute name="ng-options">
+                                    <xsl:value-of select="concat('opt for opt in ', @dynamicvalues)"/>
+                                </xsl:attribute>
+                            </xsl:when>
                             <xsl:when test="@xmlvalidation and not(@url) and not(@validvalues)">
                                 <xsl:attribute name="ng-init" >
                                     <xsl:value-of
@@ -4516,7 +4531,7 @@
                     <!--xsl:value-of
                         select="concat('dropdownUrlReq(&quot;DeviceIPInterface&quot;,','&quot;Name&quot;,','&quot;cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=false&amp;Name=&quot;',')',';dropdownUrlReq(&quot;DeviceWiFiSSID&quot;,','&quot;Name&quot;,','&quot;cgi_get_filterbyfirstparamval?Object=Device.WiFi.SSID&amp;Status=Up&amp;Name=&quot;',')')"/-->
                     <xsl:value-of
-                        select="concat('dropdownUrlReq(&quot;DeviceWiFiSSID&quot;,','&quot;InterfaceName&quot;,','&quot;cgi_get_filterbyfirstparamval?Object=Device.WiFi.SSID&amp;Status=Up&amp;Name=Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=false&amp;Name=&quot;',')')"/>                                    
+                        select="concat('dropdownUrlReq(&quot;DeviceWiFiSSID&quot;,','&quot;InterfaceName&quot;,','&quot;cgi_get_filterbyfirstparamval?Object=Device.WiFi.SSID&amp;Subobjs=true&amp;Status=Up&amp;Name=Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=false&amp;Name=Object=Device.X_INTEL_COM_ClientMode.Profile&amp;Enable=true&amp;BackhaulInterface=&quot;',')')"/>
                 </xsl:attribute>
                 <!--xsl:attribute name="ng-init" >
                     <xsl:value-of select="concat('dropdownUrlReq(&quot;DeviceIPInterface&quot;,','&quot;Name&quot;','&quot;','cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=false&amp;Name=','&quot;',')')"/>
@@ -5164,7 +5179,19 @@
             <div class="row checkbox-top-align" >
                 <div class="col-sm-12 col-md-12 col-lg-12 col-xs-12 text-left">                
                     <div class="checkbox1">                        
-                        <input type="checkbox" ng-true-value="'1'" class="hidden-dom-removal" ng-false-value="'0'" >  
+                        <input type="checkbox" class="hidden-dom-removal" >
+                            <xsl:attribute name="ng-true-value">
+                                <xsl:choose>
+                                    <xsl:when test="@truevalue">'<xsl:value-of select="@truevalue"/>'</xsl:when>
+                                    <xsl:otherwise>'1'</xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:attribute>
+                            <xsl:attribute name="ng-false-value">
+                                <xsl:choose>
+                                    <xsl:when test="@falsevalue">'<xsl:value-of select="@falsevalue"/>'</xsl:when>
+                                    <xsl:otherwise>'0'</xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:attribute>  
                             <xsl:attribute name="id">
                                 <xsl:value-of select="concat(translate(translate($paramobjectname,'*',''),'.',''),'_',@name)"/>
                             </xsl:attribute>
@@ -12663,4 +12690,3 @@
         </div>
     </xsl:template>
 </xsl:stylesheet>
-

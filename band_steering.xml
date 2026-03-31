@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="wifibasic5">
+    <helptext></helptext>
+    <header>
+        <image>images/icons/wireless.png</image>
+
+        <name>Basic - Wifi 5G</name>
+        <description>Configure the basic band steering configurations.</description>
+    </header>
+    <object viewtype="form" title="Band Steering" icon="settings-1">
+        <object name="toggle">
+            <parameter name="EnableBandSteering" type="toggle" webname="Enable Band Steering"
+                Value="true"></parameter>
+        </object>
+        <object name="temp2">
+            <row>
+                <col>
+                    <parameter name="signalstrength" type="string"
+                        webname="Signal Strength Threshold (dB)" dependsonparamvalue="true"
+                        dependsonobject="toggle" dependsonparam="EnableBandSteering" Value="65"></parameter>
+                </col>
+                <col>
+                    <parameter name="tts" type="string" webname="Time To Shift (Seconds)"
+                        dependsonparamvalue="true" dependsonobject="toggle" dependsonparam="EnableBandSteering" Value="5"></parameter>
+                </col>
+                <col>
+                    <parameter name="diffthreshold" type="string" webname="Difference Threshold"
+                        dependsonparamvalue="true" dependsonobject="toggle" dependsonparam="EnableBandSteering" Value="4"></parameter>
+                </col>
+            </row>
+        </object>
+
+        <parameter name="Modify" action="post" routeurl="Apply($event)" type="submitbutton"
+            webname="Apply" maxlen="64"></parameter>
+    </object>
+</view>

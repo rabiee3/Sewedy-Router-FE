@@ -1,0 +1,421 @@
+<div ng-controller="macFilteringController">
+  <div class="row ltq_breadcrumbs">
+    <div class="row"></div>
+  </div>
+
+  <!-- Subheader -->
+  <div class="subheader">
+    <div>
+      <img
+        src="images/icons/wireless.png"
+        class="iconDetails"
+        alt="MAC Filtering"
+      />
+    </div>
+    <div>
+      <h4>MAC Filtering - {{ wifiBandInfo.bandName }}</h4>
+    </div>
+    <p>
+      Control which devices can connect to your WiFi by creating allow
+      (whitelist) or deny (blacklist) rules based on MAC addresses.
+    </p>
+  </div>
+
+  <!-- Main Form -->
+  <div class="panel">
+    <div class="panel-heading blu_bg">
+      <span class="ng-binding">MAC Filtering Configuration</span>
+    </div>
+    <div class="panel-body">
+      <form name="macFilteringForm" novalidate autocomplete="off">
+        <!-- Enable/Disable MAC Filtering -->
+        <div class="row d-flex align-items-center mb-4">
+          <div class="col-sm-6 checkbox1 input-field1 my-3">
+            <input
+              id="enableMACFiltering"
+              name="enableMACFiltering"
+              type="checkbox"
+              ng-model="macFilteringData.enable"
+            />
+            <label class="checkbox_left_align" for="enableMACFiltering">
+              Enable MAC Filtering
+            </label>
+          </div>
+          <div class="col-sm-6 mb-3 required d-flex align-items-center justify-content-end" ng-show="macFilteringData.enable">
+            <label class="mb-0 mr-2" for="filterMode">Filter Mode</label>
+            <select
+              id="filterMode"
+              name="filterMode"
+              class="dropdown-toggle"
+              ng-options="mode for mode in filterModes"
+              ng-model="macFilteringData.filterMode"
+              ng-required="macFilteringData.enable"
+              style="width: auto;"
+            >
+              <option value="" disabled>Select Filter Mode</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Device Addition Form (only visible when enabled) -->
+        <div class="form-section" ng-show="macFilteringData.enable">
+          <hr />
+          <h5>Add Device to {{ macFilteringData.filterMode }} Rule</h5>
+
+          <div class="row d-flex align-items-ctop">
+            <!-- Device Name Input -->
+            <div class="col-sm-4 mb-3 required">
+              <label for="deviceName">Device Name</label>
+              <input
+                id="deviceName"
+                type="text"
+                name="deviceName"
+                class="form-control"
+                ng-model="newDevice.deviceName"
+                placeholder="e.g., Living Room TV"
+                ng-required="macFilteringData.enable"
+              />
+            </div>
+
+            <!-- MAC Address Input -->
+            <div class="col-sm-4 mb-3 required">
+              <label for="macAddress">MAC Address</label>
+              <input
+                id="macAddress"
+                type="text"
+                name="macAddress"
+                class="form-control"
+                ng-model="newDevice.macAddress"
+                placeholder="e.g., AA:BB:CC:DD:EE:FF"
+                ng-required="macFilteringData.enable"
+              />
+            </div>
+
+            <!-- Connected Devices Dropdown -->
+            <div class="col-sm-4 mb-3">
+              <label for="connectedDeviceSelect">Connected Devices</label>
+              <select
+                id="connectedDeviceSelect"
+                name="connectedDeviceSelect"
+                class="dropdown-toggle"
+                ng-options="device as device.name for device in macFilteringData.connectedDevices track by device.id"
+                ng-model="newDevice.selectedDevice"
+                ng-change="onDeviceSelected()"
+              >
+                <option value="" disabled selected
+                  >Select a connected device</option
+                >
+              </select>
+            </div>
+          </div>
+
+          <!-- Apply Button -->
+          <div class="row mb-4">
+            <div class="col-sm-12">
+              <button
+                type="button"
+                ng-click="applyMACFilterRule()"
+                class="btn btn-info"
+              >
+                <i class="fa fa-plus"></i> Add Device to Rule
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Devices Table (only visible when enabled) -->
+        <div
+          class="table-section"
+          ng-show="macFilteringData.enable && macFilteringData.devices.length > 0"
+        >
+          <hr />
+          <h5>Current Devices in {{ macFilteringData.filterMode }} Rule</h5>
+
+          <table class="table table-bordered tableCount theme_intel">
+            <thead>
+              <tr>
+                <th width="5%">
+                  <input
+                    type="checkbox"
+                    ng-model="selectAllDevices"
+                    ng-change="toggleAllDevices(selectAllDevices)"
+                  />
+                </th>
+                <th width="10%">ID</th>
+                <!-- <th width="35%">Device Name</th> -->
+                <th width="35%">MAC Address</th>
+                <th width="15%">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                ng-repeat="device in macFilteringData.devices"
+                ng-class="{ 'selected-row': selectedDevices[device.id] }"
+              >
+                <td>
+                  <input
+                    type="checkbox"
+                    ng-model="selectedDevices[device.id]"
+                  />
+                </td>
+                <td>{{ $index + 1 }}</td>
+                <!-- <td>{{ device.name }}</td> -->
+                <td>
+                  <code>{{ device.macAddress }}</code>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    ng-click="deleteDevice(device.id)"
+                    class="btn btn-sm btn-danger"
+                    title="Delete this device from the rule"
+                  >
+                    <i class="fa fa-trash"></i> Delete
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Action Buttons (always visible) -->
+        <div
+          class="row mb-4"
+          ng-show="macFilteringData.devices.length > 0 || !macFilteringData.enable"
+        >
+          <div class="col-sm-6">
+            <button
+              type="button"
+              ng-click="applyRulesToRouter()"
+              class="btn btn-success"
+            >
+              <i class="fa fa-check"></i> Apply
+            </button>
+          </div>
+          <div class="col-sm-6">
+            <!-- <button
+              type="button"
+              ng-click="deleteSelectedDevices()"
+              ng-disabled="!hasSelectedDevices()"
+              class="btn btn-danger"
+            >
+              <i class="fa fa-trash"></i> Delete Selected Devices
+            </button> -->
+          </div>
+        </div>
+
+        <!-- Empty State Message -->
+        <div
+          class="empty-state"
+          ng-show="macFilteringData.enable && macFilteringData.devices.length === 0"
+        >
+          <hr />
+          <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i>
+            <strong>No devices added yet.</strong> Add your first device using
+            the form above.
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .form-section,
+  .table-section {
+    margin-top: 20px;
+  }
+
+  .table-section h5,
+  .form-section h5 {
+    color: #5c2d91;
+    margin-bottom: 15px;
+    font-weight: bold;
+  }
+
+  .subheader {
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .subheader img {
+    margin-right: 15px;
+  }
+
+  .subheader h4 {
+    color: #5c2d91;
+    margin: 0;
+  }
+
+  .subheader p {
+    color: #666;
+    margin: 5px 0 0 0;
+  }
+
+  .text-info {
+    color: #17a2b8;
+    padding: 10px;
+    background-color: #e7f3ff;
+    border-left: 3px solid #17a2b8;
+    border-radius: 4px;
+    margin: 0;
+  }
+
+  .selected-row {
+    background-color: #f0f0f0;
+  }
+
+  .table-bordered code {
+    background-color: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+  }
+
+  .empty-state {
+    padding: 20px;
+    text-align: center;
+  }
+
+  .empty-state .alert {
+    margin: 0;
+  }
+
+  .form-control {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .form-control:focus {
+    border-color: #5c2d91;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(92, 45, 145, 0.1);
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-info {
+    background-color: #5c2d91;
+    color: white;
+    border: none;
+  }
+
+  .btn-info:hover {
+    background-color: #4a235a;
+  }
+
+  .btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background-color: #c82333;
+  }
+
+  .btn-success {
+    background-color: #28a745;
+    color: white;
+    border: none;
+  }
+
+  .btn-success:hover {
+    background-color: #218838;
+  }
+
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .panel {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+
+  .panel-heading {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .blu_bg {
+    background-color: #f5f5f5;
+    color: #333;
+  }
+
+  .panel-body {
+    padding: 20px;
+  }
+
+  .checkbox1 input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+  }
+
+  .checkbox_left_align label {
+    display: inline;
+    margin: 0;
+    font-weight: normal;
+  }
+
+  .d-flex {
+    display: flex;
+  }
+
+  .align-items-center {
+    align-items: center;
+  }
+
+  .mb-3 {
+    margin-bottom: 20px;
+  }
+
+  .mb-4 {
+    margin-bottom: 25px;
+  }
+
+  .my-3 {
+    margin-top: 15px;
+    margin-bottom: 15px;
+  }
+
+  .col-sm-6 {
+    width: 48%;
+    display: inline-block;
+    margin-right: 2%;
+    vertical-align: top;
+  }
+
+  .col-sm-12 {
+    width: 100%;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 20px 0;
+  }
+</style>

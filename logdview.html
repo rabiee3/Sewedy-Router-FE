@@ -1,0 +1,35 @@
+<div>
+  <div class="row ltq_breadcrumbs">
+    <div class="row"></div>
+  </div>
+
+  <!-- Subheader -->
+  <div class="subheader">
+    <div ng-click="addRule()">
+      <img
+        src="images/icons/internet.png"
+        class="iconDetails"
+        alt="Internet Icon"
+      />
+    </div>
+    <div>
+      <h4>System Log</h4>
+    </div>
+    <p>
+      This page displays the system logs
+    </p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body">
+      <div style="text-align: right; margin-bottom: 15px;">
+        <button type="button" class="btn btn-info waves-effect waves-light" ng-click="downloadLog()">
+          Export Logs
+        </button>
+      </div>
+      <pre class="systemlog">
+            {{logs}}
+      </pre>
+    </div>
+  </div>
+</div>
