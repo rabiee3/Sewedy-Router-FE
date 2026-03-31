@@ -1333,10 +1333,10 @@ myapp.controller(
    // Always create IP Interface, even for BridgedWan mode
    request += `Object=Device.IP.Interface&Operation=Add&Enable=true&Alias=${encodeParam(ipAlias)}`;
 
-   if ($scope.form.wanMode === "BridgedWan") {
+   //if ($scope.form.wanMode === "BridgedWan") {
     // For bridged mode, IP Interface connects to Ethernet Link
-    request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
-   } else {
+    //request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
+   //} else {
     // For routed mode, handle based on connection type
     if ($scope.form.enableVlan == "1") {
      const vlanAlias = `cpe-WEB-EthernetVLANTermination-${randomValue}`;
@@ -1356,7 +1356,7 @@ myapp.controller(
       request += `&LowerLayers=Device.Ethernet.Link.${ethAlias}`;
      }
     }
-   }
+   //}
 
    // Handle IPv6 based on protocolType
    if ($scope.form.protocolType === "IPv4/IPv6" || $scope.form.protocolType === "IPv6") {
